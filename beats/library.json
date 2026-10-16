@@ -1,0 +1,122 @@
+{
+  "format": 1,
+  "legend": {
+    "steps": "Each string is one bar. Its length is the number of equal steps in the bar (16 = sixteenth notes: step 0 is beat 1, 4 is beat 2, 8 is beat 3, 12 is beat 4; 12 = eighth-note triplets; 32 = thirty-seconds).",
+    "symbols": "X = accent, x = normal hit, o = ghost (soft), . = rest",
+    "voices": "kick, snare, clap, rim, hat, ohat, shaker. A track name may end in a digit (hat2) to layer the same voice.",
+    "bass": "One list per bar of 'step:note:lengthInSteps' (16-step grid), played by a sine/808 bass.",
+    "swing": "0 = straight. Delays every off-beat sixteenth on 16-step tracks by this fraction of a step (0.25 is a typical boom bap shuffle).",
+    "bars": "Pattern length. It loops, and a track with fewer bars than this repeats."
+  },
+  "beats": [
+    {
+      "id": "dusty-boom-bap", "name": "Dusty Boom Bap", "style": "boom bap", "bpm": 90, "swing": 0.2, "bars": 2,
+      "count": "Snare on 2 and 4",
+      "tracks": {
+        "kick":  ["X.....x...x.....", "X.....x...x..x.."],
+        "snare": ["....X.......X...", "....X......oX..."],
+        "hat":   ["X.x.x.x.X.x.x.x.", "X.x.x.x.X.x.x.x."]
+      },
+      "bass": [["0:C2:5", "6:C2:3", "10:Eb2:4"], ["0:C2:5", "6:G1:3", "10:Bb1:3", "13:C2:3"]]
+    },
+    {
+      "id": "head-nod", "name": "Head Nod", "style": "boom bap", "bpm": 85, "swing": 0.25, "bars": 2,
+      "count": "Snare on 2 and 4",
+      "tracks": {
+        "kick":  ["X.......x.x.....", "X.....x.x......."],
+        "snare": ["....X.......X...", "....X.......X..o"],
+        "hat":   ["x.x.x.x.x.x.x.x.", "x.x.x.x.x.x.x.x."],
+        "ohat":  ["................", "..............x."]
+      },
+      "bass": [["0:F1:8", "8:F1:2", "10:Ab1:5"], ["0:F1:6", "6:Eb1:2", "8:C2:7"]]
+    },
+    {
+      "id": "golden-era", "name": "Golden Era", "style": "boom bap", "bpm": 94, "swing": 0.18, "bars": 2,
+      "count": "Snare on 2 and 4, ghost snare before the 3",
+      "tracks": {
+        "kick":  ["X..x......x.....", "X.....x..x.x...."],
+        "snare": ["....X.......X...", "....X..o....X..."],
+        "hat":   ["x.x.x.x.x.x.x.x.", "x.x.x.xxx.x.x.x."]
+      },
+      "bass": [["0:D2:3", "3:D2:3", "10:A1:5"], ["0:D2:6", "6:F2:3", "9:E2:2", "11:D2:5"]]
+    },
+    {
+      "id": "lazy-bounce", "name": "Lazy Bounce", "style": "boom bap", "bpm": 78, "swing": 0.3, "bars": 2,
+      "count": "Clap on 2 and 4",
+      "tracks": {
+        "kick":   ["X.....x.x.......", "X.......x..x...."],
+        "clap":   ["....X.......X...", "....X.......X..."],
+        "rim":    ["................", "..............o."],
+        "hat":    ["x.x.x.x.x.x.x.x.", "x.x.x.x.x.x.x.x."],
+        "shaker": ["oxoxoxoxoxoxoxox", "oxoxoxoxoxoxoxox"]
+      }
+    },
+    {
+      "id": "lofi-chill", "name": "Lo-Fi Chill", "style": "lo-fi", "bpm": 72, "swing": 0.3, "bars": 2,
+      "count": "Snare on 2 and 4",
+      "tracks": {
+        "kick":  ["X.......x.x.....", "X.......x.....x."],
+        "snare": ["....X.......X...", "....X.......X..."],
+        "hat":   ["x.x.x.x.x.x.x.x.", "x.x.x.x.x.x.x.xo"],
+        "ohat":  ["..............x.", "................"]
+      },
+      "bass": [["0:G1:7", "8:G1:2", "10:Bb1:5"], ["0:G1:7", "8:F1:5", "14:G1:2"]]
+    },
+    {
+      "id": "old-school", "name": "Old School", "style": "old school", "bpm": 100, "swing": 0, "bars": 2,
+      "count": "Clap on 2 and 4",
+      "tracks": {
+        "kick": ["X.......x.x.....", "X.....x.x......."],
+        "clap": ["....X.......X...", "....X.......X..."],
+        "hat":  ["x.x.x.x.x.x.x.x.", "x.x.x.x.x.x.x.x."]
+      }
+    },
+    {
+      "id": "trap-classic", "name": "Trap Classic", "style": "trap", "bpm": 140, "swing": 0, "bars": 2,
+      "count": "Half-time: snare on 3",
+      "tracks": {
+        "kick":  ["X..........x..x.", "X.x.......x....."],
+        "snare": ["........X.......", "........X......."],
+        "clap":  ["........x.......", "........x......."],
+        "hat":   ["x.x.x.x.x.x.x.x.", "x.x.x.x.x.x.x.x."],
+        "hat2":  ["................................", "........................ooxxXXXX"]
+      },
+      "bass": [["0:C1:10", "11:C1:3", "14:Eb1:2"], ["0:C1:2", "2:Bb0:8", "10:C1:6"]]
+    },
+    {
+      "id": "trap-bounce", "name": "Trap Bounce", "style": "trap", "bpm": 130, "swing": 0, "bars": 2,
+      "count": "Half-time: snare on 3",
+      "tracks": {
+        "kick":  ["X.....x...x.....", "X..x..x......x.."],
+        "snare": ["........X.......", "........X......."],
+        "clap":  ["........x.......", "........x......."],
+        "hat":   ["xoxoxoxoxoxoxoxo", "xoxoxoxoxoxoxoxo"],
+        "ohat":  ["..............x.", "..............x."]
+      },
+      "bass": [["0:F1:6", "6:F1:3", "10:Ab1:6"], ["0:F1:3", "3:F1:3", "6:Eb1:7", "13:F1:3"]]
+    },
+    {
+      "id": "trap-hard", "name": "Trap Hard", "style": "trap", "bpm": 150, "swing": 0, "bars": 2,
+      "count": "Half-time: snare on 3",
+      "tracks": {
+        "kick":  ["X.x...x.....x...", "X.....x.x......."],
+        "snare": ["........X.......", "........X......."],
+        "clap":  ["........x.......", "........x......."],
+        "hat":   ["xxxxxxxxxxxxxxxx", "xxxxxxxxxxxxxxxx"],
+        "ohat":  ["..............x.", "................"]
+      },
+      "bass": [["0:D1:2", "2:D1:4", "6:A0:6", "12:D1:4"], ["0:D1:6", "6:C1:2", "8:D1:8"]]
+    },
+    {
+      "id": "trap-dark", "name": "Dark Triplet Trap", "style": "trap", "bpm": 140, "swing": 0, "bars": 2,
+      "count": "Half-time: snare on 3, triplet hats",
+      "tracks": {
+        "kick":  ["X.........x.x...", "X........x....x."],
+        "snare": ["........X.......", "........X......."],
+        "clap":  ["........x.......", "........x......."],
+        "hat":   ["Xooxooxooxoo", "Xooxooxooxoo"]
+      },
+      "bass": [["0:E1:9", "10:E1:2", "12:G1:4"], ["0:E1:9", "9:D1:5", "14:E1:2"]]
+    }
+  ]
+}
