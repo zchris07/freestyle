@@ -169,6 +169,11 @@ canvas.gv{width:100%;height:78px;background:#fdf8ea;border:1.5px solid #d8c79a;b
         <button class="btn" data-act="shift" title="Move the 'one' to the next beat">Next beat = 1</button>
       </div>
       <div class="drow">
+        <span class="dlbl">GRID BY</span>
+        <span class="muted" id="engine-lbl"></span>
+        <button class="btn" data-act="rebt" id="rebt-btn" title="Run the Beat This! model on this track again">Re-analyze with Beat This!</button>
+      </div>
+      <div class="drow">
         <span class="dlbl">CHECK</span>
         <button class="btn go" id="prev-btn">&#9654; Preview grid</button>
         <div class="dots" id="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
@@ -346,6 +351,9 @@ function normFd(fd,spb){const bar=4*spb;fd=fd%bar;if(fd<0)fd+=bar;return fd;}
 // refit grid for a manually-chosen tempo (half/double), reusing stored envelopes
 function refit(item,bpm){
   if(!item.env){item.bpm=bpm;item.fd=0;return;}
+  if(item.engine==="beat-this"){ // grid phase is already exact; only the bar length changes
+    item.bpm=Math.round(bpm*100)/100;item.fd=normFd(item.fd,60/item.bpm);return;
+  }
   const r1=bestPhase(item.env,item.fps,bpm,false);
   const p=60/bpm*item.fps;
   let bs=-1,bp=r1.ph;
@@ -354,6 +362,177 @@ function refit(item,bpm){
   const spb=60/bpm;
   item.bpm=Math.round(bpm*100)/100;
   item.fd=normFd(frameToTime(item,bp)+q*spb,spb);
+}
+
+/* ================= BEAT THIS! (in-browser, ONNX) ================= */
+// Beat This! (small) in-browser pipeline: mel spectrogram -> ONNX model -> peak picking.
+// Matches CPJKU/beat_this: 22.05 kHz mono, 1024-pt FFT, hop 441, 128 Slaney mel bins 30-11000 Hz.
+const BT = (() => {
+  const SR = 22050, NFFT = 1024, HOP = 441, NMEL = 128, FMIN = 30, FMAX = 11000, FPS = 50;
+  const hz2mel = f => { const fsp = 200 / 3, ml = 15, ls = Math.log(6.4) / 27; return f >= 1000 ? ml + Math.log(f / 1000) / ls : f / fsp; };
+  const mel2hz = m => { const fsp = 200 / 3, ml = 15, ls = Math.log(6.4) / 27; return m >= ml ? 1000 * Math.exp(ls * (m - ml)) : m * fsp; };
+  let fb = null, win = null, cosT = null, sinT = null, rev = null;
+  function init() {
+    if (fb) return;
+    const nf = NFFT / 2 + 1;
+    const mp = [], lo = hz2mel(FMIN), hi = hz2mel(FMAX);
+    for (let i = 0; i < NMEL + 2; i++) mp.push(mel2hz(lo + (hi - lo) * i / (NMEL + 1)));
+    fb = new Float32Array(NMEL * nf); // [mel][bin]
+    for (let m = 0; m < NMEL; m++) {
+      const d0 = mp[m + 1] - mp[m], d1 = mp[m + 2] - mp[m + 1];
+      for (let k = 0; k < nf; k++) {
+        const f = k * (SR / 2) / (nf - 1);
+        const dn = -(mp[m] - f) / d0, up = (mp[m + 2] - f) / d1;
+        fb[m * nf + k] = Math.max(0, Math.min(dn, up));
+      }
+    }
+    win = new Float64Array(NFFT);
+    for (let i = 0; i < NFFT; i++) win[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / NFFT); // periodic Hann
+    cosT = new Float64Array(NFFT / 2); sinT = new Float64Array(NFFT / 2);
+    for (let i = 0; i < NFFT / 2; i++) { cosT[i] = Math.cos(2 * Math.PI * i / NFFT); sinT[i] = -Math.sin(2 * Math.PI * i / NFFT); }
+    rev = new Uint16Array(NFFT);
+    const bits = Math.log2(NFFT);
+    for (let i = 0; i < NFFT; i++) { let r = 0; for (let b = 0; b < bits; b++) if (i & (1 << b)) r |= 1 << (bits - 1 - b); rev[i] = r; }
+  }
+  function fft(re, im) {
+    for (let i = 0; i < NFFT; i++) { const j = rev[i]; if (j > i) { let t = re[i]; re[i] = re[j]; re[j] = t; t = im[i]; im[i] = im[j]; im[j] = t; } }
+    for (let size = 2; size <= NFFT; size <<= 1) {
+      const half = size >> 1, step = NFFT / size;
+      for (let s = 0; s < NFFT; s += size) for (let k = 0, w = 0; k < half; k++, w += step) {
+        const a = s + k, b = a + half;
+        const tr = re[b] * cosT[w] - im[b] * sinT[w], ti = re[b] * sinT[w] + im[b] * cosT[w];
+        re[b] = re[a] - tr; im[b] = im[a] - ti; re[a] += tr; im[a] += ti;
+      }
+    }
+  }
+  // samples: Float32Array mono at 22050 Hz -> Float32Array (frames x 128), row-major
+  function logMel(x) {
+    init();
+    const nf = NFFT / 2 + 1, N = x.length, frames = 1 + Math.floor(N / HOP), pad = NFFT / 2;
+    const norm = 1 / Math.sqrt(NFFT); // torchaudio normalized="frame_length"
+    const out = new Float32Array(frames * NMEL), re = new Float64Array(NFFT), im = new Float64Array(NFFT), mag = new Float64Array(nf);
+    const at = i => { // reflect padding like torch.stft(center=True)
+      if (i < 0) i = -i; if (i >= N) i = 2 * (N - 1) - i;
+      return i >= 0 && i < N ? x[i] : 0;
+    };
+    for (let f = 0; f < frames; f++) {
+      const s = f * HOP - pad;
+      for (let i = 0; i < NFFT; i++) { re[i] = at(s + i) * win[i]; im[i] = 0; }
+      fft(re, im);
+      for (let k = 0; k < nf; k++) mag[k] = Math.hypot(re[k], im[k]) * norm;
+      for (let m = 0; m < NMEL; m++) {
+        let a = 0; const o = m * nf;
+        for (let k = 0; k < nf; k++) a += fb[o + k] * mag[k];
+        out[f * NMEL + m] = Math.log1p(1000 * a);
+      }
+    }
+    return { data: out, frames };
+  }
+  // Same chunking as beat_this.inference.split_piece / aggregate_prediction (keep_first)
+  async function frameLogits(spect, runChunk, chunk = 1500, border = 6) {
+    const T = spect.frames, step = chunk - 2 * border, starts = [];
+    for (let s = -border; s < T - border; s += step) starts.push(s);
+    if (T > step) starts[starts.length - 1] = T - (chunk - border);
+    const beat = new Float32Array(T).fill(-1000), down = new Float32Array(T).fill(-1000);
+    const preds = [];
+    for (const s of starts) {
+      const a = Math.max(s, 0), b = Math.min(s + chunk, T);
+      const left = Math.max(0, -s), right = Math.max(0, Math.min(border, s + chunk - T));
+      const L = left + (b - a) + right, buf = new Float32Array(L * NMEL);
+      buf.set(spect.data.subarray(a * NMEL, b * NMEL), left * NMEL);
+      preds.push(await runChunk(buf, L));
+    }
+    // earlier chunks win: write in reverse order
+    for (let i = starts.length - 1; i >= 0; i--) {
+      const s = starts[i], p = preds[i];
+      for (let j = border; j < p.beat.length - border; j++) {
+        const t = s + j; if (t < 0 || t >= T) continue;
+        beat[t] = p.beat[j]; down[t] = p.down[j];
+      }
+    }
+    return { beat, down };
+  }
+  function peaks(l) { // +-3 frame local max with logit > 0, adjacent peaks averaged
+    const T = l.length, idx = [];
+    for (let t = 0; t < T; t++) {
+      if (!(l[t] > 0)) continue;
+      let ok = true;
+      for (let k = Math.max(0, t - 3); k <= Math.min(T - 1, t + 3); k++) if (l[k] > l[t]) { ok = false; break; }
+      if (ok) idx.push(t);
+    }
+    const res = []; let p = idx[0], c = 1;
+    for (let i = 1; i < idx.length; i++) {
+      if (idx[i] - p <= 1) { c++; p += (idx[i] - p) / c; } else { res.push(p); p = idx[i]; c = 1; }
+    }
+    if (idx.length) res.push(p);
+    return res;
+  }
+  function postprocess(beat, down) {
+    const bt = peaks(beat).map(f => f / FPS);
+    let db = peaks(down).map(f => f / FPS);
+    if (bt.length) db = db.map(d => bt.reduce((best, b) => Math.abs(b - d) < Math.abs(best - d) ? b : best, bt[0]));
+    db = [...new Set(db)].sort((a, b) => a - b);
+    return { beats: bt, downbeats: db };
+  }
+  return { SR, HOP, NMEL, FPS, logMel, frameLogits, postprocess };
+})();
+
+/* ---- loading onnxruntime-web + the model (needs a normal web origin, e.g. GitHub Pages) ---- */
+const ORT_BASE="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.30.0/dist/";
+const BT_MODEL="models/beat_this_small.onnx";
+let btSession=null,btOrt=null,btLoading=null,btFailed=null;
+function btLoad(){
+  if(btSession) return Promise.resolve(btSession);
+  if(btFailed) return Promise.reject(btFailed);
+  if(!btLoading) btLoading=(async()=>{
+    const ort=await import(ORT_BASE+"ort.min.mjs");
+    ort.env.wasm.wasmPaths=ORT_BASE;ort.env.wasm.numThreads=1;ort.env.wasm.proxy=true; // proxy = run in a worker, UI stays responsive
+    const r=await fetch(BT_MODEL);
+    if(!r.ok) throw new Error("model file not found ("+r.status+")");
+    btSession=await ort.InferenceSession.create(new Uint8Array(await r.arrayBuffer()),{executionProviders:["wasm"]});
+    btOrt=ort;return btSession;
+  })().catch(e=>{btFailed=e;btLoading=null;throw e;});
+  return btLoading;
+}
+// decoded AudioBuffer -> mono 22.05 kHz Float32Array (first 150 s), downmix and resample by the browser
+async function btMono(buf){
+  const secs=Math.min(buf.duration,150),oc=new OfflineAudioContext(1,Math.ceil(secs*BT.SR),BT.SR);
+  const s=oc.createBufferSource();s.buffer=buf;s.connect(oc.destination);s.start(0,0,secs);
+  return (await oc.startRendering()).getChannelData(0);
+}
+// beats + downbeats (s) -> constant-tempo grid {bpm, fd}: robust line fit t = a + b*i, downbeat phase by vote
+function btToGrid(beats,downbeats){
+  if(beats.length<8) throw new Error("too few beats found");
+  const iv=[];for(let i=1;i<beats.length;i++) iv.push(beats[i]-beats[i-1]);
+  const P0=iv.slice().sort((x,y)=>x-y)[iv.length>>1];
+  const idx=[0];for(let i=1;i<beats.length;i++) idx.push(idx[i-1]+Math.max(1,Math.round(iv[i-1]/P0))); // per-interval, so no drift build-up
+  let a=beats[0],b=P0,keep=beats.map((_,i)=>i);
+  for(let pass=0;pass<3;pass++){
+    let n=keep.length,sx=0,sy=0,sxx=0,sxy=0;
+    for(const i of keep){const x=idx[i],y=beats[i];sx+=x;sy+=y;sxx+=x*x;sxy+=x*y;}
+    const den=n*sxx-sx*sx;if(!den) break;
+    b=(n*sxy-sx*sy)/den;a=(sy-b*sx)/n;
+    keep=beats.map((_,i)=>i).filter(i=>Math.abs(beats[i]-(a+b*idx[i]))<0.15*b);
+    if(keep.length<8) throw new Error("beats are not steady enough");
+  }
+  const votes=[0,0,0,0];
+  for(const d of downbeats){const k=Math.round((d-a)/b);votes[((k%4)+4)%4]++;}
+  let q=0;for(let k=1;k<4;k++) if(votes[k]>votes[q]) q=k;
+  return {bpm:Math.round(60/b*100)/100,fd:normFd(a+q*b,b)};
+}
+async function analyzeBT(buf,onProg){
+  const session=await btLoad();
+  onProg&&onProg("Beat This! 0%");
+  await new Promise(r=>setTimeout(r,0));
+  const mel=BT.logMel(await btMono(buf));
+  const total=Math.max(1,Math.ceil(mel.frames/1488));let done=0;
+  const fl=await BT.frameLogits(mel,async(data,L)=>{
+    const o=await session.run({spect:new btOrt.Tensor("float32",data,[1,L,BT.NMEL])});
+    done++;onProg&&onProg("Beat This! "+Math.round(100*done/total)+"%");
+    return {beat:o.beat.data,down:o.downbeat.data};
+  });
+  const pp=BT.postprocess(fl.beat,fl.down);
+  return btToGrid(pp.beats,pp.downbeats);
 }
 
 /* ================= LIBRARY + STORAGE ================= */
@@ -377,7 +556,7 @@ async function dbAll(){const db=await openDB();return new Promise((res,rej)=>{co
 async function dbPut(rec){if(!dbOK)return;try{const db=await openDB();await new Promise((res,rej)=>{const tx=db.transaction("beats","readwrite");tx.objectStore("beats").put(rec);tx.oncomplete=res;tx.onerror=()=>rej(tx.error);});}catch(e){dbOK=false;renderNote();}}
 async function dbDel(id){if(!dbOK)return;try{const db=await openDB();await new Promise((res,rej)=>{const tx=db.transaction("beats","readwrite");tx.objectStore("beats").delete(id);tx.oncomplete=res;tx.onerror=()=>rej(tx.error);});}catch(e){}}
 function persist(it){
-  dbPut({id:it.id,name:it.name,blob:it.blob,duration:it.duration,bpm:it.bpm,fd:it.fd,sr:it.sr,hop:it.hop,fps:it.fps,tOff:it.tOff,env:it.env,low:it.low,added:it.added});
+  dbPut({id:it.id,name:it.name,blob:it.blob,duration:it.duration,bpm:it.bpm,fd:it.fd,sr:it.sr,hop:it.hop,fps:it.fps,tOff:it.tOff,env:it.env,low:it.low,added:it.added,engine:it.engine});
 }
 function renderNote(){
   document.getElementById("store-note").textContent=dbOK
@@ -404,6 +583,21 @@ async function ensureBuf(it){
   BUF.set(it.id,b);
   return b;
 }
+// Beat This! frames are 20 ms; nudge the downbeat onto the nearest onset peak (+-30 ms) of the 10 ms envelope
+function snapPhase(it,g){
+  const p=60/g.bpm*it.fps,ph0=(g.fd-it.tOff)*it.fps;let best=-1,bd=0;
+  for(let d=-3;d<=3;d+=0.25){const ph=(((ph0+d)%p)+p)%p,sc=combSum(it.env,p,ph);if(sc>best){best=sc;bd=d;}}
+  return normFd((ph0+bd)/it.fps+it.tOff,60/g.bpm);
+}
+// try the Beat This! model; on any failure keep the built-in detector's grid
+async function runBT(it,buf){
+  it.engine="builtin";
+  try{
+    const g=await analyzeBT(buf,m=>{it.prog=m;renderLib();});
+    it.bpm=g.bpm;it.fd=snapPhase(it,g);it.engine="beat-this";
+  }catch(e){it.btErr=(e&&e.message)||String(e);}
+  it.prog=null;
+}
 function fmtDur(s){const m=Math.floor(s/60),r=Math.floor(s%60);return m+":"+String(r).padStart(2,"0");}
 
 async function addFiles(files){
@@ -417,7 +611,8 @@ async function addFiles(files){
       const buf=await getCtx().decodeAudioData(await f.arrayBuffer());
       BUF.set(it.id,buf);
       await new Promise(r=>setTimeout(r,10));
-      Object.assign(it,analyzeBuffer(buf));
+      Object.assign(it,analyzeBuffer(buf));   // built-in detector: always runs, keeps envelopes for the tempo buttons
+      await runBT(it,buf);
       it.status="ready";
       persist(it);
       if(!SELECTED||SELECTED.startsWith("click-")) setSelected(it.id);
@@ -442,7 +637,7 @@ function renderLib(){
   if(LIB.length){
     h+='<div class="lhdr">YOUR BEATS</div>';
     for(const it of LIB){
-      const meta=it.status==="analyzing"?"analyzing...":it.status==="error"?"error":Math.round(it.bpm*10)/10+" BPM · "+fmtDur(it.duration);
+      const meta=it.status==="analyzing"?(it.prog||"analyzing..."):it.status==="error"?"error":Math.round(it.bpm*10)/10+" BPM · "+fmtDur(it.duration);
       h+='<div class="lrow'+(it.id===SELECTED?" sel":"")+'" data-id="'+it.id+'"><div class="lname">'+esc(it.name)+'</div><div class="lmeta">'+meta+'</div><button class="ldel" data-del="'+it.id+'" title="Remove">&#10005;</button></div>';
     }
   }
@@ -462,6 +657,10 @@ function renderDetail(){
   if(!it||it.status!=="ready"&&!it.builtin){d.hidden=true;return;}
   d.hidden=false;
   document.getElementById("bd-bpm").textContent=it.bpm.toFixed(1);
+  const eng=document.getElementById("engine-lbl");
+  eng.textContent=it.builtin?"":it.engine==="beat-this"?"Beat This! (neural model)":"built-in detector"+(it.btErr?" (Beat This! unavailable here)":"");
+  eng.parentElement.style.display=it.builtin?"none":"flex";
+  document.getElementById("rebt-btn").style.display=it.engine==="beat-this"?"none":"inline-block";
   document.getElementById("row-offset").style.display=it.builtin?"none":"flex";
   document.getElementById("grid-cv").style.display=it.builtin?"none":"block";
   document.getElementById("grid-note").style.display=it.builtin?"none":"block";
@@ -658,6 +857,16 @@ document.getElementById("detail").addEventListener("click",e=>{
   const b=e.target.closest("[data-act]");if(!b)return;
   const it=selItem();if(!it)return;
   const wasPreviewing=previewing;
+  if(b.dataset.act==="rebt"){
+    if(it.builtin||it.status!=="ready") return;
+    if(previewing){previewing=false;stopPlayer();resetDots();}
+    btFailed=null;it.status="analyzing";renderLib();
+    (async()=>{
+      try{await runBT(it,await ensureBuf(it));persist(it);}catch(e){it.btErr=e.message;}
+      it.status="ready";renderLib();
+    })();
+    return;
+  }
   switch(b.dataset.act){
     case "half":refit(it,Math.max(40,it.bpm/2));break;
     case "dbl":refit(it,Math.min(260,it.bpm*2));break;
