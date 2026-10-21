@@ -5,105 +5,180 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Freestyle Rhyme Trainer</title>
 <style>
+/* Spotify palette. #191414 is the brand black from developer.spotify.com/documentation/design (fallback
+   background for playback views); the rest are the Spotify web player's UI tokens. */
+:root{
+  --base:#000000;--bg:#121212;--surface:#181818;--elev:#1f1f1f;--high:#282828;--high-hover:#3e3e3e;--player:#191414;
+  --border:#4d4d4d;--border-soft:rgba(255,255,255,.1);--outline:#7c7c7c;
+  --text:#ffffff;--meta:#cbcbcb;--muted:#b3b3b3;--subdued:#7c7c7c;
+  --green:#1ed760;--green-hover:#1db954;--on-accent:#000000;--focus:rgba(30,215,96,.4);
+  --warn:#ffa42b;--danger:#f3727f;--blue:#539df5;
+  --ease:cubic-bezier(.77,0,.18,1);
+}
 *{box-sizing:border-box;margin:0;padding:0;}
-body{background:#faf3e3;font-family:Georgia,'Times New Roman',serif;color:#0f2a1a;}
+body{background:var(--base);font-family:Georgia,'Times New Roman',serif;color:var(--text);}
+body.lock{overflow:hidden;}
 button,input{font-family:inherit;}
-.root{background:#faf3e3;overflow:hidden;color:#0f2a1a;min-height:100vh;max-width:760px;margin:0 auto;padding-bottom:6px;}
+button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--green);outline-offset:2px;}
+.root{background:var(--bg);overflow:hidden;color:var(--text);min-height:100vh;max-width:760px;margin:0 auto;padding-bottom:6px;}
 .screen{display:none;flex-direction:column;}
 .screen.active{display:flex;}
+#setup-screen{transition:transform .65s var(--ease),filter .65s var(--ease);transform-origin:50% 0;}
+.root.building #setup-screen{transform:scale(.96);filter:brightness(.45);}
 
-.panel{background:#f1e8d2;border-radius:10px;padding:16px 18px;margin:0 14px 12px;}
+.panel{background:var(--surface);border-radius:8px;padding:16px 18px;margin:0 14px 12px;}
 .panel:first-child{margin-top:14px;}
 .panel-hdr{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
-.panel-num{width:26px;height:26px;border-radius:50%;background:#e0d3ac;font-size:12px;font-weight:700;color:#0e7a32;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.panel-title{font-size:12px;letter-spacing:.12em;color:#0e7a32;font-weight:700;}
-.muted{font-size:11px;color:#5c6b52;}
-.lbl{font-size:10px;color:#5c6b52;letter-spacing:.1em;margin-bottom:8px;}
+.panel-title{font-size:12px;letter-spacing:.12em;color:var(--text);font-weight:700;flex:1;}
+.muted{font-size:11px;color:var(--muted);}
+.lbl{font-size:10px;color:var(--muted);letter-spacing:.1em;margin-bottom:8px;}
+.row-gap{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:18px;}
 
 .scheme-pills{display:flex;gap:8px;flex-wrap:wrap;}
-.spill{background:#ede1c2;border:1.5px solid #d8c79a;border-radius:20px;padding:7px 18px;font-size:13px;color:#5c6b52;cursor:pointer;transition:all .15s;font-weight:700;}
-.spill:hover{border-color:#1DB954;color:#0e7a32;}
-.spill.sel{background:#c8f3d6;border-color:#1DB954;color:#0f2a1a;}
+.spill{background:var(--high);border-radius:500px;padding:7px 16px;font-size:13px;color:var(--text);cursor:pointer;transition:background .15s;font-weight:700;display:inline-flex;align-items:center;gap:8px;}
+.spill:hover{background:var(--high-hover);}
+.spill.sel{background:var(--green);color:var(--on-accent);}
+.spill .x{font-size:10px;opacity:.55;padding:0 2px;}
+.spill .x:hover{opacity:1;}
 .vis-pills{display:flex;gap:6px;}
-.vpill{background:#ede1c2;border:1.5px solid #d8c79a;border-radius:8px;padding:6px 14px;font-size:12px;color:#5c6b52;cursor:pointer;transition:all .15s;flex:1;text-align:center;font-weight:700;}
-.vpill:hover{border-color:#1DB954;color:#0e7a32;}
-.vpill.sel{background:#c8f3d6;border-color:#1DB954;color:#0f2a1a;}
+.vpill{background:var(--high);border-radius:500px;padding:7px 14px;font-size:12px;color:var(--text);cursor:pointer;transition:background .15s;flex:1;text-align:center;font-weight:700;white-space:nowrap;}
+.vpill:hover{background:var(--high-hover);}
+.vpill.sel{background:var(--green);color:var(--on-accent);}
 
 .grid-wrap{position:relative;user-select:none;}
 .beat-labels{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:5px;}
-.beat-lbl{text-align:center;font-size:11px;color:#5c6b52;letter-spacing:.08em;font-weight:700;}
+.beat-lbl{text-align:center;font-size:11px;color:var(--muted);letter-spacing:.08em;font-weight:700;}
 .bar-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;}
-.gcell{height:62px;border-radius:8px;background:#ddd5b8;border:1.5px solid #c4bb98;display:flex;align-items:center;justify-content:center;position:relative;}
-.gcell.word-orange,.gcell.word-teal{background:#fdf8ea;border:2px solid #000;cursor:grab;}
-.gcell.word-orange:active,.gcell.word-teal:active{cursor:grabbing;}
+.gcell{height:62px;border-radius:8px;background:var(--elev);border:1px solid var(--border-soft);display:flex;align-items:center;justify-content:center;position:relative;}
+.gcell.rc{background:var(--high);border:2px solid var(--gc);}
+.gcell.rc.hid{border-style:dashed;}
+.gcell.drag{cursor:grab;}
+.gcell.drag:active{cursor:grabbing;}
 .gcell.dragging-col{opacity:.4;}
-.word-text{font-size:16px;font-weight:700;letter-spacing:.02em;text-align:center;padding:0 6px;}
-.gcell.word-orange .word-text{color:#b5480c;}
-.gcell.word-teal .word-text{color:#0a6a5a;}
-.word-text.hidden-word{display:none;}
-.col-drag-hint{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);font-size:9px;color:rgba(15,42,26,.4);letter-spacing:.06em;white-space:nowrap;}
+.word-text{font-size:16px;font-weight:700;letter-spacing:.02em;text-align:center;padding:0 6px;color:var(--gc);}
+.word-text.hidden-word{opacity:.3;text-decoration:line-through;}
+.col-drag-hint{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);font-size:9px;color:var(--subdued);letter-spacing:.06em;white-space:nowrap;}
 
 /* beat library */
-.drop{border:2px dashed #b9c9a8;border-radius:10px;padding:14px;text-align:center;background:#f7f0dc;transition:all .15s;}
-.drop.over{border-color:#1DB954;background:#e4f8ea;}
-.btn{background:#ede1c2;border:1.5px solid #d8c79a;border-radius:8px;padding:7px 12px;font-size:12px;color:#0f2a1a;cursor:pointer;font-weight:700;transition:all .15s;}
-.btn:hover{border-color:#1DB954;color:#0e7a32;}
-.btn.go{background:#1DB954;border-color:#1DB954;color:#07210f;}
-.btn.go:hover{background:#1ed760;color:#07210f;}
-.lib{margin-top:12px;max-height:230px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding-right:2px;}
-.lhdr{font-size:10px;letter-spacing:.1em;color:#5c6b52;margin:6px 2px 0;}
-.lrow{display:flex;align-items:center;gap:10px;background:#f7f0dc;border:1.5px solid #d8c79a;border-radius:8px;padding:9px 10px;cursor:pointer;}
-.lrow:hover{border-color:#1DB954;}
-.lrow.sel{background:#c8f3d6;border-color:#1DB954;}
-.lname{flex:1;min-width:0;font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.lmeta{font-size:11px;color:#5c6b52;white-space:nowrap;}
-.ldel{background:none;border:none;color:#7b8a70;font-size:14px;cursor:pointer;padding:2px 6px;}
-.ldel:hover{color:#b5480c;}
-.detail{margin-top:14px;border-top:1px solid #e0d3ac;padding-top:14px;}
+.drop{border:2px dashed var(--border);border-radius:8px;padding:14px;text-align:center;background:var(--elev);transition:all .15s;}
+.drop.over{border-color:var(--green);background:rgba(30,215,96,.08);}
+.btn{background:transparent;border:1px solid var(--outline);border-radius:500px;padding:7px 14px;font-size:12px;color:var(--text);cursor:pointer;font-weight:700;transition:border-color .15s,background .15s,transform .15s;}
+.btn:hover{border-color:var(--text);transform:scale(1.04);}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none;border-color:var(--outline);}
+.btn.go{background:var(--green);border-color:var(--green);color:var(--on-accent);}
+.btn.go:hover{background:var(--green-hover);border-color:var(--green-hover);}
+.btn.go:disabled{background:var(--green);border-color:var(--green);}
+.btn.big{padding:12px 30px;font-size:14px;letter-spacing:.08em;}
+.lib{margin-top:12px;max-height:230px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;padding-right:2px;}
+.lhdr{font-size:10px;letter-spacing:.1em;color:var(--muted);margin:8px 2px 4px;}
+.lrow{display:flex;align-items:center;gap:10px;border-radius:6px;padding:9px 10px;cursor:pointer;transition:background .15s;}
+.lrow:hover{background:var(--high);}
+.lrow.sel{background:var(--high);}
+.lrow.sel .lname{color:var(--green);}
+.lname{flex:1;min-width:0;font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text);}
+.lmeta{font-size:11px;color:var(--muted);white-space:nowrap;}
+.ldel{background:none;border:none;color:var(--subdued);font-size:14px;cursor:pointer;padding:2px 6px;}
+.ldel:hover{color:var(--danger);}
+.detail{margin-top:14px;border-top:1px solid var(--border-soft);padding-top:14px;}
 .drow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
-.dlbl{font-size:10px;letter-spacing:.1em;color:#5c6b52;width:78px;}
-.bpmv{font-size:20px;font-weight:700;min-width:70px;text-align:center;color:#0e7a32;}
+.dlbl{font-size:10px;letter-spacing:.1em;color:var(--muted);width:78px;}
+.bpmv{font-size:20px;font-weight:700;min-width:70px;text-align:center;color:var(--green);}
 .dots{display:flex;gap:6px;margin-left:6px;}
-.dot{width:14px;height:14px;border-radius:50%;background:#ddd5b8;border:1.5px solid #c4bb98;}
-.dot.on{background:#1DB954;border-color:#0e7a32;}
-.dot.on.one{background:#0f2a1a;border-color:#0f2a1a;}
-canvas.gv{width:100%;height:78px;background:#fdf8ea;border:1.5px solid #d8c79a;border-radius:8px;display:block;}
-.note{font-size:11px;color:#5c6b52;line-height:1.45;margin-top:8px;}
-.chk{display:flex;align-items:center;gap:6px;font-size:12px;color:#0f2a1a;cursor:pointer;}
-.chk input{accent-color:#1DB954;width:15px;height:15px;}
+.dot{width:14px;height:14px;border-radius:50%;background:var(--high);border:1.5px solid var(--border);}
+.dot.on{background:var(--green);border-color:var(--green);}
+.dot.on.one{background:var(--text);border-color:var(--text);}
+canvas.gv{width:100%;height:78px;background:var(--bg);border:1px solid var(--border-soft);border-radius:8px;display:block;}
+.note{font-size:11px;color:var(--muted);line-height:1.45;margin-top:8px;}
+.chk{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text);cursor:pointer;}
+.chk input{accent-color:var(--green);width:15px;height:15px;}
 
-.play-btn{width:calc(100% - 28px);margin:4px 14px 14px;background:#1DB954;color:#07210f;border:none;border-radius:10px;padding:15px;font-size:15px;font-weight:700;letter-spacing:.08em;cursor:pointer;transition:background .15s;display:flex;align-items:center;justify-content:center;gap:9px;}
-.play-btn:hover{background:#1ed760;}
-.play-btn:disabled{opacity:.5;cursor:not-allowed;}
+.play-btn{width:calc(100% - 28px);margin:4px 14px 14px;background:var(--green);color:var(--on-accent);border:none;border-radius:500px;padding:15px;font-size:15px;font-weight:700;letter-spacing:.1em;cursor:pointer;transition:background .15s,transform .15s;display:flex;align-items:center;justify-content:center;gap:9px;}
+.play-btn:hover{background:var(--green-hover);transform:scale(1.02);}
+.play-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
 
-.perf-hdr{background:#f1e8d2;padding:14px 18px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e0d3ac;gap:10px;}
+/* performance */
+#perf-screen{background:var(--player);min-height:100vh;}
+.perf-hdr{background:var(--base);padding:14px 18px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border-soft);gap:10px;}
 .perf-chips{display:flex;gap:16px;flex-wrap:wrap;min-width:0;}
-.pchip{font-size:11px;color:#5c6b52;letter-spacing:.08em;}
-.pchip span{color:#0e7a32;font-weight:700;}
-.stop-btn{background:#ede1c2;border:1.5px solid #d8c79a;border-radius:7px;padding:6px 14px;font-size:12px;color:#5c6b52;cursor:pointer;letter-spacing:.06em;white-space:nowrap;}
-.stop-btn:hover{border-color:#1DB954;color:#0e7a32;}
-.status-panel{background:#f1e8d2;margin:12px 14px 0;border-radius:10px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;}
-.status-main{font-size:22px;font-weight:700;color:#0f2a1a;letter-spacing:.06em;}
-.status-main.prep-mode{color:#9a6a00;}
-.beat-big{font-size:36px;font-weight:700;color:#0e7a32;min-width:52px;text-align:right;}
-.bar-sub{font-size:11px;color:#5c6b52;letter-spacing:.1em;margin-top:2px;}
+.pchip{font-size:11px;color:var(--muted);letter-spacing:.08em;}
+.pchip span{color:var(--green);font-weight:700;}
+.stop-btn{background:transparent;border:1px solid var(--outline);border-radius:500px;padding:6px 14px;font-size:12px;color:var(--text);cursor:pointer;letter-spacing:.06em;white-space:nowrap;font-weight:700;transition:border-color .15s,transform .15s;}
+.stop-btn:hover{border-color:var(--text);transform:scale(1.04);}
+.status-panel{background:var(--surface);margin:12px 14px 0;border-radius:8px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;}
+.status-main{font-size:22px;font-weight:700;color:var(--text);letter-spacing:.06em;}
+.status-main.prep-mode{color:var(--warn);}
+.beat-big{font-size:36px;font-weight:700;color:var(--green);min-width:52px;text-align:right;}
+.bar-sub{font-size:11px;color:var(--muted);letter-spacing:.1em;margin-top:2px;}
 .bars-scroll{overflow-y:auto;flex:1;padding:12px 14px 20px;max-height:62vh;}
 .bar-block{margin-bottom:10px;}
-.bar-block-label{font-size:10px;color:#5c6b52;letter-spacing:.1em;margin-bottom:4px;padding-left:2px;font-weight:700;}
+.bar-block-label{font-size:10px;color:var(--muted);letter-spacing:.1em;margin-bottom:4px;padding-left:2px;font-weight:700;}
 .bar-row-perf{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;}
-.pcell{height:64px;border-radius:8px;background:#ddd5b8;border:1.5px solid #c4bb98;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;transition:background .1s,border-color .1s;}
-.pcell .pbeat-num{font-size:17px;font-weight:700;color:#a89c78;}
+.pcell{height:64px;border-radius:8px;background:var(--elev);border:1px solid var(--border-soft);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;transition:background .1s,border-color .1s;}
+.pcell .pbeat-num{font-size:17px;font-weight:700;color:var(--subdued);}
 .pcell .pword{font-size:13px;font-weight:700;color:transparent;text-align:center;padding:0 4px;line-height:1.2;}
-.pcell.prep-cell{background:#e3dcc4;border-color:#cabf9a;}
-.pcell.prep-cell .pbeat-num{color:#b3a882;}
-.pcell.current-orange,.pcell.current-purple{background:#fdf8ea;border:2px solid #000;}
-.pcell.current-orange .pbeat-num,.pcell.current-orange .pword{color:#b5480c;}
-.pcell.current-purple .pbeat-num,.pcell.current-purple .pword{color:#0e7a32;}
-.pcell.played{background:#e8e1c9;border-color:#d3c8a6;}
-.pcell.played .pbeat-num{color:#c4b98f;}
-.pcell.played .pword{color:#b5480c;}
-.pcell.rhyme-cell.upcoming{background:#fdf8ea;border:2px solid #000;}
-.pcell.rhyme-cell.upcoming .pword{color:#c9a98a;}
+.pcell.prep-cell{background:var(--surface);}
+.pcell.prep-cell .pbeat-num{color:var(--border);}
+.pcell.rhyme-cell.upcoming{background:var(--high);border:2px solid var(--gc);}
+.pcell.rhyme-cell.upcoming .pword{color:var(--gc);opacity:.5;}
+.pcell.current-beat{background:var(--green);border-color:var(--green);}
+.pcell.current-beat .pbeat-num{color:var(--on-accent);}
+.pcell.current-rhyme{background:var(--gc);border:2px solid var(--gc);}
+.pcell.current-rhyme .pbeat-num,.pcell.current-rhyme .pword{color:var(--on-accent);}
+.pcell.played{background:var(--surface);border-color:transparent;}
+.pcell.played .pbeat-num{color:var(--border);}
+.pcell.played .pword{color:var(--gc);opacity:.6;}
+
+/* rhyme builder page */
+.build{position:fixed;inset:0;z-index:50;overflow-y:auto;background:linear-gradient(180deg,rgba(30,215,96,.34) 0,rgba(18,18,18,0) 320px) var(--bg);
+  clip-path:circle(0 at var(--ox,50%) var(--oy,0));visibility:hidden;transition:clip-path .65s var(--ease),visibility 0s linear .65s;}
+.build.open{clip-path:circle(150vmax at var(--ox,50%) var(--oy,0));visibility:visible;transition:clip-path .65s var(--ease);}
+.build-in{max-width:760px;margin:0 auto;padding:18px 14px 40px;}
+.build.intro .rise{animation:rise .55s var(--ease) backwards;animation-delay:calc(.2s + var(--d,0) * 60ms);}
+@keyframes rise{from{opacity:0;transform:translateY(16px);}}
+.bhead{display:flex;align-items:center;gap:14px;margin-bottom:16px;}
+.back{width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,.55);border:none;color:var(--text);font-size:17px;cursor:pointer;flex-shrink:0;transition:background .15s,transform .15s;}
+.back:hover{background:rgba(0,0,0,.8);transform:scale(1.06);}
+.beyebrow{font-size:10px;letter-spacing:.14em;color:var(--meta);font-weight:700;}
+.btitle{font-size:30px;font-weight:700;line-height:1.1;}
+.bhint{font-size:13px;color:var(--meta);line-height:1.45;min-height:38px;margin-bottom:14px;}
+.bhint b{color:var(--ac);}
+.bgrid-wrap{display:grid;grid-template-columns:44px 1fr;column-gap:7px;}
+.bar-lbls{display:grid;grid-template-rows:repeat(4,70px);gap:7px;}
+.bar-lbls div{display:flex;align-items:center;font-size:10px;letter-spacing:.08em;color:var(--muted);font-weight:700;}
+.bgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;}
+.bcell{font:inherit;color:var(--text);height:70px;border-radius:8px;background:var(--elev);border:1px solid var(--border-soft);display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;cursor:pointer;transition:background .15s,border-color .15s;user-select:none;}
+.bgrid.intro .bcell{animation:pop .45s var(--ease) backwards;animation-delay:calc(.3s + var(--i) * 22ms);}
+@keyframes pop{from{opacity:0;transform:scale(.85);}}
+.bcell:hover{background:var(--high);}
+.bcell:not(.on):hover::after{content:"+";font-size:24px;line-height:1;color:var(--ac);}
+.bcell.on{background:var(--high);border:2px solid var(--gc);}
+.bcell.hid{border-style:dashed;}
+.bcell .bw{font-size:16px;font-weight:700;color:var(--gc);text-align:center;padding:0 4px;}
+.bcell.hid .bw{opacity:.35;text-decoration:line-through;}
+.bcell .btag{position:absolute;top:5px;left:7px;font-size:10px;font-weight:700;color:var(--gc);}
+.bcell .bstate{font-size:9px;color:var(--muted);letter-spacing:.08em;margin-top:3px;}
+.bcell.bump{animation:bump .25s ease;}
+@keyframes bump{50%{transform:scale(.93);}}
+.groups{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 4px;}
+.gchip{display:inline-flex;align-items:center;gap:8px;background:var(--high);border:2px solid transparent;border-radius:500px;padding:5px 6px 5px 12px;font-size:12px;font-weight:700;color:var(--text);cursor:pointer;transition:border-color .15s,background .15s;}
+.gchip:hover{background:var(--high-hover);}
+.gchip.act{border-color:var(--gc);}
+.gdot{width:10px;height:10px;border-radius:50%;background:var(--gc);}
+.gmeta{color:var(--muted);font-weight:400;}
+.gx{background:none;border:none;color:var(--subdued);cursor:pointer;font-size:11px;padding:2px 6px;}
+.gx:hover{color:var(--danger);}
+.bactions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 20px;}
+.bfoot{display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--border-soft);padding-top:18px;}
+.name-in{flex:1;min-width:160px;background:var(--elev);border:1px solid var(--outline);border-radius:4px;padding:10px 12px;color:var(--text);font-size:13px;}
+.name-in::placeholder{color:var(--subdued);}
+.name-in:focus{outline:none;border-color:var(--text);box-shadow:0 0 0 3px var(--focus);}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--blue);color:var(--on-accent);font-size:13px;font-weight:700;padding:10px 18px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:60;max-width:calc(100% - 32px);}
+.toast.show{opacity:1;transform:translate(-50%,0);}
+@media (max-width:480px){
+  .bcell{height:60px;}.bar-lbls{grid-template-rows:repeat(4,60px);}.bgrid-wrap{grid-template-columns:36px 1fr;}
+  .btitle{font-size:24px;}.bcell .bw{font-size:14px;}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
 </style>
 </head>
 <body>
@@ -111,19 +186,15 @@ canvas.gv{width:100%;height:78px;background:#fdf8ea;border:1.5px solid #d8c79a;b
 
 <div id="setup-screen" class="screen active">
 
-  <div class="panel">
-    <div class="panel-hdr"><div class="panel-num">1</div><div class="panel-title">SCHEME &amp; WORD DISPLAY</div></div>
-    <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+  <div class="panel" id="grid-panel">
+    <div class="panel-hdr"><div class="panel-title">RHYME SCHEME</div><button class="btn go" id="build-btn">+ Build</button></div>
+    <div class="row-gap">
       <div>
-        <div class="lbl">RHYME SCHEME</div>
-        <div class="scheme-pills" id="scheme-pills">
-          <div class="spill sel" data-s="AABB">AABB</div>
-          <div class="spill" data-s="AAAA">AAAA</div>
-          <div class="spill" data-s="AA_A">AA_A</div>
-        </div>
-        <div class="muted" style="margin-top:8px;" id="scheme-desc">Lines 1&amp;2 rhyme · Lines 3&amp;4 rhyme (2 color sets)</div>
+        <div class="lbl">SCHEME</div>
+        <div class="scheme-pills" id="scheme-pills"></div>
+        <div class="muted" style="margin-top:8px;" id="scheme-desc"></div>
       </div>
-      <div style="flex:1;min-width:160px;">
+      <div style="flex:1;min-width:160px;" id="vis-wrap">
         <div class="lbl">SHOW WORDS</div>
         <div class="vis-pills" id="vis-pills">
           <div class="vpill sel" data-v="first">First only</div>
@@ -132,11 +203,8 @@ canvas.gv{width:100%;height:78px;background:#fdf8ea;border:1.5px solid #d8c79a;b
         </div>
       </div>
     </div>
-  </div>
-
-  <div class="panel" id="grid-panel">
-    <div class="panel-hdr"><div class="panel-num">2</div><div class="panel-title" id="scheme-panel-label">SCHEME: AABB</div></div>
-    <div class="muted" style="margin-bottom:10px;">Drag the word column left or right to set which beat your rhymes land on.</div>
+    <div class="lbl">BEAT TIMING</div>
+    <div class="muted" style="margin-bottom:10px;" id="grid-hint"></div>
     <div class="beat-labels">
       <div class="beat-lbl">BEAT 1</div><div class="beat-lbl">BEAT 2</div><div class="beat-lbl">BEAT 3</div><div class="beat-lbl">BEAT 4</div>
     </div>
@@ -144,7 +212,7 @@ canvas.gv{width:100%;height:78px;background:#fdf8ea;border:1.5px solid #d8c79a;b
   </div>
 
   <div class="panel">
-    <div class="panel-hdr"><div class="panel-num">3</div><div class="panel-title">BEAT LIBRARY</div></div>
+    <div class="panel-hdr"><div class="panel-title">BEAT LIBRARY</div></div>
     <div class="drop" id="drop">
       <button class="btn go" id="upload-btn">+ Upload beats</button>
       <input type="file" id="file-in" accept="audio/*" multiple hidden>
@@ -211,6 +279,35 @@ canvas.gv{width:100%;height:78px;background:#fdf8ea;border:1.5px solid #d8c79a;b
 </div>
 
 </div>
+
+<div class="build" id="build-screen" aria-hidden="true">
+  <div class="build-in">
+    <div class="bhead rise" style="--d:0">
+      <button class="back" id="build-back" title="Back (Esc)" aria-label="Back">&#8592;</button>
+      <div><div class="beyebrow">RHYME BUILDER</div><div class="btitle">Build your scheme</div></div>
+    </div>
+    <div class="bhint rise" style="--d:1" id="build-hint"></div>
+    <div class="rise" style="--d:2">
+      <div class="bgrid-wrap">
+        <div></div>
+        <div class="beat-labels"><div class="beat-lbl">BEAT 1</div><div class="beat-lbl">BEAT 2</div><div class="beat-lbl">BEAT 3</div><div class="beat-lbl">BEAT 4</div></div>
+        <div class="bar-lbls"><div>BAR 1</div><div>BAR 2</div><div>BAR 3</div><div>BAR 4</div></div>
+        <div class="bgrid" id="build-grid"></div>
+      </div>
+    </div>
+    <div class="groups rise" style="--d:3" id="build-groups"></div>
+    <div class="bactions rise" style="--d:4">
+      <button class="btn" id="new-rhyme-btn">+ Create new rhyme</button>
+      <button class="btn" id="clear-btn">Clear all</button>
+    </div>
+    <div class="bfoot rise" style="--d:5">
+      <input class="name-in" id="scheme-name" placeholder="Name this scheme" maxlength="40" aria-label="Scheme name">
+      <button class="btn" id="save-scheme-btn">Save rhyme scheme</button>
+      <button class="btn go big" id="confirm-btn">Confirm</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
 
 <script>
 /* ================= AUDIO + BEAT ANALYSIS ================= */
@@ -678,7 +775,7 @@ async function drawGrid(it){
   const spb=60/it.bpm,span=Math.min(buf.duration,4*spb*8+spb);
   const t0=Math.max(0,it.fd-spb);
   const data=buf.getChannelData(0),sr=buf.sampleRate;
-  g.fillStyle="#9fb59a";
+  g.fillStyle="#4d4d4d";
   for(let x=0;x<w;x++){
     const s0=Math.floor((t0+span*x/w)*sr),s1=Math.floor((t0+span*(x+1)/w)*sr);
     let mx=0;for(let i=s0;i<s1&&i<data.length;i+=4){const v=Math.abs(data[i]);if(v>mx)mx=v;}
@@ -687,9 +784,9 @@ async function drawGrid(it){
   for(let k=-1;t0+span>it.fd+k*spb;k++){
     const t=it.fd+k*spb;if(t<t0)continue;
     const x=(t-t0)/span*w,down=((k%4)+4)%4===0;
-    g.fillStyle=down?"#1DB954":"rgba(15,42,26,.35)";
+    g.fillStyle=down?"#1ed760":"rgba(255,255,255,.3)";
     g.fillRect(Math.round(x),0,down?3:1,h);
-    if(down){g.fillStyle="#0f2a1a";g.font="bold 11px Georgia";g.fillText(String(Math.floor(k/4)+1),x+5,12);}
+    if(down){g.fillStyle="#ffffff";g.font="bold 11px Georgia";g.fillText(String(Math.floor(k/4)+1),x+5,12);}
   }
 }
 
@@ -750,48 +847,92 @@ async function togglePreview(){
   }});
 }
 
-/* ================= SETUP SCREEN (rhyme grid) ================= */
-const RHYME_WORDS={
-  AABB:[["prime","time","climb","rhyme"],["green","mean","load","mode"],["speak","peak","fire","higher"],["gold","bold","night","right"],["flow","know","heat","beat"],["real","feel","grind","mind"],["throne","own","wave","brave"],["deep","keep","shine","fine"]],
-  AAAA:[["prime","time","climb","rhyme"],["green","mean","lean","scene"],["fire","higher","wire","desire"],["gold","bold","cold","told"],["flow","know","glow","show"],["real","feel","deal","steal"],["throne","own","stone","bone"],["deep","keep","sleep","creep"]],
-  AA_A:[["prime","time","—","rhyme"],["green","mean","—","scene"],["fire","higher","—","desire"],["gold","bold","—","told"],["flow","know","—","show"],["real","feel","—","steal"],["throne","own","—","bone"],["deep","keep","—","creep"]],
-};
+/* ================= RHYME SCHEMES ================= */
+// A scheme is a list of rhyme groups over the 4x4 grid (rows = bars 1-4, cols = beats 1-4), repeated every 4 bars.
+// Each group draws its words from one family; every 4-bar block moves on to fresh families.
+const BANK=[
+  ["prime","time","climb","rhyme","dime","grime","chime","sublime"],
+  ["green","mean","scene","clean","lean","queen","machine","routine"],
+  ["fire","higher","wire","desire","liar","empire","choir","buyer"],
+  ["gold","bold","cold","told","hold","sold","fold","old"],
+  ["flow","know","glow","show","grow","slow","throw","pro"],
+  ["real","feel","deal","steal","wheel","meal","seal","steel"],
+  ["throne","own","stone","bone","zone","phone","grown","known"],
+  ["deep","keep","sleep","creep","sweep","leap","cheap","heap"],
+  ["night","right","light","fight","bright","flight","sight","height"],
+  ["heat","beat","street","feet","seat","sweet","elite","repeat"],
+  ["grind","mind","find","blind","kind","behind","signed","designed"],
+  ["wave","brave","save","grave","cave","crave","gave","pave"],
+  ["game","flame","name","fame","frame","claim","aim","same"],
+  ["rain","pain","chain","brain","lane","gain","train","vein"],
+  ["sky","high","fly","why","try","eye","cry","guy"],
+  ["crown","down","town","frown","gown","drown","noun","renown"],
+];
+// rhyme-group colors: Spotify green, warning orange, announcement blue, negative pink, then lavender and white
+const GROUP_COLORS=["#1ed760","#ffa42b","#539df5","#f3727f","#b49bc8","#ffffff"];
+function gColor(g){return GROUP_COLORS[g%GROUP_COLORS.length];}
+function gLetter(g){return String.fromCharCode(65+g);}
+const PRESET_ROWS={AABB:[[0,1],[2,3]],AAAA:[[0,1,2,3]],AA_A:[[0,1,3]]};
 const SCHEME_DESC={AABB:"Lines 1&2 rhyme · Lines 3&4 rhyme (2 color sets)",AAAA:"All 4 lines rhyme (1 color set)",AA_A:"Lines 1, 2 & 4 rhyme · Line 3 is free"};
-let G={scheme:"AABB",vis:"first",rhymeCol:3,running:false,curGlobalBeat:-1};
+let G={kind:"preset",scheme:"AABB",vis:"first",rhymeCol:3,custom:null,running:false,curGlobalBeat:-1};
+let SAVED=[];
+try{SAVED=JSON.parse(localStorage.getItem("fs-schemes")||"[]");if(!Array.isArray(SAVED))SAVED=[];}catch(e){SAVED=[];}
+function persistSaved(){try{localStorage.setItem("fs-schemes",JSON.stringify(SAVED));return true;}catch(e){return false;}}
+function clone(o){return JSON.parse(JSON.stringify(o));}
 
-function wordSets(){return RHYME_WORDS[G.scheme];}
-function getWordForRow(r){const ws=wordSets();return ws[Math.floor(r/4)%ws.length][r%4];}
-function shouldShowWord(r,scheme,vis){
-  if(getWordForRow(r)==="—") return false;
-  if(vis==="all") return true;
-  const setSize=scheme==="AABB"?2:4,pos=r%setSize;
-  if(vis==="first") return pos===0;
-  if(vis==="last") return pos===setSize-1;
-  return true;
+function presetGroups(){
+  return PRESET_ROWS[G.scheme].map(rows=>({cells:rows.map((r,i)=>({r,c:G.rhymeCol,
+    show:G.vis==="all"||(G.vis==="first"?i===0:i===rows.length-1)}))}));
+}
+function activeGroups(){return G.kind==="custom"?G.custom.groups:presetGroups();}
+function schemeName(){return G.kind==="custom"?G.custom.name:G.scheme;}
+// r*4+c -> {g,pos,show}; pos numbers a group's cells in reading order
+function cellMap(groups){
+  const m=new Map();
+  groups.forEach((gr,g)=>gr.cells.slice().sort((a,b)=>a.r-b.r||a.c-b.c).forEach((cl,pos)=>m.set(cl.r*4+cl.c,{g,pos,show:cl.show})));
+  return m;
+}
+function wordFor(info,block,ng){const fam=BANK[(block*ng+info.g)%BANK.length];return fam[info.pos%fam.length];}
+function describe(groups){
+  const n=groups.length,beats=groups.reduce((s,g)=>s+g.cells.length,0),hid=groups.reduce((s,g)=>s+g.cells.filter(c=>!c.show).length,0);
+  return n+" rhyme"+(n===1?"":"s")+" · "+beats+" rhyme beat"+(beats===1?"":"s")+(hid?" · "+hid+" hidden":"");
+}
+
+function renderSetup(){
+  let h="";
+  for(const s of ["AABB","AAAA","AA_A"]) h+='<div class="spill'+(G.kind==="preset"&&G.scheme===s?" sel":"")+'" data-s="'+s+'">'+s+'</div>';
+  for(const s of SAVED) h+='<div class="spill'+(G.kind==="custom"&&G.custom.id===s.id?" sel":"")+'" data-saved="'+s.id+'">'+esc(s.name)+'<span class="x" data-delsaved="'+s.id+'" title="Delete saved scheme">&#10005;</span></div>';
+  if(G.kind==="custom"&&!G.custom.id) h+='<div class="spill sel">'+esc(G.custom.name)+'</div>';
+  document.getElementById("scheme-pills").innerHTML=h;
+  const preset=G.kind==="preset";
+  document.getElementById("scheme-desc").textContent=preset?SCHEME_DESC[G.scheme]:"Custom · "+describe(G.custom.groups);
+  document.getElementById("vis-wrap").style.display=preset?"":"none";
+  document.querySelectorAll(".vpill").forEach(p=>p.classList.toggle("sel",p.dataset.v===G.vis));
+  document.getElementById("grid-hint").textContent=preset
+    ?"Drag the word column left or right to set which beat your rhymes land on."
+    :"Made in the rhyme builder. Press Build to change it.";
+  buildSetupGrid();
 }
 function buildSetupGrid(){
   const grid=document.getElementById("setup-grid");grid.innerHTML="";
-  for(let r=0;r<4;r++){
-    const word=getWordForRow(r);
-    const colorSet=G.scheme==="AABB"?(r<2?"orange":"teal"):"orange";
-    const show=shouldShowWord(r,G.scheme,G.vis);
-    for(let c=0;c<4;c++){
-      const cell=document.createElement("div");cell.className="gcell";
-      if(c===G.rhymeCol&&word!=="—"){
-        cell.classList.add(colorSet==="orange"?"word-orange":"word-teal");
-        const wt=document.createElement("div");wt.className="word-text"+(show?"":" hidden-word");wt.textContent=word;cell.appendChild(wt);
-        if(r===0){const hint=document.createElement("div");hint.className="col-drag-hint";hint.textContent="drag ←→";cell.appendChild(hint);}
-      }
-      grid.appendChild(cell);
+  const groups=activeGroups(),m=cellMap(groups),preset=G.kind==="preset";let hinted=false;
+  for(let r=0;r<4;r++)for(let c=0;c<4;c++){
+    const cell=document.createElement("div");cell.className="gcell";
+    const info=m.get(r*4+c);
+    if(info){
+      cell.classList.add("rc");if(preset)cell.classList.add("drag");if(!info.show)cell.classList.add("hid");
+      cell.style.setProperty("--gc",gColor(info.g));
+      const wt=document.createElement("div");wt.className="word-text"+(info.show?"":" hidden-word");wt.textContent=wordFor(info,0,groups.length);cell.appendChild(wt);
+      if(preset&&!hinted){hinted=true;const hint=document.createElement("div");hint.className="col-drag-hint";hint.textContent="drag ←→";cell.appendChild(hint);}
     }
+    grid.appendChild(cell);
   }
-  setupDrag();
+  if(preset) setupDrag();
 }
 function setupDrag(){
   const grid=document.getElementById("setup-grid");
   let dragging=false,ghost=null;
-  grid.querySelectorAll(".gcell").forEach(cell=>{
-    if(!cell.classList.contains("word-orange")&&!cell.classList.contains("word-teal")) return;
+  grid.querySelectorAll(".gcell.drag").forEach(cell=>{
     cell.addEventListener("mousedown",onDown);
     cell.addEventListener("touchstart",onTouchDown,{passive:false});
   });
@@ -800,11 +941,11 @@ function setupDrag(){
   function createGhost(x,y){
     if(ghost)ghost.remove();
     ghost=document.createElement("div");
+    const groups=activeGroups(),m=cellMap(groups);
     for(let r=0;r<4;r++){
-      const w=getWordForRow(r),col=G.scheme==="AABB"?(r<2?"#b5480c":"#0a6a5a"):"#b5480c";
-      const d=document.createElement("div");
-      d.style.cssText="width:60px;height:62px;border-radius:8px;background:#fdf8ea;border:2px solid #000;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:"+col+";";
-      d.textContent=w==="—"?"":w;ghost.appendChild(d);
+      const info=m.get(r*4+G.rhymeCol),d=document.createElement("div"),col=info?gColor(info.g):"";
+      d.style.cssText="width:60px;height:62px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;"+(info?"background:#282828;border:2px solid "+col+";color:"+col+";":"");
+      d.textContent=info?wordFor(info,0,groups.length):"";ghost.appendChild(d);
     }
     ghost.style.cssText="position:fixed;top:"+(y-31)+"px;left:"+(x-30)+"px;pointer-events:none;opacity:.85;z-index:9999;display:flex;flex-direction:column;gap:7px;";
     document.body.appendChild(ghost);
@@ -815,24 +956,152 @@ function setupDrag(){
   function buildSetupGridKeepGhost(){const g=ghost;ghost=null;buildSetupGrid();ghost=g;}
   function onMove(e){move(e.clientX,e.clientY);}
   function onTouchMove(e){if(!dragging)return;e.preventDefault();const t=e.touches[0];move(t.clientX,t.clientY);}
-  function mark(on){document.querySelectorAll(".gcell.word-orange,.gcell.word-teal").forEach(c=>c.classList.toggle("dragging-col",on));}
+  function mark(on){document.querySelectorAll(".gcell.rc").forEach(c=>c.classList.toggle("dragging-col",on));}
   function end(){dragging=false;if(ghost){ghost.remove();ghost=null;}mark(false);}
   function onUp(){end();document.removeEventListener("mousemove",onMove);document.removeEventListener("mouseup",onUp);buildSetupGrid();}
   function onTouchUp(){end();document.removeEventListener("touchmove",onTouchMove);document.removeEventListener("touchend",onTouchUp);buildSetupGrid();}
 }
 
 document.getElementById("scheme-pills").addEventListener("click",e=>{
+  const del=e.target.closest("[data-delsaved]");
+  if(del){
+    const id=del.dataset.delsaved;
+    SAVED=SAVED.filter(s=>s.id!==id);persistSaved();
+    if(G.kind==="custom"&&G.custom.id===id) G.custom.id=null;   // keep playing it, just unsaved
+    renderSetup();return;
+  }
   const el=e.target.closest(".spill");if(!el)return;
-  document.querySelectorAll(".spill").forEach(p=>p.classList.remove("sel"));el.classList.add("sel");
-  G.scheme=el.dataset.s;
-  document.getElementById("scheme-desc").textContent=SCHEME_DESC[G.scheme];
-  document.getElementById("scheme-panel-label").textContent="SCHEME: "+G.scheme;
-  buildSetupGrid();
+  if(el.dataset.s){G.kind="preset";G.scheme=el.dataset.s;}
+  else if(el.dataset.saved){const s=SAVED.find(x=>x.id===el.dataset.saved);if(s){G.kind="custom";G.custom=clone(s);}}
+  renderSetup();
 });
 document.getElementById("vis-pills").addEventListener("click",e=>{
   const el=e.target.closest(".vpill");if(!el)return;
-  document.querySelectorAll(".vpill").forEach(p=>p.classList.remove("sel"));el.classList.add("sel");
-  G.vis=el.dataset.v;buildSetupGrid();
+  G.vis=el.dataset.v;renderSetup();
+});
+
+/* ================= RHYME BUILDER ================= */
+// Click an empty box to add it to the active rhyme (shown), click a shown word to hide it, click a hidden one to remove it.
+const B={groups:[{cells:[]}],active:0,id:null};
+const buildEl=document.getElementById("build-screen");
+function setOrigin(el){
+  const r=el.getBoundingClientRect();
+  buildEl.style.setProperty("--ox",(r.left+r.width/2)+"px");buildEl.style.setProperty("--oy",(r.top+r.height/2)+"px");
+}
+function openBuilder(){
+  if(previewing){previewing=false;stopPlayer();resetDots();}
+  const src=G.kind==="custom"?clone(G.custom):null;
+  B.groups=src?src.groups:[{cells:[]}];B.id=src?src.id:null;B.active=B.groups.length-1;
+  document.getElementById("scheme-name").value=src&&src.id?src.name:"";
+  renderBuilder();
+  setOrigin(document.getElementById("build-btn"));
+  buildEl.scrollTop=0;
+  buildEl.classList.remove("intro");void buildEl.offsetWidth;buildEl.classList.add("intro");
+  const bg=document.getElementById("build-grid");bg.classList.add("intro");setTimeout(()=>bg.classList.remove("intro"),900);
+  buildEl.classList.add("open");buildEl.setAttribute("aria-hidden","false");
+  document.getElementById("root").classList.add("building");document.body.classList.add("lock");
+}
+function closeBuilder(){
+  setOrigin(document.getElementById("build-btn"));
+  buildEl.classList.remove("open");buildEl.setAttribute("aria-hidden","true");
+  document.getElementById("root").classList.remove("building");document.body.classList.remove("lock");
+}
+function builtGroups(){return B.groups.filter(g=>g.cells.length).map(g=>({cells:g.cells.map(c=>({r:c.r,c:c.c,show:c.show}))}));}
+function removeGroup(g){
+  B.groups.splice(g,1);
+  if(!B.groups.length) B.groups.push({cells:[]});
+  if(B.active>g||B.active>=B.groups.length) B.active=Math.max(0,B.active-1);
+}
+function renderBuilder(bumpKey){
+  const grid=document.getElementById("build-grid");grid.innerHTML="";
+  const m=cellMap(B.groups),ng=B.groups.length,L=gLetter(B.active);
+  buildEl.style.setProperty("--ac",gColor(B.active));
+  for(let r=0;r<4;r++)for(let c=0;c<4;c++){
+    const info=m.get(r*4+c),cell=document.createElement("button");
+    cell.type="button";cell.className="bcell";cell.dataset.r=r;cell.dataset.c=c;cell.style.setProperty("--i",r*4+c);
+    const where="Bar "+(r+1)+", beat "+(c+1);
+    if(info){
+      const w=wordFor(info,0,ng);
+      cell.classList.add("on");if(!info.show)cell.classList.add("hid");cell.style.setProperty("--gc",gColor(info.g));
+      cell.innerHTML='<span class="btag">'+gLetter(info.g)+'</span><span class="bw">'+esc(w)+'</span><span class="bstate">'+(info.show?"SHOWN":"HIDDEN")+'</span>';
+      cell.setAttribute("aria-label",where+": rhyme "+gLetter(info.g)+", "+w+", "+(info.show?"shown. Click to hide.":"hidden. Click to remove."));
+    }else cell.setAttribute("aria-label",where+": add to rhyme "+L);
+    if(bumpKey===r*4+c) cell.classList.add("bump");
+    grid.appendChild(cell);
+  }
+  document.getElementById("build-groups").innerHTML=B.groups.map((gr,g)=>{
+    const n=gr.cells.length,hid=gr.cells.filter(x=>!x.show).length;
+    const meta=n?n+" beat"+(n===1?"":"s")+(hid?" · "+hid+" hidden":""):"pick boxes";
+    return '<div class="gchip'+(g===B.active?" act":"")+'" data-g="'+g+'" style="--gc:'+gColor(g)+'" role="button" tabindex="0" aria-pressed="'+(g===B.active)+'"><span class="gdot"></span>Rhyme '+gLetter(g)+' <span class="gmeta">'+meta+'</span><button class="gx" data-gdel="'+g+'" title="Delete rhyme '+gLetter(g)+'" aria-label="Delete rhyme '+gLetter(g)+'">&#10005;</button></div>';
+  }).join("");
+  const act=B.groups[B.active],any=B.groups.some(g=>g.cells.length);
+  document.getElementById("build-hint").innerHTML=act.cells.length
+    ?"Adding to <b>Rhyme "+L+"</b>. Tap more boxes to add beats. Tap a shown word to hide it, tap a hidden one to remove it."
+    :"Tap the boxes where <b>Rhyme "+L+"</b> should land. Each row is a bar, each column a beat. The pattern repeats every 4 bars.";
+  document.getElementById("new-rhyme-btn").disabled=!act.cells.length;
+  document.getElementById("clear-btn").disabled=!any;
+  document.getElementById("confirm-btn").disabled=!any;
+  document.getElementById("save-scheme-btn").disabled=!any;
+}
+let toastT=null;
+function toast(msg){
+  const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");
+  clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),2200);
+}
+
+document.getElementById("build-btn").addEventListener("click",openBuilder);
+document.getElementById("build-back").addEventListener("click",closeBuilder);
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&buildEl.classList.contains("open"))closeBuilder();});
+document.getElementById("build-grid").addEventListener("click",e=>{
+  const cell=e.target.closest(".bcell");if(!cell)return;
+  const r=+cell.dataset.r,c=+cell.dataset.c;
+  let owner=-1,idx=-1;
+  B.groups.forEach((gr,g)=>{const i=gr.cells.findIndex(x=>x.r===r&&x.c===c);if(i>=0){owner=g;idx=i;}});
+  if(owner<0) B.groups[B.active].cells.push({r,c,show:true});
+  else{
+    const cl=B.groups[owner].cells[idx];
+    if(cl.show) cl.show=false;
+    else{
+      B.groups[owner].cells.splice(idx,1);
+      if(!B.groups[owner].cells.length&&owner!==B.active) removeGroup(owner);
+    }
+  }
+  renderBuilder(r*4+c);
+  const nb=document.querySelector('#build-grid .bcell[data-r="'+r+'"][data-c="'+c+'"]');if(nb)nb.focus({preventScroll:true});
+});
+function onGroupPick(e){
+  const del=e.target.closest("[data-gdel]");
+  if(del){e.stopPropagation();removeGroup(+del.dataset.gdel);renderBuilder();return;}
+  const chip=e.target.closest(".gchip");if(!chip)return;
+  B.active=+chip.dataset.g;renderBuilder();
+}
+document.getElementById("build-groups").addEventListener("click",onGroupPick);
+document.getElementById("build-groups").addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.classList.contains("gchip")){e.preventDefault();onGroupPick(e);}});
+document.getElementById("new-rhyme-btn").addEventListener("click",()=>{
+  if(!B.groups[B.active].cells.length) return;
+  B.groups.push({cells:[]});B.active=B.groups.length-1;renderBuilder();
+});
+document.getElementById("clear-btn").addEventListener("click",()=>{B.groups=[{cells:[]}];B.active=0;renderBuilder();});
+document.getElementById("confirm-btn").addEventListener("click",()=>{
+  const gs=builtGroups();if(!gs.length) return;
+  const saved=B.id&&SAVED.find(s=>s.id===B.id);
+  const same=saved&&JSON.stringify(saved.groups)===JSON.stringify(gs);
+  const name=document.getElementById("scheme-name").value.trim();
+  G.kind="custom";G.custom=same?clone(saved):{id:null,name:name||"Custom",groups:gs};
+  renderSetup();closeBuilder();
+});
+document.getElementById("save-scheme-btn").addEventListener("click",()=>{
+  const gs=builtGroups();if(!gs.length) return;
+  const input=document.getElementById("scheme-name");
+  let name=input.value.trim();
+  if(!name){name="My scheme "+(SAVED.length+1);input.value=name;}
+  let s=B.id&&SAVED.find(x=>x.id===B.id);
+  if(s){s.name=name;s.groups=gs;}
+  else{s={id:"s"+Date.now().toString(36),name,groups:gs};SAVED.push(s);B.id=s.id;}
+  const ok=persistSaved();
+  if(G.kind==="custom"&&G.custom.id===s.id) G.custom=clone(s);
+  renderSetup();
+  toast(ok?'Saved "'+name+'"':"Saved for this session only (browser storage is unavailable)");
 });
 
 /* ================= LIBRARY UI EVENTS ================= */
@@ -887,6 +1156,7 @@ document.getElementById("prev-btn").addEventListener("click",togglePreview);
 const PREP_BARS=2,TOTAL_BARS=32;
 function build32Bars(){
   const scroll=document.getElementById("bars-scroll");scroll.innerHTML="";
+  const groups=activeGroups(),m=cellMap(groups),ng=groups.length;
   for(let bar=0;bar<PREP_BARS+TOTAL_BARS;bar++){
     const isPrep=bar<PREP_BARS,realBar=bar-PREP_BARS;
     const block=document.createElement("div");block.className="bar-block";block.id="barblock-"+bar;
@@ -896,9 +1166,11 @@ function build32Bars(){
       const cell=document.createElement("div");cell.className="pcell"+(isPrep?" prep-cell":" upcoming");cell.id="pc-"+bar+"-"+beat;
       const num=document.createElement("div");num.className="pbeat-num";num.textContent=beat+1;
       const wd=document.createElement("div");wd.className="pword";
-      if(!isPrep&&beat===G.rhymeCol){
-        const w=getWordForRow(realBar);
-        if(w!=="—"){const show=shouldShowWord(realBar,G.scheme,G.vis);wd.textContent=show?w:"";wd.dataset.word=w;wd.dataset.shouldshow=show?"1":"0";cell.classList.add("rhyme-cell");}
+      const info=isPrep?null:m.get((realBar%4)*4+beat);
+      if(info){
+        const w=wordFor(info,Math.floor(realBar/4),ng);
+        wd.textContent=info.show?w:"";wd.dataset.word=w;wd.dataset.shouldshow=info.show?"1":"0";
+        cell.classList.add("rhyme-cell");cell.style.setProperty("--gc",gColor(info.g));
       }
       cell.appendChild(num);cell.appendChild(wd);row.appendChild(cell);
     }
@@ -910,7 +1182,7 @@ async function startPerf(){
   if(previewing){previewing=false;stopPlayer();resetDots();}
   document.getElementById("p-beat-name").textContent=it.name.length>22?it.name.slice(0,21)+"…":it.name;
   document.getElementById("p-bpm").textContent=it.bpm.toFixed(1);
-  document.getElementById("p-scheme").textContent=G.scheme;
+  document.getElementById("p-scheme").textContent=schemeName();
   build32Bars();
   document.getElementById("setup-screen").classList.remove("active");
   document.getElementById("perf-screen").classList.add("active");
@@ -935,7 +1207,7 @@ function handleBeat(globalBeat){
   if(G.curGlobalBeat>=0){
     const prev=document.getElementById("pc-"+Math.floor(G.curGlobalBeat/4)+"-"+(G.curGlobalBeat%4));
     if(prev){
-      prev.classList.remove("current-orange","current-purple");prev.classList.add("played");
+      prev.classList.remove("current-rhyme","current-beat");prev.classList.add("played");
       const pw=prev.querySelector(".pword");
       if(pw&&pw.dataset.word) pw.textContent=pw.dataset.shouldshow==="1"?pw.dataset.word:"";
     }
@@ -944,7 +1216,7 @@ function handleBeat(globalBeat){
   const cell=document.getElementById("pc-"+bar+"-"+beat);
   if(cell){
     cell.classList.remove("upcoming","prep-cell","played");
-    cell.classList.add(cell.classList.contains("rhyme-cell")?"current-orange":"current-purple");
+    cell.classList.add(cell.classList.contains("rhyme-cell")?"current-rhyme":"current-beat");
     const pw=cell.querySelector(".pword");if(pw&&pw.dataset.word) pw.textContent=pw.dataset.word;
     const block=document.getElementById("barblock-"+bar),sc=document.getElementById("bars-scroll");
     if(block){const bR=block.getBoundingClientRect(),sR=sc.getBoundingClientRect();
@@ -968,7 +1240,7 @@ function stopPerf(){
 document.getElementById("play-btn").addEventListener("click",startPerf);
 
 /* ================= INIT ================= */
-buildSetupGrid();
+renderSetup();
 renderLib();
 loadLib();
 window.addEventListener("resize",()=>{const it=selItem();if(it&&!it.builtin&&!document.getElementById("detail").hidden)drawGrid(it);});

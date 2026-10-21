@@ -9,18 +9,31 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
 
 ## User preferences (decided, don't re-litigate)
 
-- Palette: off-white cream background (`#faf3e3`), very dark green text (`#0f2a1a`), Spotify green
-  accents (`#1DB954`, hover `#1ed760`, readable green text `#0e7a32`, selected tint `#c8f3d6`).
+- Palette: Spotify dark theme (changed from the old cream look on 2026-10-20), as CSS tokens in `:root`. Black app chrome
+  `#000000`, page `#121212`, panels `#181818`, cells `#1f1f1f`, pills/raised `#282828` (hover `#3e3e3e`), performance
+  screen `#191414` (Spotify brand black, its official playback-view fallback). Text `#ffffff` / secondary `#b3b3b3` /
+  subdued `#7c7c7c`. Accent Spotify green `#1ed760` (hover `#1db954`) with black text on it; selected pills are green.
+  Pill-shaped buttons (radius 500px). Warning `#ffa42b`, error `#f3727f`, toast blue `#539df5`.
 - Font: Georgia (serif fallback) for ALL text, including buttons and numbers. No icon fonts.
-- Rhyme cells: slightly brighter cream (`#fdf8ea`) with a clear 2px black outline; unoccupied cells are
-  a clearly grayer tan (`#ddd5b8`). Rhyme word TEXT is colored, and words that rhyme share a color
-  (orange `#b5480c`, teal `#0a6a5a`).
+- Rhyme groups are colored, in order: green `#1ed760`, orange `#ffa42b`, blue `#539df5`, pink `#f3727f`, lavender
+  `#b49bc8`, white. A rhyme cell has a 2px outline and word text in its group's color. Hidden words get a dashed
+  outline and faded, struck-through text.
+- No panel numbering.
 - Wants to upload many trap and boom bap beats and have the metronome indicator structured correctly.
 
 ## Architecture (all in `index.html`)
 
-- **Setup screen**: scheme pills (AABB / AAAA / AA_A), word visibility (first/last/all), draggable
-  4x4 grid to choose which beat the rhyme lands on, beat library, PLAY.
+- **Setup screen**: one "RHYME SCHEME" panel (scheme pills: AABB / AAAA / AA_A plus saved custom schemes; word
+  visibility first/last/all for presets; 4x4 beat-timing grid, drag the column for presets) with a **Build** button,
+  then the beat library and PLAY.
+- **Scheme model**: every scheme is a list of rhyme groups `{cells:[{r,c,show}]}` over the 4x4 grid (rows = bars 1-4,
+  cols = beats 1-4), repeated every 4 bars. Presets are generated as groups (`presetGroups`); custom ones live in
+  `G.custom`. `cellMap` + `wordFor` give each cell its word: each group draws from one `BANK` rhyme family, and each
+  4-bar block moves on to fresh families. Saved schemes are kept in localStorage `fs-schemes`.
+- **Rhyme builder** (`#build-screen`): a full-page overlay that opens with a clip-path circle growing out of the Build
+  button. It starts with an empty Rhyme A. Clicking an empty box adds it to the active rhyme (shown); clicking a shown
+  word hides it; clicking a hidden one removes it. "+ Create new rhyme" starts the next group, and chips switch or
+  delete groups. Confirm applies the scheme; Save rhyme scheme stores or updates it by name.
 - **Performance screen**: 2 prep bars then 32 bars, 4 cells per bar; current cell highlights, rhyme
   word reveals on its beat.
 - **Beat analysis, two engines.** (1) **Beat This! small** (CPJKU, MIT) running in the browser via
