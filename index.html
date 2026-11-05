@@ -1705,16 +1705,21 @@ function cellMap(groups){
   groups.forEach((gr,g)=>gr.cells.slice().sort((a,b)=>a.r-b.r||a.c-b.c).forEach((cl,pos)=>m.set(cl.r*4+cl.c,{g,pos,show:cl.show,multi:!!gr.multi,n:gr.cells.length})));
   return m;
 }
-// 2-syllable groups pick from BANK2 families big enough for the group (up to 6 distinct words), starting
-// from a random spot each page load so replays get fresh words
+// 2-syllable groups pick from BANK2 families big enough for the group (up to 6 distinct words)
 const BANK2_MIN=[0,1,2,3,4,5,6].map(k=>BANK2.filter(f=>f.length>=k));
-const BANK2_SEED=Math.floor(Math.random()*BANK2.length);
+// Every PLAY re-rolls the words: a shuffled family order per bank (no family repeats until the bank runs out)
+// plus a random rotation inside each family, so a 2-cell group isn't always a family's two most common words.
+// The rotation stays within the family's group-size + 2 most common words (families are sorted by frequency).
+let RND=null;
+function shuffled(n){const a=[...Array(n).keys()];for(let i=n-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function rerollWords(){RND={b1:shuffled(BANK.length),b2:BANK2_MIN.map(f=>shuffled(f.length)),rot:Math.floor(Math.random()*1e6)};}
+rerollWords();
 function wordFor(info,block,ng){
-  if(info.multi){
-    const fams=BANK2_MIN[Math.min(info.n,6)],fam=fams[(BANK2_SEED+block*ng+info.g)%fams.length];
-    return fam[info.pos%fam.length];
-  }
-  const fam=BANK[(block*ng+info.g)%BANK.length];return fam[info.pos%fam.length];
+  const slot=block*ng+info.g;let fam,k;
+  if(info.multi){const need=Math.min(info.n,6),ord=RND.b2[need];k=ord[slot%ord.length];fam=BANK2_MIN[need][k];}
+  else{k=RND.b1[slot%BANK.length];fam=BANK[k];}
+  const w=Math.min(fam.length,info.n+2);
+  return fam[(info.pos+RND.rot+k*7)%w];
 }
 function describe(groups){
   const n=groups.length,beats=groups.reduce((s,g)=>s+g.cells.length,0),hid=groups.reduce((s,g)=>s+g.cells.filter(c=>!c.show).length,0);
@@ -2014,6 +2019,7 @@ async function startPerf(){
   document.getElementById("p-beat-name").textContent=it.name.length>22?it.name.slice(0,21)+"…":it.name;
   document.getElementById("p-bpm").textContent=it.bpm.toFixed(1);
   document.getElementById("p-scheme").textContent=schemeName();
+  rerollWords();
   build32Bars();
   document.getElementById("setup-screen").classList.remove("active");
   document.getElementById("perf-screen").classList.add("active");
@@ -2067,6 +2073,7 @@ function stopPerf(){
   stopPlayer();G.running=false;
   document.getElementById("perf-screen").classList.remove("active");
   document.getElementById("setup-screen").classList.add("active");
+  renderSetup();   // the grid preview shows this session's words
 }
 document.getElementById("play-btn").addEventListener("click",startPerf);
 
