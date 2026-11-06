@@ -27,7 +27,13 @@ body{background:var(--base);font-family:"Fraunces",Georgia,'Times New Roman',ser
 body.lock{overflow:hidden;}
 button,input{font-family:inherit;}
 button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--green);outline-offset:2px;}
-.root{background:var(--bg);overflow:hidden;color:var(--text);min-height:100vh;max-width:760px;margin:0 auto;padding-bottom:6px;}
+.root{--top-h:56px;background:var(--base);color:var(--text);min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;}
+.topbar{height:var(--top-h);flex-shrink:0;display:flex;align-items:center;gap:12px;padding:0 20px;}
+.brand{font-size:24px;font-weight:700;letter-spacing:-.02em;color:var(--text);text-decoration:none;line-height:1;font-variation-settings:"opsz" 144;}
+.brand span{color:var(--green);}
+.brand:hover span{color:var(--green-hover);}
+.main{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--bg);border-radius:8px 8px 0 0;margin:0 8px;overflow:hidden;}
+#setup-screen{width:100%;max-width:760px;margin:0 auto;padding-bottom:6px;}
 .screen{display:none;flex-direction:column;}
 .screen.active{display:flex;}
 #setup-screen{transition:transform .65s var(--ease),filter .65s var(--ease);transform-origin:50% 0;}
@@ -104,19 +110,20 @@ canvas.gv{width:100%;height:78px;background:var(--bg);border:1px solid var(--bor
 .play-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
 
 /* performance */
-#perf-screen{background:var(--player);min-height:100vh;}
+#perf-screen{background:var(--player);height:calc(100vh - var(--top-h));height:calc(100dvh - var(--top-h));--inset:14px;}
+#perf-screen.active{display:flex;}
 .perf-hdr{background:var(--base);padding:14px 18px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border-soft);gap:10px;}
 .perf-chips{display:flex;gap:16px;flex-wrap:wrap;min-width:0;}
 .pchip{font-size:11px;color:var(--muted);letter-spacing:.08em;}
 .pchip span{color:var(--green);font-weight:700;}
 .stop-btn{background:transparent;border:1px solid var(--outline);border-radius:500px;padding:6px 14px;font-size:12px;color:var(--text);cursor:pointer;letter-spacing:.06em;white-space:nowrap;font-weight:700;transition:border-color .15s,transform .15s;}
 .stop-btn:hover{border-color:var(--text);transform:scale(1.04);}
-.status-panel{background:var(--surface);margin:12px 14px 0;border-radius:8px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;}
+.status-panel{background:var(--surface);margin:12px var(--inset) 0;border-radius:8px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;}
 .status-main{font-size:22px;font-weight:700;color:var(--text);letter-spacing:.06em;}
 .status-main.prep-mode{color:var(--warn);}
 .beat-big{font-size:36px;font-weight:700;color:var(--green);min-width:52px;text-align:right;}
 .bar-sub{font-size:11px;color:var(--muted);letter-spacing:.1em;margin-top:2px;}
-.bars-scroll{overflow-y:auto;flex:1;padding:12px 14px 20px;max-height:62vh;}
+.bars-scroll{overflow-y:auto;flex:1;min-height:0;padding:12px var(--inset) 20px;}
 .bar-block{margin-bottom:10px;}
 .bar-block-label{font-size:10px;color:var(--muted);letter-spacing:.1em;margin-bottom:4px;padding-left:2px;font-weight:700;}
 .bar-row-perf{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;}
@@ -189,12 +196,52 @@ canvas.gv{width:100%;height:78px;background:var(--bg);border:1px solid var(--bor
   .bcell{height:60px;}.bar-lbls{grid-template-rows:repeat(4,60px);}.bgrid-wrap{grid-template-columns:36px 1fr;}
   .btitle{font-size:24px;}.bcell .bw{font-size:14px;}
 }
+/* phones: edge-to-edge content, compact top bar */
+@media (max-width:640px){
+  .root{--top-h:50px;}
+  .topbar{padding:0 16px;}
+  .brand{font-size:21px;}
+  .main{margin:0;border-radius:0;}
+}
+/* full-size windows: two columns on setup, bigger grids, performance centred and filling the height */
+@media (min-width:1000px){
+  #setup-screen.active{display:grid;max-width:1320px;padding:20px 24px 24px;gap:16px;align-items:start;
+    grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);grid-template-areas:"scheme lib" "scheme play";grid-template-rows:auto 1fr;}
+  #setup-screen .panel{margin:0;padding:20px 22px;}
+  #grid-panel{grid-area:scheme;}
+  #lib-panel{grid-area:lib;}
+  .play-btn{grid-area:play;align-self:start;width:100%;margin:0;padding:18px;font-size:16px;}
+  .gcell{height:86px;}
+  .word-text{font-size:20px;}
+  .word-text.long{font-size:16px;}
+  .lib{max-height:340px;}
+  #perf-screen{--inset:max(24px,calc((100% - 1040px) / 2));}
+  .perf-hdr{padding:16px var(--inset) 14px;}
+  .status-panel{padding:18px 24px;}
+  .status-main{font-size:28px;}
+  .beat-big{font-size:44px;}
+  .bar-row-perf{gap:10px;}
+  .pcell{height:88px;}
+  .pcell .pbeat-num{font-size:22px;}
+  .pcell .pword{font-size:19px;}
+  .bar-block{margin-bottom:14px;}
+  .build-in{max-width:1040px;padding:28px 24px 48px;}
+  .bcell{height:88px;}
+  .bar-lbls{grid-template-rows:repeat(4,88px);}
+  .bcell .bw{font-size:19px;}
+  .bcell .bw.long{font-size:16px;}
+}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
 </style>
 </head>
 <body>
 <div class="root" id="root">
 
+<header class="topbar">
+  <a class="brand" href="./" aria-label="freestyle.wtf, home">freestyle<span>.wtf</span></a>
+</header>
+
+<main class="main">
 <div id="setup-screen" class="screen active">
 
   <div class="panel" id="grid-panel">
@@ -222,7 +269,7 @@ canvas.gv{width:100%;height:78px;background:var(--bg);border:1px solid var(--bor
     <div class="grid-wrap" id="grid-wrap"><div class="bar-grid" id="setup-grid"></div></div>
   </div>
 
-  <div class="panel">
+  <div class="panel" id="lib-panel">
     <div class="panel-hdr"><div class="panel-title">BEAT LIBRARY</div></div>
     <div class="drop" id="drop">
       <button class="btn go" id="upload-btn">+ Upload beats</button>
@@ -294,6 +341,7 @@ canvas.gv{width:100%;height:78px;background:var(--bg);border:1px solid var(--bor
   </div>
   <div class="bars-scroll" id="bars-scroll"></div>
 </div>
+</main>
 
 </div>
 

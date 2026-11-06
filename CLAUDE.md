@@ -19,6 +19,10 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   `#b49bc8`, white. A rhyme cell has a 2px outline and word text in its group's color. Hidden words get a dashed
   outline and faded, struck-through text.
 - No panel numbering.
+- Layout: a black top bar with the "freestyle.wtf" wordmark top-left (".wtf" in green, no caption), over a rounded
+  `#121212` `.main` area. At 1000px and wider, setup is two columns (rhyme scheme on the left, beat library + PLAY on
+  the right), and grids and performance cells are bigger. The performance screen fills the window height with its
+  content centred at about 1040px. Phones (640px and below) get edge-to-edge content and a 50px top bar.
 - Wants to upload many trap and boom bap beats and have the metronome indicator structured correctly.
 
 ## Architecture (all in `index.html`)
@@ -89,6 +93,7 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
 - Needs a normal web origin: `import()` of ORT from jsdelivr and `fetch("models/...")`. The Claude artifact's CSP
   blocks both, so there it silently falls back to the built-in detector (UI says so; "Re-analyze with Beat This!"
   button appears for non-Beat-This items). Real use = GitHub Pages: https://zchris07.github.io/freestyle/ and the custom domain https://freestyle.wtf (CNAME file in repo root; domain bought by Chris on Nov 6 2026).
+  Pages was enabled 2026-11-05 and deploys from `main` /, so every push to main updates the site within a minute or two.
 - Cost: ~16 s for a 40 s track on one wasm thread (GitHub Pages cannot send COOP/COEP headers, so no threads);
   150 s cap means up to ~1 min. Runs in an ORT worker (`env.wasm.proxy`), UI stays responsive, progress shown on the row.
 - Tested only on synthetic loops (92 BPM boom-bap-ish, 140 BPM trap-ish with a 6 s silent intro, 44.1 kHz stereo):
