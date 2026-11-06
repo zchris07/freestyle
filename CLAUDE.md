@@ -41,6 +41,14 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   1px `.paint-dot` in the page colour gives the browser an early paint, so a refresh doesn't keep showing the
   previous page. The session opens as a
   clip-path circle from START SESSION and collapses into the STOP button.
+- Upload: no upload panel in the library. An upload chip (inline SVG icon) next to the Trap / Boom bap tabs opens
+  `#upload-modal` over the page, which recedes and blurs (`.root.modal-open`). Drop files or click to browse.
+  Beat style Auto (default, reset each time) / Trap / Boom bap: Auto runs checkFeel, the others setFeel
+  (`addFiles(files,feel)`).
+- wtf? button top right opens `#guide`, a full-page guide that grows as a circle out of the button with its
+  sections rising in: how to use every part of the site, plus "every other freestyle app out there right now is ass".
+- Session title: the beat name is large (26px, 34px wide, 21px phone). The session's boxes pop in, staggered like
+  the builder grid (`.bars-scroll.pop`).
 - Session controls: PAUSE / RESUME next to STOP (Space toggles it). Pause suspends the AudioContext, so the beat,
   the clicks and the beat clock stop together. Both "2 syllable" toggles say only "2 syllable" and show their state
   by colour (main: green when on; builder: filled in the active rhyme's colour when on).
@@ -163,6 +171,8 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   NYSOM 84.48 boom bap, no intro (checkFeel misread it as half-time trap and doubled it to 169, like J. Cole type 2;
   set to boom bap by hand). Probably the "N.Y. State of Mind" instrumental, a commercial track like Still Tippin'
   and 93; Chris chose to host those.
+  Molly 109.95 trap (Beat This! and the built-in detector agree; snare strongly on 3), drop bar 9 (17.46 s).
+  Downloaded from a streaming site like Still Tippin'.
   Ominous, Guitar, both J. Cole type beats, Memphis and Minor are Chris's own Suno tracks.
 - Known issue: checkFeel's hi-hat test (FEEL_HAT_FILL) misreads busy-hat boom bap as half-time trap (2 of 4 real
   boom bap beats so far), which doubles the tempo and files an upload under Trap.

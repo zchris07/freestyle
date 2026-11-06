@@ -42,6 +42,25 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 .topbar{height:var(--top-h);flex-shrink:0;display:flex;align-items:center;gap:12px;padding:0 20px;}
 .brand{font-size:24px;font-weight:700;letter-spacing:-.02em;color:var(--text);text-decoration:none;line-height:1;font-variation-settings:"opsz" 144;}
 .brand .tld{color:var(--green);}
+.wtf-btn{margin-left:auto;background:transparent;border:1px solid rgba(30,215,96,.45);border-radius:500px;padding:5px 14px;color:var(--green);
+  font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;transition:background .15s,color .15s,transform .15s;}
+.wtf-btn:hover{background:var(--green);color:var(--on-accent);transform:scale(1.05);}
+/* the guide opens like the builder: a circle growing out of the wtf? button */
+.guide{position:fixed;inset:0;z-index:52;overflow-y:auto;background:linear-gradient(180deg,rgba(30,215,96,.28) 0,rgba(18,18,18,0) 340px) var(--bg);
+  clip-path:circle(0 at var(--ox,100%) var(--oy,0));visibility:hidden;transition:clip-path .65s var(--ease),visibility 0s linear .65s;}
+.guide.open{clip-path:circle(150vmax at var(--ox,100%) var(--oy,0));visibility:visible;transition:clip-path .65s var(--ease);}
+.guide.intro .rise{animation:rise .55s var(--ease) backwards;animation-delay:calc(.22s + var(--d,0) * 70ms);}
+.guide-in{max-width:720px;margin:0 auto;padding:22px 16px 48px;}
+.ghead{display:flex;align-items:center;gap:14px;margin-bottom:18px;}
+.glead{font-size:17px;line-height:1.5;color:var(--meta);margin-bottom:22px;}
+.gsec{display:flex;gap:16px;background:var(--surface);border-radius:12px;padding:18px;margin-bottom:12px;}
+.gsec h3{font-size:17px;margin-bottom:6px;}
+.gsec p{font-size:14px;line-height:1.55;color:var(--meta);margin-bottom:6px;}
+.gsec p b{color:var(--text);}
+.gnum{flex:none;width:30px;height:30px;border-radius:50%;background:var(--green);color:var(--on-accent);font-weight:700;display:flex;align-items:center;justify-content:center;}
+.gsec.why{border:1px solid rgba(30,215,96,.4);}
+.gsec.why p{font-size:17px;color:var(--text);font-weight:700;}
+#guide-done{margin-top:10px;}
 .brand:hover .tld{color:var(--green-hover);}
 .main{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
 #setup-screen{width:100%;max-width:840px;margin:0 auto;padding-bottom:6px;}
@@ -127,8 +146,26 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 .col-hint[hidden]{display:none;}
 
 /* beat library */
-.drop{border:2px dashed var(--border);border-radius:8px;padding:14px;text-align:center;background:var(--elev);transition:all .15s;}
+/* upload dialog: the page recedes and blurs behind it */
+.root{transition:filter .4s ease,transform .45s var(--ease);transform-origin:50% 30%;}
+.root.modal-open{filter:blur(8px) brightness(.55);transform:scale(.97);}
+.modal{position:fixed;inset:0;z-index:55;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.3);
+  opacity:0;visibility:hidden;transition:opacity .3s ease,visibility 0s linear .3s;}
+.modal.open{opacity:1;visibility:visible;transition:opacity .3s ease;}
+.modal-card{position:relative;width:min(460px,100%);background:var(--surface);border:1px solid var(--border-soft);border-radius:16px;padding:22px 22px 24px;
+  box-shadow:0 30px 80px rgba(0,0,0,.6);transform:translateY(22px) scale(.95);transition:transform .5s var(--ease);}
+.modal.open .modal-card{transform:none;}
+.modal-title{font-size:22px;font-weight:700;margin-bottom:16px;}
+.modal-x{position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:50%;border:none;background:var(--high);color:var(--text);cursor:pointer;font-size:13px;}
+.modal-x:hover{background:var(--high-hover);}
+.drop{display:flex;flex-direction:column;align-items:center;gap:10px;border:2px dashed var(--border);border-radius:12px;padding:34px 16px;text-align:center;
+  background:var(--elev);color:var(--green);cursor:pointer;margin-bottom:18px;transition:border-color .15s,background .15s;}
+.drop:hover,.drop:focus-visible{border-color:var(--green);outline:none;}
 .drop.over{border-color:var(--green);background:rgba(30,215,96,.08);}
+.drop-main{font-size:14px;font-weight:700;color:var(--text);}
+#up-feel .vpill{flex:1;}
+.tab.up{display:inline-flex;align-items:center;justify-content:center;padding:6px 11px;}
+.tab.up:hover{background:var(--green);color:var(--on-accent);}
 .btn{background:transparent;border:1px solid var(--outline);border-radius:500px;padding:7px 14px;font-size:12px;color:var(--text);cursor:pointer;font-weight:700;transition:border-color .15s,background .15s,transform .15s;}
 .btn:hover{border-color:var(--text);transform:scale(1.04);}
 .btn:disabled{opacity:.35;cursor:not-allowed;transform:none;border-color:var(--outline);}
@@ -176,7 +213,9 @@ canvas.gv{width:100%;height:78px;background:var(--bg);border:1px solid var(--bor
 #perf-screen.open{clip-path:circle(150vmax at var(--ox,50%) var(--oy,100%));visibility:visible;transition:clip-path .65s var(--ease);}
 #perf-screen.intro .rise{animation:rise .55s var(--ease) backwards;animation-delay:calc(.2s + var(--d,0) * 60ms);}
 .perf-hdr{padding:14px var(--inset) 4px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
-.pname{font-size:16px;font-weight:700;color:var(--text);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pname{font-size:26px;line-height:1.15;font-weight:700;letter-spacing:-.01em;color:var(--text);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variation-settings:"opsz" 144;}
+/* session boxes pop in, staggered, like the builder's grid */
+#perf-screen .bars-scroll.pop .pcell{animation:pop .45s var(--ease) backwards;animation-delay:calc(.32s + var(--i,0) * 18ms);}
 .stop-btn{background:transparent;border:1px solid var(--outline);border-radius:500px;padding:6px 14px;font-size:12px;color:var(--text);cursor:pointer;letter-spacing:.06em;white-space:nowrap;font-weight:700;transition:border-color .15s,transform .15s;}
 .stop-btn:hover{border-color:var(--text);transform:scale(1.04);}
 .stop-btn:disabled{opacity:.35;cursor:default;transform:none;}
@@ -260,6 +299,7 @@ canvas.gv{width:100%;height:78px;background:var(--bg);border:1px solid var(--bor
   :root{--top-h:50px;}
   .topbar{padding:0 16px;}
   .brand{font-size:21px;}
+  .pname{font-size:21px;}
   .col-hint{padding:8px 15px;font-size:12px;gap:9px;}
   .col-hint .ar{font-size:15px;}
 }
@@ -277,7 +317,8 @@ canvas.gv{width:100%;height:78px;background:var(--bg);border:1px solid var(--bor
   .word-text.long{font-size:16px;}
   .lib{max-height:340px;}
   #perf-screen{--inset:max(24px,calc((100% - 1040px) / 2));}
-  .perf-hdr{padding:18px var(--inset) 6px;}
+  .perf-hdr{padding:18px var(--inset) 8px;}
+  .pname{font-size:34px;}
   .bar-row-perf{gap:10px;}
   .pcell{height:88px;}
   .pcell .pword{font-size:19px;}
@@ -324,6 +365,7 @@ body.preintro .root{opacity:0;}
 
 <header class="topbar">
   <a class="brand" href="./" aria-label="freestyle.wtf, home">freestyle<span class="tld">.wtf</span></a>
+  <button class="wtf-btn" id="wtf-btn" aria-label="How freestyle.wtf works">wtf?</button>
 </header>
 
 <main class="main">
@@ -360,11 +402,8 @@ body.preintro .root{opacity:0;}
       <div class="tabs" id="lib-tabs" role="tablist" aria-label="Beat style">
         <button class="tab" role="tab" data-tab="trap" aria-selected="true">Trap</button>
         <button class="tab" role="tab" data-tab="boombap" aria-selected="false">Boom bap</button>
+        <button class="tab up" id="upload-chip" title="Upload a beat" aria-label="Upload a beat"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M7 9l5-5 5 5M5 15v4h14v-4"/></svg></button>
       </div>
-    </div>
-    <div class="drop" id="drop">
-      <button class="btn go" id="upload-btn">+ Upload beat</button>
-      <input type="file" id="file-in" accept="audio/*" multiple hidden>
     </div>
     <div class="lib" id="lib"></div>
 
@@ -410,7 +449,49 @@ body.preintro .root{opacity:0;}
       <button class="stop-btn" id="stop-btn" onclick="stopPerf()">&#9632; STOP</button>
     </div>
   </div>
-  <div class="bars-scroll rise" style="--d:2" id="bars-scroll"></div>
+  <div class="bars-scroll" id="bars-scroll"></div>
+</div>
+
+<!-- upload: a dialog over the page, which recedes and blurs behind it -->
+<div class="modal" id="upload-modal" role="dialog" aria-modal="true" aria-label="Upload a beat" aria-hidden="true">
+  <div class="modal-card">
+    <button class="modal-x" id="upload-close" aria-label="Close">&#10005;</button>
+    <div class="modal-title">Upload a beat</div>
+    <div class="drop" id="drop" role="button" tabindex="0" aria-label="Choose audio files">
+      <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M7 9l5-5 5 5M5 15v4h14v-4"/></svg>
+      <div class="drop-main">Drop a beat or click to choose</div>
+    </div>
+    <input type="file" id="file-in" accept="audio/*" multiple hidden>
+    <div class="lbl">BEAT STYLE</div>
+    <div class="vis-pills" id="up-feel">
+      <div class="vpill sel" data-feel="auto">Auto</div>
+      <div class="vpill" data-feel="trap">Trap</div>
+      <div class="vpill" data-feel="boombap">Boom bap</div>
+    </div>
+  </div>
+</div>
+
+<!-- the wtf? guide -->
+<div class="guide" id="guide" role="dialog" aria-modal="true" aria-label="How freestyle.wtf works" aria-hidden="true">
+  <div class="guide-in">
+    <div class="ghead rise" style="--d:0">
+      <button class="back" id="guide-close" aria-label="Close guide">&#10005;</button>
+      <div><div class="beyebrow">THE GUIDE</div><div class="btitle">wtf is this?</div></div>
+    </div>
+    <p class="glead rise" style="--d:1">A freestyle trainer that locks to a real beat and puts rhyme words exactly where you want to land them. Pick a pattern, pick a beat, hit start, spit 32 bars.</p>
+    <div class="gsec rise" style="--d:2"><div class="gnum">1</div><div><h3>Pick a rhyme scheme</h3>
+      <p>Each letter is a bar, and the same letter means the same rhyme: AABB, AAAA, ABAB, AA_A (_ = no rhyme). <b>more</b> opens patterns with two rhymes per bar: lowercase lands on beat 2, uppercase on beat 4.</p>
+      <p>Drag the rhyme column (or the DRAG tab under it) to the beat you want the rhymes to hit. <b>Show words</b> hides all but the first or last word of each rhyme, so you have to find the rest. <b>2 syllable rhyme</b> swaps in two-syllable words.</p></div></div>
+    <div class="gsec rise" style="--d:3"><div class="gnum">2</div><div><h3>Or build your own</h3>
+      <p><b>+ Build</b> opens the builder. Tap boxes to place a rhyme, tap a word again to hide it, once more to remove it. <b>+ Create new rhyme</b> starts the next one, each in its own colour. Make any rhyme 2 syllable, then confirm or save it for later.</p></div></div>
+    <div class="gsec rise" style="--d:4"><div class="gnum">3</div><div><h3>Pick a beat</h3>
+      <p>Trap or boom bap, from the library, or upload your own with the upload chip. Every beat is read for its tempo, its "one" and its drop, and you always get 8 beats of lead-in right before the drop. <b>Preview</b> lets you check the grid; turn on the click track if you want a metronome on top.</p></div></div>
+    <div class="gsec rise" style="--d:5"><div class="gnum">4</div><div><h3>Start session</h3>
+      <p>Two prep bars, then 32 bars. The lit box is the beat; rhyme words light up as you reach them. Every session deals new words. <b>Space</b> pauses, <b>Esc</b> stops.</p></div></div>
+    <div class="gsec why rise" style="--d:6"><div class="gnum">?</div><div><h3>Why does this exist</h3>
+      <p>Because every other freestyle app out there right now is ass.</p></div></div>
+    <button class="btn go big rise" style="--d:7" id="guide-done">Got it</button>
+  </div>
 </div>
 
 <div class="build" id="build-screen" aria-hidden="true">
@@ -915,7 +996,8 @@ const DEFAULTS=[
   {"id":"d-still-tippin","name":"Still Tippin'","file":"beats/still-tippin.mp3","bpm":143.16,"fd":0.267,"dropT":0.267,"feel":"trap","engine":"beat-this","duration":154.53},
   {"id":"d-memphis","name":"Memphis","file":"beats/memphis.mp3","bpm":128.81,"fd":0.356,"dropT":15.261,"feel":"trap","engine":"builtin","duration":180.0},
   {"id":"d-minor","name":"Minor","file":"beats/minor.mp3","bpm":134.8,"fd":0.23,"dropT":14.474,"feel":"trap","engine":"beat-this","duration":162.43},
-  {"id":"d-nysom","name":"NYSOM","file":"beats/nysom.mp3","bpm":84.48,"fd":0.085,"dropT":0.085,"feel":"boombap","engine":"beat-this","duration":294.82}
+  {"id":"d-nysom","name":"NYSOM","file":"beats/nysom.mp3","bpm":84.48,"fd":0.085,"dropT":0.085,"feel":"boombap","engine":"beat-this","duration":294.82},
+  {"id":"d-molly","name":"Molly","file":"beats/molly.mp3","bpm":109.95,"fd":0.002,"dropT":17.464,"feel":"trap","engine":"beat-this","duration":258.65}
 ].map(d=>({...d,isDefault:true,status:"ready"}));
 function openDB(){
   return new Promise((res,rej)=>{
@@ -996,7 +1078,7 @@ async function runBT(it,buf){
 }
 function fmtDur(s){const m=Math.floor(s/60),r=Math.floor(s%60);return m+":"+String(r).padStart(2,"0");}
 
-async function addFiles(files){
+async function addFiles(files,feel="auto"){
   getCtx();
   for(const f of files){
     if(!/^audio\//.test(f.type)&&!/\.(mp3|wav|m4a|aac|ogg|flac|webm)$/i.test(f.name)) continue;
@@ -1009,7 +1091,7 @@ async function addFiles(files){
       await new Promise(r=>setTimeout(r,10));
       Object.assign(it,analyzeBuffer(buf));   // built-in detector: always runs, keeps envelopes for the tempo buttons
       await runBT(it,buf);
-      checkFeel(it);
+      if(feel==="auto") checkFeel(it); else setFeel(it,feel);   // the upload dialog's Auto / Trap / Boom bap choice
       detectDrop(it,true);
       it.status="ready";
       persist(it);
@@ -2275,6 +2357,8 @@ document.addEventListener("keydown",e=>{
   if(e.key!=="Escape") return;
   if(buildEl.classList.contains("open")) closeBuilder();
   else if(document.getElementById("perf-screen").classList.contains("open")) stopPerf();
+  else if(document.getElementById("guide").classList.contains("open")) closeGuide();
+  else if(document.getElementById("upload-modal").classList.contains("open")) closeUpload();
 });
 document.addEventListener("keydown",e=>{
   if(e.code!=="Space"||(e.target instanceof Element&&e.target.closest("button,input"))) return;   // a focused button handles Space itself
@@ -2338,12 +2422,46 @@ document.getElementById("save-scheme-btn").addEventListener("click",()=>{
 });
 
 /* ================= LIBRARY UI EVENTS ================= */
-const fileIn=document.getElementById("file-in"),drop=document.getElementById("drop");
-document.getElementById("upload-btn").addEventListener("click",()=>fileIn.click());
-fileIn.addEventListener("change",()=>{addFiles([...fileIn.files]);fileIn.value="";});
+// Upload dialog: opened from the upload chip by the library tabs; the page recedes and blurs behind it. Drop files on
+// it or click to pick them; the style choice (Auto by default) decides trap / boom bap instead of the automatic check.
+const fileIn=document.getElementById("file-in"),drop=document.getElementById("drop"),upModal=document.getElementById("upload-modal");
+let UP_FEEL="auto";
+function openUpload(){
+  UP_FEEL="auto";document.querySelectorAll("#up-feel .vpill").forEach(p=>p.classList.toggle("sel",p.dataset.feel==="auto"));
+  upModal.classList.add("open");upModal.setAttribute("aria-hidden","false");
+  document.getElementById("root").classList.add("modal-open");document.body.classList.add("lock");
+  setTimeout(()=>drop.focus({preventScroll:true}),60);
+}
+function closeUpload(){
+  upModal.classList.remove("open");upModal.setAttribute("aria-hidden","true");
+  document.getElementById("root").classList.remove("modal-open");document.body.classList.remove("lock");
+}
+function takeFiles(files){if(!files.length) return;closeUpload();addFiles(files,UP_FEEL);}
+document.getElementById("upload-chip").addEventListener("click",openUpload);
+document.getElementById("upload-close").addEventListener("click",closeUpload);
+upModal.addEventListener("click",e=>{if(e.target===upModal) closeUpload();});
+drop.addEventListener("click",()=>fileIn.click());
+drop.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();fileIn.click();}});
+fileIn.addEventListener("change",()=>{takeFiles([...fileIn.files]);fileIn.value="";});
 ["dragenter","dragover"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add("over");}));
 ["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("over");}));
-drop.addEventListener("drop",e=>addFiles([...e.dataTransfer.files]));
+drop.addEventListener("drop",e=>takeFiles([...e.dataTransfer.files]));
+document.getElementById("up-feel").addEventListener("click",e=>{
+  const el=e.target.closest(".vpill");if(!el)return;
+  UP_FEEL=el.dataset.feel;document.querySelectorAll("#up-feel .vpill").forEach(p=>p.classList.toggle("sel",p===el));
+});
+// The wtf? guide opens like the builder, as a circle out of the button, with its sections rising in.
+const guideEl=document.getElementById("guide");
+function guideOrigin(){const r=document.getElementById("wtf-btn").getBoundingClientRect();guideEl.style.setProperty("--ox",(r.left+r.width/2)+"px");guideEl.style.setProperty("--oy",(r.top+r.height/2)+"px");}
+function openGuide(){
+  guideOrigin();guideEl.scrollTop=0;
+  guideEl.classList.remove("intro");void guideEl.offsetWidth;guideEl.classList.add("intro");
+  guideEl.classList.add("open");guideEl.setAttribute("aria-hidden","false");document.body.classList.add("lock");
+}
+function closeGuide(){guideOrigin();guideEl.classList.remove("open");guideEl.setAttribute("aria-hidden","true");document.body.classList.remove("lock");}
+document.getElementById("wtf-btn").addEventListener("click",openGuide);
+document.getElementById("guide-close").addEventListener("click",closeGuide);
+document.getElementById("guide-done").addEventListener("click",closeGuide);
 document.getElementById("lib-tabs").addEventListener("click",e=>{
   const b=e.target.closest(".tab");if(!b||b.dataset.tab===LIB_TAB)return;
   LIB_TAB=b.dataset.tab;try{localStorage.setItem("fs-tab",LIB_TAB);}catch(err){}
@@ -2411,6 +2529,7 @@ function build32Bars(){
     const row=document.createElement("div");row.className="bar-row-perf";
     for(let beat=0;beat<4;beat++){
       const cell=document.createElement("div");cell.className="pcell"+(isPrep?" prep-cell":" upcoming");cell.id="pc-"+bar+"-"+beat;
+      cell.style.setProperty("--i",Math.min(bar*4+beat,48));   // stagger for the pop-in (boxes far below just come in together)
       const wd=document.createElement("div");wd.className="pword";
       const info=isPrep?null:m.get((realBar%4)*4+beat);
       if(info){
@@ -2434,7 +2553,8 @@ async function startPerf(){
   // the session opens like the rhyme builder: a circle growing out of the START SESSION button
   const ps=document.getElementById("perf-screen"),r=document.getElementById("play-btn").getBoundingClientRect();
   ps.style.setProperty("--ox",(r.left+r.width/2)+"px");ps.style.setProperty("--oy",(r.top+r.height/2)+"px");
-  document.getElementById("bars-scroll").scrollTop=0;
+  const sc=document.getElementById("bars-scroll");sc.scrollTop=0;
+  sc.classList.remove("pop");void sc.offsetWidth;sc.classList.add("pop");setTimeout(()=>sc.classList.remove("pop"),1600);
   ps.classList.remove("intro");void ps.offsetWidth;ps.classList.add("intro");
   ps.classList.add("open");ps.setAttribute("aria-hidden","false");
   document.getElementById("root").classList.add("sessioning");document.body.classList.add("lock");
@@ -2501,9 +2621,9 @@ document.getElementById("play-btn").addEventListener("click",startPerf);
 // top left; anything inside a container starts once that container's outline is under way.
 let INTRO=false,INTRO_PENDING=false;
 const SVGNS="http://www.w3.org/2000/svg";
-const CARVE_SEL=".panel,.drop,.gcell,.btn,.spill,.vpill,.tab,.play-btn,.lrow.sel,.col-hint";
-const ASSEMBLE_SEL=".dot,.chk input,.col-hint .ar";
-const TEXT_SEL=".topbar .brand,.panel-title,.lbl,.spill,.vpill,.beat-lbl,.word-text,.col-hint,.btn,.tab,.lhdr,.lname,.lmeta,.lempty,.dlbl,.bpmv,.muted,.chk,.play-btn";
+const CARVE_SEL=".panel,.gcell,.btn,.spill,.vpill,.tab,.play-btn,.lrow.sel,.col-hint,.wtf-btn";
+const ASSEMBLE_SEL=".dot,.chk input,.col-hint .ar,.tab svg";
+const TEXT_SEL=".topbar .brand,.wtf-btn,.panel-title,.lbl,.spill,.vpill,.beat-lbl,.word-text,.col-hint,.btn,.tab,.lhdr,.lname,.lmeta,.lempty,.dlbl,.bpmv,.muted,.chk,.play-btn";
 function introDelay(el,y0){const r=el.getBoundingClientRect();return Math.min(1300,Math.round(40+(r.top-y0)*0.45+r.left*0.1));}
 // draw a rounded-rect outline over el (its own border box) and return the overlay
 function carveOutline(el,d){
