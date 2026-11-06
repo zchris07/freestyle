@@ -701,8 +701,8 @@ function detectDrop(it,anchor){
   let maxBefore=0;   // loudest 4-bar stretch that ends at or before j
   for(let j=1;j<=n-DROP_WIN;j++){
     if(j>=DROP_WIN) maxBefore=Math.max(maxBefore,R[j-DROP_WIN]);
-    const before=j>=DROP_WIN?maxBefore:avg(0,j);
-    if(before>DROP_QUIET*full) break;
+    // only a full 4-bar stretch counts as "already full": a single opening hit doesn't rule out a later drop
+    if(maxBefore>DROP_QUIET*full) break;
     const after=R[j];
     if(after>=DROP_FULL*full&&after>=DROP_JUMP*avg(j-DROP_WIN,j)){
       const step=c=>avg(c,c+4)-avg(c-4,c);
@@ -912,7 +912,9 @@ const DEFAULTS=[
   {"id":"d-jcole2","name":"J. Cole type 2","file":"beats/j-cole-type-2.mp3","bpm":89.17,"fd":0.151,"dropT":10.917,"feel":"boombap","engine":"beat-this","duration":192.48},
   {"id":"d-guitar","name":"Guitar","file":"beats/guitar.mp3","bpm":137.98,"fd":0.206,"dropT":28.036,"feel":"trap","engine":"beat-this","duration":187.68},
   {"id":"d-93","name":"93","file":"beats/93.mp3","bpm":103.09,"fd":0.757,"dropT":19.381,"feel":"boombap","engine":"beat-this","duration":292.05},
-  {"id":"d-still-tippin","name":"Still Tippin'","file":"beats/still-tippin.mp3","bpm":143.16,"fd":0.267,"dropT":0.267,"feel":"trap","engine":"beat-this","duration":154.53}
+  {"id":"d-still-tippin","name":"Still Tippin'","file":"beats/still-tippin.mp3","bpm":143.16,"fd":0.267,"dropT":0.267,"feel":"trap","engine":"beat-this","duration":154.53},
+  {"id":"d-memphis","name":"Memphis","file":"beats/memphis.mp3","bpm":128.81,"fd":0.356,"dropT":15.261,"feel":"trap","engine":"builtin","duration":180.0},
+  {"id":"d-minor","name":"Minor","file":"beats/minor.mp3","bpm":134.8,"fd":0.23,"dropT":14.474,"feel":"trap","engine":"beat-this","duration":162.43}
 ].map(d=>({...d,isDefault:true,status:"ready"}));
 function openDB(){
   return new Promise((res,rej)=>{

@@ -126,7 +126,8 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   8 beats into the song, the missing prep beats are a click count-in (`P.countIn`).
 - detectDrop(it,anchor) works per beat on the stored kick/hat/low bands (beatScores). "Full level" = the 75th
   percentile of 4-bar averages. The drop is the first beat whose next 4 bars reach DROP_FULL x full and
-  DROP_JUMP x the 4 bars before, with no 4-bar stretch before it above DROP_QUIET (0.65) x full. A song that starts full
+  DROP_JUMP x the 4 bars before, with no full 4-bar stretch before it above DROP_QUIET (0.65) x full (a single loud
+  opening hit doesn't count). A song that starts full
   gets no drop, so a later breakdown is never picked. Refined to the sharpest 4-beat step.
 - anchor=true on fresh analysis (upload, Re-analyze): drops land on a "1", so the grid's downbeat moves onto the
   drop, as far as the groove allows: trap (snare on 3) keeps the grid; boom bap may move the "1" by 2 beats
@@ -155,7 +156,11 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   were re-timed as trap by hand (Beat This! counted them at half speed): setFeel(it,"trap") doubled the tempo and put
   the snare on 3 (confirmed: snare strongest on beat 3).
   J. Cole type 2 was hand-corrected: checkFeel read its busy hi-hats as half-time trap and doubled it to 178.
-  Ominous, Guitar and both J. Cole type beats are Chris's own Suno tracks.
+  Memphis 128.81 trap, drop bar 9 (15.26 s): Beat This! tracks its intro at half speed and the rest at full speed,
+  so its grid fails the steadiness check. The built-in grid is used, and was checked against Beat This!'s
+  main-section beats (they line up, and 40 of 49 of its downbeats fall on beat 1). Minor 134.8 trap (Beat This!
+  said 67.4), snare on 3, drop bar 9 (14.47 s).
+  Ominous, Guitar, both J. Cole type beats, Memphis and Minor are Chris's own Suno tracks.
 
 ## Beat This! in the browser
 
