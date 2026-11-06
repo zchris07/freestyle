@@ -30,26 +30,37 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   the bar grid with no bar/prep labels, no beat numbers in the cells and no status texts (no PREPARE / SPIT IT!).
   The lit outline is the beat indicator; STOP turns into BACK after bar 32.
 - Wants to upload many trap and boom bap beats and have the metronome indicator structured correctly.
-- Motion: on every load the page grows into place (each element scales up out of a blur, staggered from the top
-  left) while all text writes itself in with the football explainer's writing animation (`runIntro`, `writeWord`:
-  an SVG copy of each word, each letter's outline stroked on then inked; words 1/60 s apart, letters 14 ms). The
-  session opens and closes like the builder, as a clip-path circle from the START SESSION button.
+- Motion: on every load the page is carved out, not grown. Containers and buttons (`CARVE_SEL`) get a rounded
+  outline drawn on as an SVG stroke, then their fill and real border fade in, and the drawn line fades away. Small
+  pieces (`ASSEMBLE_SEL`: beat dots, checkbox, drag arrows) fly in and lock into place, and the waveform wipes on.
+  All text writes itself in with the football explainer's writing animation (`runIntro`, `carveOutline`, `writeWord`:
+  an SVG copy of each word, each letter's outline stroked on then inked; words 1/60 s apart, letters 14 ms).
+  Everything is staggered from the top left, and children start 180 ms after their container. The session opens as a
+  clip-path circle from START SESSION and collapses into the STOP button.
+- Session controls: PAUSE / RESUME next to STOP (Space toggles it). Pause suspends the AudioContext, so the beat,
+  the clicks and the beat clock stop together. Both "2 syllable" toggles say only "2 syllable" and show their state
+  by colour (main: green when on; builder: filled in the active rhyme's colour when on).
 - Dragging (presets): the rhyme column is its own layer (`.rhyme-col`) above a full grid of empty boxes, so the
-  boxes it leaves stay visible. While held it moves through magnetic detents (sticky near each column, then it
-  snaps across), resists past the ends, leans with its speed, and a spring settles it on release (rAF in
-  `setupDrag`). The target column's boxes light up in dashed green. The drag hint is a "← DRAG →" capsule below
+  boxes it leaves stay visible. While held it glides through magnetic detents (holds near each column, then slides
+  across), resists past the ends, and eases into the nearest column on release. No lean, wobble, vibration or
+  overshoot (Chris asked). One state and one rAF loop per column, so a quick re-grab carries on (`setupDrag`). The target column's boxes light up in dashed green. The drag hint is a "← DRAG →" capsule below
   the rhyme scheme panel, centred under the column (`placeHint`); it fades out on grab and back in after landing.
 - Session beat indicator: the current box lights up its outline (border + glow) and is never filled, so a rhyme
   word stays readable (a plain beat in green, a rhyme in its group's color).
 
 ## Architecture (all in `index.html`)
 
-- **Setup screen**: one "RHYME SCHEME" panel (scheme pills from `SCHEMES`: AABB (default), AAAA, ABAB, AA_A, A_A_,
-  aAaA, aAbB, aBaB, aA_A, _AaA, _A_A_B_B, plus saved custom schemes; one letter per bar, same letter = same rhyme,
-  UPPERCASE = word shown, lowercase = outline with the word hidden, _ = no rhyme; "_A_A_B_B" is written over 8 bars
-  and is "_A_A" on the repeating 4-bar grid. Word visibility all/first/last applies to the all-uppercase presets
-  only (hidden for lowercase ones). A single "2-syllable rhymes" toggle button makes every preset rhyme 2-syllable (`G.multi`,
-  localStorage `fs-syl`); custom schemes set it per rhyme in Build. 4x4 grid, drag the column for presets) with a **Build**
+- **Setup screen**: one "RHYME SCHEME" panel. Scheme chips: AABB (default), AAAA, ABAB, AA_A, then a green "more"
+  chip that reveals A_A_, aAaA, aAbB, aBaB, aA_A, _AaA (and a green "<" chip that folds them away; the row's height
+  glides and the chips pop in/out, `toggleMore`). A selected extra stays visible when folded. Saved custom schemes
+  follow. Column schemes (AABB, AAAA, ABAB, AA_A, A_A_): one letter per bar, same letter = same rhyme, _ = none.
+  Only the first four are draggable; A_A_ sits on beat 4. Two-beat schemes (`SCHEMES[k]` is an array of 2 bars):
+  per bar the beat-2 letter (lowercase) then the beat-4 letter (UPPERCASE); bars 3-4 repeat the shape with fresh
+  rhymes. aAaA = beats 2+4 of both bars one rhyme; aAbB = a new rhyme each bar; aBaB = the 2s rhyme, the 4s rhyme;
+  aA_A = bar 2 has no beat-2 rhyme; _AaA = bar 1 has no beat-2 rhyme. Not draggable. "Show words" all/first/last
+  works per rhyme group for every preset. A single "2-syllable rhymes" button (`#syl-main`, `G.multi`, localStorage
+  `fs-syl`) makes preset rhymes 2-syllable; custom schemes set it per rhyme in Build (`#syl-btn`). 4x4 grid, with a
+  **Build**
   button, then the beat library (Trap / Boom bap tabs: `LIB_TAB`, by each beat's `feel`; uploads with no feel yet
   show in both) and START SESSION.
 - **Scheme model**: every scheme is a list of rhyme groups `{cells:[{r,c,show}]}` over the 4x4 grid (rows = bars 1-4,
@@ -65,7 +76,7 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
 - **Rhyme builder** (`#build-screen`): a full-page overlay that opens with a clip-path circle growing out of the Build
   button. It starts with an empty Rhyme A. Clicking an empty box adds it to the active rhyme (shown); clicking a shown
   word hides it; clicking a hidden one removes it. "+ Create new rhyme" starts the next group, and chips switch or
-  delete groups. A "2-syllable" toggle switches the active group to `BANK2` words. Confirm applies the scheme;
+  delete groups. The "2 syllable" toggle switches only the active rhyme group to `BANK2` words. No instruction text. Confirm applies the scheme;
   Save rhyme scheme stores or updates it by name.
 - **Session screen**: 2 prep bars then 32 bars, 4 cells per bar; current cell highlights, rhyme
   word reveals on its beat. Esc or STOP closes it.

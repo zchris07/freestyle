@@ -60,6 +60,13 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 .spill{background:var(--high);border-radius:500px;padding:7px 16px;font-size:13px;color:var(--text);cursor:pointer;transition:background .15s;font-weight:700;display:inline-flex;align-items:center;gap:8px;}
 .spill:hover{background:var(--high-hover);}
 .spill.sel{background:var(--green);color:var(--on-accent);}
+.spill.more{background:var(--green);color:var(--on-accent);}
+.spill.more:hover{background:var(--green-hover);}
+.scheme-pills.sizing{overflow:hidden;transition:height .45s var(--ease);}
+.spill.pop-in{animation:chip-in .42s cubic-bezier(.2,.9,.3,1.1) backwards;}
+.spill.pop-out{animation:chip-out .2s ease forwards;}
+@keyframes chip-in{from{opacity:0;transform:scale(.6);filter:blur(6px);}}
+@keyframes chip-out{to{opacity:0;transform:scale(.7);filter:blur(4px);}}
 .spill .x{font-size:10px;opacity:.55;padding:0 2px;}
 .spill .x:hover{opacity:1;}
 .vis-pills{display:flex;gap:6px;flex-wrap:wrap;}
@@ -81,7 +88,7 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
   display:flex;flex-direction:column;gap:7px;z-index:2;cursor:grab;touch-action:none;will-change:transform;}
 .rhyme-col.dragging{cursor:grabbing;}
 .rhyme-col .gcell.rc{transition:box-shadow .25s,background .25s;}
-.rhyme-col.dragging .gcell.rc{background:#2c2c2c;box-shadow:0 16px 34px rgba(0,0,0,.6);}
+.rhyme-col.dragging .gcell.rc{background:#2c2c2c;box-shadow:0 14px 30px rgba(0,0,0,.55);}
 .rhyme-col .slot{visibility:hidden;}
 .word-text{font-size:16px;font-weight:700;letter-spacing:.02em;text-align:center;padding:0 6px;color:var(--gc);}
 .word-text.hidden-word{visibility:hidden;}
@@ -154,6 +161,11 @@ canvas.gv{width:100%;height:78px;background:var(--bg);border:1px solid var(--bor
 .pname{font-size:16px;font-weight:700;color:var(--text);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .stop-btn{background:transparent;border:1px solid var(--outline);border-radius:500px;padding:6px 14px;font-size:12px;color:var(--text);cursor:pointer;letter-spacing:.06em;white-space:nowrap;font-weight:700;transition:border-color .15s,transform .15s;}
 .stop-btn:hover{border-color:var(--text);transform:scale(1.04);}
+.stop-btn:disabled{opacity:.35;cursor:default;transform:none;}
+.perf-actions{display:flex;gap:8px;flex-shrink:0;}
+#pause-btn.on{border-color:var(--green);color:var(--green);}
+#perf-screen .bars-scroll{transition:opacity .25s;}
+#perf-screen.paused .bars-scroll{opacity:.45;}
 .bars-scroll{overflow-y:auto;flex:1;min-height:0;padding:12px var(--inset) 20px;}
 .bar-block{margin-bottom:10px;}
 .bar-row-perf{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;}
@@ -201,7 +213,7 @@ canvas.gv{width:100%;height:78px;background:var(--bg);border:1px solid var(--bor
 .bcell .btag{position:absolute;top:5px;left:7px;font-size:10px;font-weight:700;color:var(--gc);letter-spacing:.04em;}
 .word-text.long,.bcell .bw.long{font-size:13px;}
 .gsyl{font-size:10px;letter-spacing:.06em;color:var(--on-accent);background:var(--gc);border-radius:500px;padding:1px 6px;}
-.btn.toggle[aria-pressed="true"]{border-color:var(--ac);color:var(--ac);}
+.btn.toggle[aria-pressed="true"]{background:var(--ac);border-color:var(--ac);color:var(--on-accent);}
 .btn.feel[aria-pressed="true"]{border-color:var(--green);color:var(--green);}
 .bcell .bstate{font-size:9px;color:var(--muted);letter-spacing:.08em;margin-top:3px;}
 .bcell.bump{animation:bump .25s ease;}
@@ -256,11 +268,21 @@ canvas.gv{width:100%;height:78px;background:var(--bg);border:1px solid var(--bor
   .bcell .bw{font-size:19px;}
   .bcell .bw.long{font-size:16px;}
 }
-/* page-load intro: every element grows into place while its text writes itself in, letter by letter: each letter's
+/* page-load intro: containers and buttons are carved out (their outline is drawn on, then they fill in), the small
+   pieces assemble (fly in and lock into place), and all text writes itself in letter by letter: each letter's
    outline is stroked on, then filled with ink (the football explainer's writing animation) */
 body.preintro .root{opacity:0;}
-.grow{animation:grow .95s cubic-bezier(.2,.85,.25,1.06) both;animation-delay:var(--gd,0ms);}
-@keyframes grow{0%{opacity:0;transform:scale(.55);filter:blur(12px);}55%{opacity:1;filter:blur(0);}100%{opacity:1;transform:none;filter:none;}}
+.carving{background-color:transparent!important;border-color:transparent!important;box-shadow:none!important;}
+.carved{transition:background-color .45s ease,border-color .45s ease,box-shadow .45s ease!important;}
+.carve-svg{position:absolute;pointer-events:none;overflow:visible;transition:opacity .4s ease;z-index:1;}
+.carve-svg rect{fill:none;stroke-width:1.5;stroke-linecap:round;stroke-dasharray:var(--len) 100000;stroke-dashoffset:var(--len);
+  animation:carve-draw .75s cubic-bezier(.6,.05,.3,1) forwards;animation-delay:var(--d);}
+@keyframes carve-draw{to{stroke-dashoffset:0;}}
+.carve-svg.done{opacity:0;}
+.wipe{animation:wipe .9s cubic-bezier(.6,.05,.3,1) both;animation-delay:var(--d);}
+@keyframes wipe{from{clip-path:inset(0 100% 0 0);}}
+.assemble{animation:assemble .7s cubic-bezier(.2,.9,.3,1.15) both;animation-delay:var(--d);}
+@keyframes assemble{from{opacity:0;transform:translate(var(--ax),var(--ay)) rotate(var(--ar)) scale(.5);}}
 .w{position:relative;display:inline-block;}
 .w.writing>.wt{color:transparent;}
 .w>svg{position:absolute;left:0;top:0;overflow:visible;pointer-events:none;}
@@ -297,7 +319,7 @@ body.preintro .root{opacity:0;}
           <div class="vpill" data-v="last">Last only</div>
         </div>
       </div>
-      <div id="syl-wrap"><button class="vpill" id="syl-btn" aria-pressed="false">2-syllable rhymes</button></div>
+      <div id="syl-wrap"><button class="vpill" id="syl-main" aria-pressed="false">2 syllable</button></div>
     </div>
     <div class="beat-labels">
       <div class="beat-lbl">BEAT 1</div><div class="beat-lbl">BEAT 2</div><div class="beat-lbl">BEAT 3</div><div class="beat-lbl">BEAT 4</div>
@@ -356,7 +378,10 @@ body.preintro .root{opacity:0;}
   <header class="topbar rise" style="--d:0"><span class="brand">freestyle<span class="tld">.wtf</span></span></header>
   <div class="perf-hdr rise" style="--d:1">
     <div class="pname" id="p-beat-name">--</div>
-    <button class="stop-btn" id="stop-btn" onclick="stopPerf()">&#9632; STOP</button>
+    <div class="perf-actions">
+      <button class="stop-btn" id="pause-btn" onclick="togglePause()">&#10074;&#10074; PAUSE</button>
+      <button class="stop-btn" id="stop-btn" onclick="stopPerf()">&#9632; STOP</button>
+    </div>
   </div>
   <div class="bars-scroll rise" style="--d:2" id="bars-scroll"></div>
 </div>
@@ -367,7 +392,6 @@ body.preintro .root{opacity:0;}
       <button class="back" id="build-back" title="Back (Esc)" aria-label="Back">&#8592;</button>
       <div><div class="beyebrow">RHYME BUILDER</div><div class="btitle">Build your scheme</div></div>
     </div>
-    <div class="bhint rise" style="--d:1" id="build-hint"></div>
     <div class="rise" style="--d:2">
       <div class="bgrid-wrap">
         <div></div>
@@ -379,7 +403,7 @@ body.preintro .root{opacity:0;}
     <div class="groups rise" style="--d:3" id="build-groups"></div>
     <div class="bactions rise" style="--d:4">
       <button class="btn" id="new-rhyme-btn">+ Create new rhyme</button>
-      <button class="btn toggle" id="syl-btn" aria-pressed="false" title="Switch the selected rhyme between 1-syllable and 2-syllable words">2-syllable rhyme: Off</button>
+      <button class="btn toggle" id="syl-btn" aria-pressed="false" title="Use 2-syllable words for the selected rhyme">2 syllable</button>
       <button class="btn" id="clear-btn">Clear all</button>
     </div>
     <div class="bfoot rise" style="--d:5">
@@ -1941,11 +1965,15 @@ const BANK2=[
 const GROUP_COLORS=["#1ed760","#ffa42b","#539df5","#f3727f","#b49bc8","#ffffff"];
 function gColor(g){return GROUP_COLORS[g%GROUP_COLORS.length];}
 function gLetter(g){return String.fromCharCode(65+g);}
-// Preset schemes, one letter per bar of the 4-bar grid: same letter = same rhyme, UPPERCASE = the word is shown,
-// lowercase = its box keeps the outline but hides the word, _ = no rhyme in that bar. "_A_A_B_B" is written over
-// 8 bars; the grid repeats every 4 bars with fresh words, so it is "_A_A" on the grid.
-const SCHEMES={AABB:"AABB",AAAA:"AAAA",ABAB:"ABAB",AA_A:"AA_A",A_A_:"A_A_",aAaA:"aAaA",aAbB:"aAbB",aBaB:"aBaB",aA_A:"aA_A",_AaA:"_AaA",_A_A_B_B:"_A_A"};
-const schemeFixesVis=k=>/[a-z]/.test(SCHEMES[k]);   // lowercase letters set the visibility themselves
+// Preset schemes. Column schemes: one letter per bar, same letter = same rhyme, _ = no rhyme; the rhyme column can be
+// dragged to any beat. Two-beat schemes: per bar, the beat-2 letter then the beat-4 letter (lowercase = beat 2,
+// UPPERCASE = beat 4), written for 2 bars; bars 3-4 repeat the pattern with fresh rhymes. Fixed on beats 2 and 4.
+// Only the first four show until "more" is pressed.
+const SCHEMES={AABB:"AABB",AAAA:"AAAA",ABAB:"ABAB",AA_A:"AA_A",A_A_:"A_A_",aAaA:["aA","aA"],aAbB:["aA","bB"],aBaB:["aB","aB"],aA_A:["aA","_A"],_AaA:["_A","aA"]};
+const MAIN_SCHEMES=["AABB","AAAA","ABAB","AA_A"];
+const isColumnScheme=k=>typeof SCHEMES[k]==="string";
+const canDrag=()=>G.kind==="preset"&&MAIN_SCHEMES.includes(G.scheme);
+let MORE_OPEN=false;
 let G={kind:"preset",scheme:"AABB",vis:"all",multi:false,rhymeCol:3,custom:null,running:false,curGlobalBeat:-1};
 try{G.multi=localStorage.getItem("fs-syl")==="2";}catch(e){}
 let SAVED=[];
@@ -1954,14 +1982,20 @@ function persistSaved(){try{localStorage.setItem("fs-schemes",JSON.stringify(SAV
 function clone(o){return JSON.parse(JSON.stringify(o));}
 
 function presetGroups(){
-  const pat=SCHEMES[G.scheme],fixed=schemeFixesVis(G.scheme),groups=new Map();
-  [...pat].forEach((ch,r)=>{
-    if(ch==="_") return;
-    const k=ch.toUpperCase();if(!groups.has(k)) groups.set(k,[]);
-    groups.get(k).push({r,upper:ch!==ch.toLowerCase()});
-  });
-  return [...groups.values()].map(rows=>({...(G.multi?{multi:true}:{}),cells:rows.map((x,i)=>({r:x.r,c:G.rhymeCol,
-    show:fixed?x.upper:G.vis==="all"||(G.vis==="first"?i===0:i===rows.length-1)}))}));
+  const pat=SCHEMES[G.scheme],groups=new Map();
+  const add=(key,r,c)=>{if(!groups.has(key)) groups.set(key,[]);groups.get(key).push({r,c});};
+  if(isColumnScheme(G.scheme)){
+    const c=canDrag()?G.rhymeCol:3;
+    [...pat].forEach((ch,r)=>{if(ch!=="_") add(ch,r,c);});
+  }else{
+    for(let r=0;r<4;r++){
+      const pair=pat[r%2],block=r<2?"":"'";   // bars 3-4: same shape, new rhymes
+      [...pair].forEach((ch,i)=>{if(ch!=="_") add(ch.toUpperCase()+block,r,i?3:1);});
+    }
+  }
+  // "Show words": all, or only the first / last box of each rhyme group (reading order)
+  return [...groups.values()].map(cells=>({...(G.multi?{multi:true}:{}),cells:cells.map((x,i)=>({r:x.r,c:x.c,
+    show:G.vis==="all"||(G.vis==="first"?i===0:i===cells.length-1)}))}));
 }
 function activeGroups(){return G.kind==="custom"?G.custom.groups:presetGroups();}
 function schemeName(){return G.kind==="custom"?G.custom.name:G.scheme;}
@@ -1990,21 +2024,27 @@ function wordFor(info,block,ng){
 
 function renderSetup(){
   let h="";
-  for(const s of Object.keys(SCHEMES)) h+='<div class="spill'+(G.kind==="preset"&&G.scheme===s?" sel":"")+'" data-s="'+s+'">'+s+'</div>';
+  const chip=(s,extra)=>'<div class="spill'+(extra?" xtra":"")+(G.kind==="preset"&&G.scheme===s?" sel":"")+'" data-s="'+s+'">'+s+'</div>';
+  for(const s of MAIN_SCHEMES) h+=chip(s,false);
+  if(MORE_OPEN){for(const s of Object.keys(SCHEMES)) if(!MAIN_SCHEMES.includes(s)) h+=chip(s,true);h+='<div class="spill more" data-more="0" title="Fewer schemes">&lt;</div>';}
+  else{
+    if(G.kind==="preset"&&!MAIN_SCHEMES.includes(G.scheme)) h+=chip(G.scheme,true);   // keep the picked extra in view
+    h+='<div class="spill more" data-more="1" title="More schemes">more</div>';
+  }
   for(const s of SAVED) h+='<div class="spill'+(G.kind==="custom"&&G.custom.id===s.id?" sel":"")+'" data-saved="'+s.id+'">'+esc(s.name)+'<span class="x" data-delsaved="'+s.id+'" title="Delete saved scheme">&#10005;</span></div>';
   if(G.kind==="custom"&&!G.custom.id) h+='<div class="spill sel">'+esc(G.custom.name)+'</div>';
   document.getElementById("scheme-pills").innerHTML=h;
   const preset=G.kind==="preset";
-  document.getElementById("vis-wrap").style.display=preset&&!schemeFixesVis(G.scheme)?"":"none";
+  document.getElementById("vis-wrap").style.display=preset?"":"none";
   document.getElementById("syl-wrap").style.display=preset?"":"none";   // custom schemes set syllables per rhyme in Build
-  const syl=document.getElementById("syl-btn");syl.classList.toggle("sel",G.multi);syl.setAttribute("aria-pressed",String(G.multi));
+  const syl=document.getElementById("syl-main");syl.classList.toggle("sel",G.multi);syl.setAttribute("aria-pressed",String(G.multi));
   document.querySelectorAll("#vis-pills .vpill").forEach(p=>p.classList.toggle("sel",p.dataset.v===G.vis));
   buildSetupGrid();
 }
 function buildSetupGrid(){
   const grid=document.getElementById("setup-grid"),wrap=document.getElementById("grid-wrap");
   grid.innerHTML="";wrap.querySelector(".rhyme-col")?.remove();
-  const groups=activeGroups(),m=cellMap(groups),preset=G.kind==="preset";
+  const groups=activeGroups(),m=cellMap(groups),layer=canDrag();
   const box=cls=>{const d=document.createElement("div");d.className=cls;return d;};
   const rhymeCell=info=>{
     const cell=box("gcell rc"+(info.show?"":" hid"));cell.style.setProperty("--gc",gColor(info.g));
@@ -2012,11 +2052,11 @@ function buildSetupGrid(){
     wt.className="word-text"+(info.show?"":" hidden-word")+(w.length>7?" long":"");wt.textContent=w;cell.appendChild(wt);
     return cell;
   };
-  // presets draw only empty boxes here; their rhyme column is a separate layer on top (it can be dragged)
-  for(let r=0;r<4;r++)for(let c=0;c<4;c++){const info=preset?null:m.get(r*4+c);grid.appendChild(info?rhymeCell(info):box("gcell"));}
+  // draggable schemes draw only empty boxes here; their rhyme column is a separate layer on top
+  for(let r=0;r<4;r++)for(let c=0;c<4;c++){const info=layer?null:m.get(r*4+c);grid.appendChild(info?rhymeCell(info):box("gcell"));}
   const hint=document.getElementById("col-hint");
-  hint.hidden=!preset;document.getElementById("grid-panel").classList.toggle("has-hint",preset);
-  if(!preset) return;
+  hint.hidden=!layer;hint.classList.remove("away");document.getElementById("grid-panel").classList.toggle("has-hint",layer);
+  if(!layer) return;
   const col=box("rhyme-col");col.style.setProperty("--col",G.rhymeCol);
   for(let r=0;r<4;r++){const info=m.get(r*4+G.rhymeCol);col.appendChild(info?rhymeCell(info):box("gcell slot"));}
   wrap.appendChild(col);
@@ -2029,47 +2069,52 @@ function placeHint(){
   if(!col||hint.hidden) return;
   hint.style.left=(wrap.offsetLeft+col.offsetLeft+col.offsetWidth/2)+"px";
 }
-// Dragging the rhyme column: it follows the pointer through magnetic detents (sticky near each column, quick to jump
-// across the gap to the next, with rubbery resistance past the ends), leans with its speed, and on release a spring
-// settles it into the nearest column. The empty boxes underneath stay put; the column it is heading for lights up.
+// Dragging the rhyme column. It glides after the pointer through magnetic detents (it holds near each column, then
+// slides quickly across the gap to the next) with resistance past the ends, and on release eases into the nearest
+// column: no lean, no wobble, no overshoot. One animation loop and one state per column, so grabbing it again before
+// it has settled carries on from where it is instead of starting a second, competing animation.
 function setupDrag(col){
   const hint=document.getElementById("col-hint"),grid=document.getElementById("setup-grid");
-  col.addEventListener("pointerdown",e=>{
-    if(e.button>0) return;
-    e.preventDefault();
-    const pitch=grid.children[1].offsetLeft-grid.children[0].offsetLeft,c0=G.rhymeCol,x0=e.clientX;
-    let x=0,v=0,target=0,dragging=true,near=c0,dest=c0;
-    col.classList.add("dragging");hint.classList.add("away");
-    const detent=raw=>{
-      const lo=-c0*pitch,hi=(3-c0)*pitch;
-      if(raw<lo) return lo+(raw-lo)*0.22;
-      if(raw>hi) return hi+(raw-hi)*0.22;
-      const n=Math.round(raw/pitch),d=raw-n*pitch,h=pitch/2;
-      return n*pitch+Math.sign(d)*h*Math.pow(Math.abs(d)/h,2.4);   // flat near a column (magnet), steep between two
-    };
-    const light=t=>[...grid.children].forEach((g,i)=>g.classList.toggle("target",t!==c0&&i%4===t));
-    const frame=()=>{
-      const k=dragging?0.2:0.15,damp=dragging?0.64:0.76;   // spring: snappy while held, a soft overshoot on release
-      v=(v+(target-x)*k)*damp;x+=v;
-      const lean=Math.max(-5,Math.min(5,v*0.5));
-      col.style.transform="translateX("+x.toFixed(2)+"px) rotate("+lean.toFixed(2)+"deg) scale("+(dragging?1.035:1)+")";
-      const now=Math.max(0,Math.min(3,c0+Math.round(x/pitch)));
-      if(dragging&&now!==near){near=now;light(now);try{navigator.vibrate&&navigator.vibrate(6);}catch(err){}}
-      if(!dragging&&Math.abs(v)<0.04&&Math.abs(target-x)<0.3){land();return;}
-      requestAnimationFrame(frame);
-    };
-    const move=ev=>{target=detent(ev.clientX-x0);};
-    const up=()=>{
-      document.removeEventListener("pointermove",move);document.removeEventListener("pointerup",up);document.removeEventListener("pointercancel",up);
-      dragging=false;col.classList.remove("dragging");light(-1);
-      dest=Math.max(0,Math.min(3,c0+Math.round(x/pitch)));target=(dest-c0)*pitch;
-    };
-    const land=()=>{
-      G.rhymeCol=dest;col.style.transform="";col.style.setProperty("--col",dest);
+  const st={base:G.rhymeCol,x:0,target:0,dragging:false,raf:0,x0:0,grab:0,last:0};
+  const pitch=()=>grid.children[1].offsetLeft-grid.children[0].offsetLeft;
+  const detent=raw=>{
+    const p=pitch(),lo=-st.base*p,hi=(3-st.base)*p;
+    if(raw<lo) return lo+(raw-lo)*0.2;
+    if(raw>hi) return hi+(raw-hi)*0.2;
+    const n=Math.round(raw/p),d=raw-n*p,h=p/2;
+    return n*p+Math.sign(d)*h*Math.pow(Math.abs(d)/h,2.2);
+  };
+  const nearest=()=>Math.max(0,Math.min(3,st.base+Math.round(st.x/pitch())));
+  const light=t=>[...grid.children].forEach((g,i)=>g.classList.toggle("target",st.dragging&&t!==st.base&&i%4===t));
+  const frame=now=>{
+    const dt=Math.min(50,now-(st.last||now)||16.7);st.last=now;
+    const ease=1-Math.pow(1-(st.dragging?0.32:0.2),dt/16.7);   // exponential glide: smooth, never overshoots
+    st.x+=(st.target-st.x)*ease;
+    col.style.transform="translateX("+st.x.toFixed(2)+"px)";
+    if(st.dragging) light(nearest());
+    if(!st.dragging&&Math.abs(st.target-st.x)<0.35){   // settled: make the new column the layout position
+      const dest=nearest();
+      st.raf=0;st.last=0;st.x=0;st.target=0;st.base=dest;G.rhymeCol=dest;
+      col.style.transform="";col.style.setProperty("--col",dest);
       placeHint();hint.classList.remove("away");
-    };
+      return;
+    }
+    st.raf=requestAnimationFrame(frame);
+  };
+  const run=()=>{if(!st.raf) st.raf=requestAnimationFrame(frame);};
+  const move=e=>{st.target=detent(st.grab+e.clientX-st.x0);};
+  const up=()=>{
+    document.removeEventListener("pointermove",move);document.removeEventListener("pointerup",up);document.removeEventListener("pointercancel",up);
+    st.dragging=false;col.classList.remove("dragging");light(-1);
+    st.target=(nearest()-st.base)*pitch();run();
+  };
+  col.addEventListener("pointerdown",e=>{
+    if(e.button>0||st.dragging) return;
+    e.preventDefault();
+    st.dragging=true;st.x0=e.clientX;st.grab=st.x;st.target=st.x;
+    col.classList.add("dragging");hint.classList.add("away");
     document.addEventListener("pointermove",move);document.addEventListener("pointerup",up);document.addEventListener("pointercancel",up);
-    requestAnimationFrame(frame);
+    run();
   });
 }
 
@@ -2082,11 +2127,28 @@ document.getElementById("scheme-pills").addEventListener("click",e=>{
     renderSetup();return;
   }
   const el=e.target.closest(".spill");if(!el)return;
+  if(el.dataset.more){toggleMore(el.dataset.more==="1");return;}
   if(el.dataset.s){G.kind="preset";G.scheme=el.dataset.s;}
   else if(el.dataset.saved){const s=SAVED.find(x=>x.id===el.dataset.saved);if(s){G.kind="custom";G.custom=clone(s);}}
   renderSetup();
 });
-document.getElementById("syl-btn").addEventListener("click",()=>{
+// "more" reveals the other schemes and "<" folds them away: the chip row's height glides to its new size while the
+// extra chips pop in (or out) one after another.
+function toggleMore(open){
+  const box=document.getElementById("scheme-pills");
+  if(box.classList.contains("sizing")) return;
+  const resize=()=>{
+    const h0=box.offsetHeight;
+    MORE_OPEN=open;renderSetup();
+    const h1=box.offsetHeight;
+    box.style.height=h0+"px";box.classList.add("sizing");void box.offsetHeight;box.style.height=h1+"px";
+    if(open) box.querySelectorAll(".xtra").forEach((c,i)=>{c.style.animationDelay=(i*45)+"ms";c.classList.add("pop-in");});
+    setTimeout(()=>{box.classList.remove("sizing");box.style.height="";box.querySelectorAll(".pop-in").forEach(c=>{c.classList.remove("pop-in");c.style.animationDelay="";});},520);
+  };
+  if(open) resize();
+  else{box.querySelectorAll(".xtra:not(.sel)").forEach(c=>c.classList.add("pop-out"));setTimeout(resize,190);}
+}
+document.getElementById("syl-main").addEventListener("click",()=>{
   G.multi=!G.multi;try{localStorage.setItem("fs-syl",G.multi?"2":"1");}catch(err){}
   renderSetup();
 });
@@ -2150,12 +2212,9 @@ function renderBuilder(bumpKey){
     return '<div class="gchip'+(g===B.active?" act":"")+'" data-g="'+g+'" style="--gc:'+gColor(g)+'" role="button" tabindex="0" aria-pressed="'+(g===B.active)+'"><span class="gdot"></span>Rhyme '+gLetter(g)+(gr.multi?' <span class="gsyl">2 SYL</span>':'')+' <span class="gmeta">'+meta+'</span><button class="gx" data-gdel="'+g+'" title="Delete rhyme '+gLetter(g)+'" aria-label="Delete rhyme '+gLetter(g)+'">&#10005;</button></div>';
   }).join("");
   const act=B.groups[B.active],any=B.groups.some(g=>g.cells.length);
-  document.getElementById("build-hint").innerHTML=act.cells.length
-    ?"Adding to <b>Rhyme "+L+"</b>. Tap more boxes to add beats. Tap a shown word to hide it, tap a hidden one to remove it."
-    :"Tap the boxes where <b>Rhyme "+L+"</b> should land. Each row is a bar, each column a beat. The pattern repeats every 4 bars.";
   document.getElementById("new-rhyme-btn").disabled=!act.cells.length;
   const syl=document.getElementById("syl-btn");
-  syl.setAttribute("aria-pressed",String(!!act.multi));syl.textContent="Rhyme "+L+" 2-syllable: "+(act.multi?"On":"Off");
+  syl.setAttribute("aria-pressed",String(!!act.multi));syl.title="Use 2-syllable words for Rhyme "+L;
   document.getElementById("clear-btn").disabled=!any;
   document.getElementById("confirm-btn").disabled=!any;
   document.getElementById("save-scheme-btn").disabled=!any;
@@ -2172,6 +2231,10 @@ document.addEventListener("keydown",e=>{
   if(e.key!=="Escape") return;
   if(buildEl.classList.contains("open")) closeBuilder();
   else if(document.getElementById("perf-screen").classList.contains("open")) stopPerf();
+});
+document.addEventListener("keydown",e=>{
+  if(e.code!=="Space"||(e.target instanceof Element&&e.target.closest("button,input"))) return;   // a focused button handles Space itself
+  if(G.running&&document.getElementById("perf-screen").classList.contains("open")){e.preventDefault();togglePause();}
 });
 document.getElementById("build-grid").addEventListener("click",e=>{
   const cell=e.target.closest(".bcell");if(!cell)return;
@@ -2321,6 +2384,7 @@ async function startPerf(){
   if(previewing){previewing=false;stopPlayer();resetDots();}
   document.getElementById("p-beat-name").textContent=it.name.length>22?it.name.slice(0,21)+"…":it.name;
   document.getElementById("stop-btn").innerHTML="&#9632; STOP";
+  setPaused(false);document.getElementById("pause-btn").disabled=false;
   rerollWords();
   build32Bars();
   // the session opens like the rhyme builder: a circle growing out of the START SESSION button
@@ -2340,6 +2404,7 @@ function handleBeat(globalBeat){
   if(globalBeat>=totalCells){
     stopPlayer();
     document.getElementById("stop-btn").innerHTML="&#8592; BACK";   // 32 bars done
+    document.getElementById("pause-btn").disabled=true;
     return;
   }
   const bar=Math.floor(globalBeat/4),beat=globalBeat%4;
@@ -2362,10 +2427,21 @@ function handleBeat(globalBeat){
       if(bR.bottom>sR.bottom-40||bR.top<sR.top+10) block.scrollIntoView({behavior:"smooth",block:"nearest"});}
   }
 }
+// Pause suspends the audio context: the beat, the clicks and the clock (beats are read from AudioContext.currentTime)
+// all stop together, so resuming carries on exactly in time. Space toggles it during a session.
+let PAUSED=false;
+function setPaused(on){
+  PAUSED=on;
+  if(AC) (on?AC.suspend():AC.resume()).catch(()=>{});
+  const b=document.getElementById("pause-btn");b.innerHTML=on?"&#9654; RESUME":"&#10074;&#10074; PAUSE";b.classList.toggle("on",on);
+  document.getElementById("perf-screen").classList.toggle("paused",on);
+}
+function togglePause(){if(G.running) setPaused(!PAUSED);}
 function stopPerf(){
+  if(PAUSED) setPaused(false);
   stopPlayer();G.running=false;
-  // and closes back into the button
-  const ps=document.getElementById("perf-screen"),r=document.getElementById("play-btn").getBoundingClientRect();
+  // the session bubble collapses back into the STOP button
+  const ps=document.getElementById("perf-screen"),r=document.getElementById("stop-btn").getBoundingClientRect();
   ps.style.setProperty("--ox",(r.left+r.width/2)+"px");ps.style.setProperty("--oy",(r.top+r.height/2)+"px");
   ps.classList.remove("open");ps.setAttribute("aria-hidden","true");
   document.getElementById("root").classList.remove("sessioning");document.body.classList.remove("lock");
@@ -2373,15 +2449,35 @@ function stopPerf(){
 }
 document.getElementById("play-btn").addEventListener("click",startPerf);
 
-/* ================= INTRO: EVERYTHING GROWS IN, TEXT WRITES ITSELF IN ================= */
-// On every load the page grows into place: each element scales up out of a blur, staggered from the top left, while
-// all of its text is written in letter by letter (the football explainer's writing: an SVG copy of each word laid over
-// it, each letter's outline stroked on and then inked in; words start 1/60 s apart, letters 14 ms apart).
+/* ================= INTRO: CARVED OUT, ASSEMBLED, TEXT WRITTEN IN ================= */
+// On every load the page is carved out: each container and button has its outline drawn on and is then filled in, the
+// small pieces (beat dots, the checkbox, the drag arrows) fly in and lock into place, the waveform is wiped on, and all
+// text is written in letter by letter (the football explainer's writing: an SVG copy of each word laid over it, each
+// letter's outline stroked on and then inked in; words start 1/60 s apart, letters 14 ms apart). Staggered from the
+// top left; anything inside a container starts once that container's outline is under way.
 let INTRO=false,INTRO_PENDING=false;
 const SVGNS="http://www.w3.org/2000/svg";
-const GROW_SEL=".topbar .brand,.panel,.panel-hdr>*,.lbl,.spill,.vpill,.beat-lbl,.gcell,.drop,.tab,.lhdr,.lrow,.lempty,.detail .drow,.gv,.play-btn";
+const CARVE_SEL=".panel,.drop,.gcell,.btn,.spill,.vpill,.tab,.play-btn,.lrow.sel,.col-hint";
+const ASSEMBLE_SEL=".dot,.chk input,.col-hint .ar";
 const TEXT_SEL=".topbar .brand,.panel-title,.lbl,.spill,.vpill,.beat-lbl,.word-text,.col-hint,.btn,.tab,.lhdr,.lname,.lmeta,.lempty,.dlbl,.bpmv,.muted,.chk,.play-btn";
-function growDelay(el,y0){const r=el.getBoundingClientRect();return Math.min(1500,Math.round(60+(r.top-y0)*0.55+r.left*0.12));}
+function introDelay(el,y0){const r=el.getBoundingClientRect();return Math.min(1300,Math.round(40+(r.top-y0)*0.45+r.left*0.1));}
+// draw a rounded-rect outline over el (its own border box) and return the overlay
+function carveOutline(el,d){
+  const cs=getComputedStyle(el),w=el.offsetWidth,h=el.offsetHeight;if(!w||!h) return null;
+  if(cs.position==="static"){el.style.position="relative";el.dataset.carvePos="1";}
+  const bl=parseFloat(cs.borderLeftWidth)||0,bt=parseFloat(cs.borderTopWidth)||0;
+  const r=Math.min(parseFloat(cs.borderTopLeftRadius)||0,h/2,w/2);
+  // outline colour: green for green buttons, else the element's own border colour, else a soft white
+  const bg=cs.backgroundColor,bc=cs.borderTopColor;
+  const stroke=/30, 215, 96|29, 185, 84/.test(bg)?"#1ed760":(bt>0&&!/rgba\(\d+, \d+, \d+, 0\)/.test(bc)?bc:"rgba(255,255,255,.32)");
+  const g=document.createElementNS(SVGNS,"svg");g.setAttribute("class","carve-svg");g.setAttribute("width",w);g.setAttribute("height",h);
+  g.style.left=-bl+"px";g.style.top=-bt+"px";g.setAttribute("aria-hidden","true");
+  const rect=document.createElementNS(SVGNS,"rect");
+  rect.setAttribute("x",.75);rect.setAttribute("y",.75);rect.setAttribute("width",Math.max(0,w-1.5));rect.setAttribute("height",Math.max(0,h-1.5));rect.setAttribute("rx",Math.max(0,r-.75));
+  rect.style.stroke=stroke;rect.style.setProperty("--len",Math.ceil(2*(w+h)-(8-2*Math.PI)*r)+2);rect.style.setProperty("--d",d+"ms");
+  g.append(rect);el.append(g);
+  return g;
+}
 // wrap every word of el's text in <span class="w"><span class="wt">word</span></span>
 function wrapWords(el){
   const walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT),nodes=[];
@@ -2424,27 +2520,47 @@ async function runIntro(){
   INTRO=true;
   const scope=[document.querySelector("#root > .topbar"),document.getElementById("setup-screen")];
   const vis=el=>el.offsetParent!==null||getComputedStyle(el).position==="fixed";
-  const grows=scope.flatMap(r=>[...r.querySelectorAll(GROW_SEL)]).concat(scope[0].matches(GROW_SEL)?[scope[0]]:[]).filter(vis);
-  const y0=Math.min(...grows.map(e=>e.getBoundingClientRect().top));
-  const delays=new Map(grows.map(e=>[e,growDelay(e,y0)]));
-  // measure and lay out the writing first, while nothing is scaled yet
+  const all=sel=>scope.flatMap(r=>[...r.querySelectorAll(sel)]).filter(vis);
+  const carves=all(CARVE_SEL);
+  const y0=Math.min(...scope.map(r=>r.getBoundingClientRect().top));
+  // each container starts no earlier than 180 ms after the container around it
+  const delays=new Map();
+  for(const el of carves){
+    let d=introDelay(el,y0);
+    const host=el.parentElement.closest(CARVE_SEL);if(host&&delays.has(host)) d=Math.max(d,delays.get(host)+180);
+    delays.set(el,d);
+  }
+  const hostDelay=el=>{const h=el.closest(CARVE_SEL);return h&&delays.has(h)?delays.get(h):introDelay(el,y0);};
   let end=0;
-  const texts=scope.flatMap(r=>[...r.querySelectorAll(TEXT_SEL)]).filter(vis).filter(el=>!el.parentElement.closest(TEXT_SEL));
+  // writing first (it measures the words), then outlines, assembly and the waveform wipe
+  const texts=all(TEXT_SEL).filter(el=>!el.parentElement.closest(TEXT_SEL));
   for(const el of texts){
-    const start=(delays.get(el)??growDelay(el,y0))+160;
+    const start=hostDelay(el)+260;
     wrapWords(el).forEach((w,i)=>{end=Math.max(end,writeWord(w,start+Math.round(i*1000/60)));});
   }
+  const svgs=[];
   for(const [el,d] of delays){
-    el.style.setProperty("--gd",d+"ms");el.classList.add("grow");
-    el.addEventListener("animationend",function f(e){if(e.target!==el)return;el.classList.remove("grow");el.style.removeProperty("--gd");el.removeEventListener("animationend",f);});
-    end=Math.max(end,d+950);
+    el.classList.add("carving","carved");
+    const g=carveOutline(el,d);if(g) svgs.push(g);
+    setTimeout(()=>el.classList.remove("carving"),d+700);   // the outline is drawn: fill it in
+    if(g) setTimeout(()=>g.classList.add("done"),d+1050);   // then let the drawn line fade into the real border
+    end=Math.max(end,d+1150);
   }
+  const rnd=(a,b)=>(a+Math.random()*(b-a)).toFixed(1);
+  for(const el of all(ASSEMBLE_SEL)){
+    const d=hostDelay(el)+300;
+    el.style.setProperty("--d",d+"ms");el.style.setProperty("--ax",rnd(-18,18)+"px");el.style.setProperty("--ay",rnd(-14,14)+"px");el.style.setProperty("--ar",rnd(-25,25)+"deg");
+    el.classList.add("assemble");end=Math.max(end,d+700);
+  }
+  for(const el of all(".gv")){const d=hostDelay(el)+200;el.style.setProperty("--d",d+"ms");el.classList.add("wipe");end=Math.max(end,d+900);}
   document.body.classList.remove("preintro");
-  // hand back to plain text once everything is inked (letters take ~0.6 s after their delay)
+  // hand everything back to plain markup once it is all drawn, filled and inked
   setTimeout(()=>{
     document.querySelectorAll(".w").forEach(w=>w.replaceWith(w.firstChild.textContent));
-    // in case animationend never fired (a background tab doesn't run animations), drop the grow class so hovers work
-    document.querySelectorAll(".grow").forEach(el=>{el.classList.remove("grow");el.style.removeProperty("--gd");});
+    svgs.forEach(g=>g.remove());
+    document.querySelectorAll("[data-carve-pos]").forEach(el=>{el.style.position="";delete el.dataset.carvePos;});
+    document.querySelectorAll(".carving,.carved").forEach(el=>el.classList.remove("carving","carved"));
+    document.querySelectorAll(".assemble,.wipe").forEach(el=>{el.classList.remove("assemble","wipe");["--d","--ax","--ay","--ar"].forEach(v=>el.style.removeProperty(v));});
     done();
   },end+700);
 }
