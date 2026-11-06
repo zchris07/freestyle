@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Freestyle Rhyme Trainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap">
 <meta name="description" content="Practice freestyle rap: pick a rhyme scheme, upload a beat, and spit 32 bars with rhyme words landing on the beat. Beat detection runs in your browser.">
 <meta property="og:title" content="Freestyle Rhyme Trainer">
 <meta property="og:description" content="Pick a rhyme scheme, upload a beat, and spit 32 bars with rhyme words landing on the beat.">
@@ -20,7 +23,7 @@
   --ease:cubic-bezier(.77,0,.18,1);
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--base);font-family:Georgia,'Times New Roman',serif;color:var(--text);}
+body{background:var(--base);font-family:"Fraunces",Georgia,'Times New Roman',serif;font-optical-sizing:auto;color:var(--text);}
 body.lock{overflow:hidden;}
 button,input{font-family:inherit;}
 button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--green);outline-offset:2px;}
@@ -163,6 +166,7 @@ canvas.gv{width:100%;height:78px;background:var(--bg);border:1px solid var(--bor
 .word-text.long,.bcell .bw.long{font-size:13px;}
 .gsyl{font-size:10px;letter-spacing:.06em;color:var(--on-accent);background:var(--gc);border-radius:500px;padding:1px 6px;}
 .btn.toggle[aria-pressed="true"]{border-color:var(--ac);color:var(--ac);}
+.btn.feel[aria-pressed="true"]{border-color:var(--green);color:var(--green);}
 .bcell .bstate{font-size:9px;color:var(--muted);letter-spacing:.08em;margin-top:3px;}
 .bcell.bump{animation:bump .25s ease;}
 @keyframes bump{50%{transform:scale(.93);}}
@@ -236,6 +240,12 @@ canvas.gv{width:100%;height:78px;background:var(--bg);border:1px solid var(--bor
         <button class="btn" data-act="bpm+">+</button>
         <button class="btn" data-act="dbl" title="Double the tempo (fixes half-time detection)">2&times;</button>
         <span class="muted">BPM</span>
+      </div>
+      <div class="drow" id="row-feel">
+        <span class="dlbl">FEEL</span>
+        <button class="btn feel" data-act="feel-trap" id="feel-trap" aria-pressed="false" title="Half-time: a click on every quarter note, snare on beat 3">Trap (snare on 3)</button>
+        <button class="btn feel" data-act="feel-boombap" id="feel-boombap" aria-pressed="false" title="Snare on beats 2 and 4">Boom bap (snare on 2 and 4)</button>
+        <span class="muted" id="feel-lbl"></span>
       </div>
       <div class="drow" id="row-offset">
         <span class="dlbl">DOWNBEAT</span>
@@ -443,7 +453,7 @@ function analyzeBuffer(buf){
       if(sc>fine.sc) fine={sc,bpm,ph:pp};
     }
   }
-  const item={sr,hop,fps,tOff:(N/2)/sr-DELTA,env:o,low:lowE,duration:buf.duration};
+  const item={sr,hop,fps,tOff:(N/2)/sr-DELTA,env:o,low:lowE,kick:lo,snr:mi,hat:hi,duration:buf.duration};
   item.bpm=Math.round(fine.bpm*100)/100;
   const q=pickDownbeat(o,lowE,fps,item.bpm,fine.ph);
   const spb=60/item.bpm;
@@ -467,6 +477,78 @@ function refit(item,bpm){
   const spb=60/bpm;
   item.bpm=Math.round(bpm*100)/100;
   item.fd=normFd(frameToTime(item,bp)+q*spb,spb);
+}
+
+/* ================= FEEL: TRAP (HALF-TIME) VS BOOM BAP ================= */
+// Both styles put a snare every 2 counts of SOME grid, so the tempo alone can't tell them apart:
+//   boom bap ~80-100 BPM: kick on 1 and 3, snare on 2 and 4, hi-hats in 8ths (or 16ths) of that beat.
+//   trap ~130-160 BPM, half-time: kick on 1, snare on 3, hi-hats in 16ths (plus rolls) of that beat.
+// A trap beat counted at half speed (e.g. 70 instead of 140) looks like a slow boom bap: snare on "2 and 4" of the
+// stretched grid. What gives it away is the hi-hats: at the half-speed grid they fill every 1/8 of a beat (they are
+// 16ths of the real tempo), while a boom bap's hats leave the in-between 1/8 slots empty.
+const FEEL_HAT_FILL=0.55;  // hats in the in-between 1/8-beat slots vs the on-grid 1/4 slots: above this = 16ths of double time
+const FEEL_SNARE24=1.15;   // snare on beats 2+4 vs 1+3 of the bar
+const FEEL_HAT8_MAX=0.3;   // hats on the off-beat 8ths vs on the beat: below this at a fast tempo = really half that tempo
+// strongest value of an envelope within +-w frames of time t (s)
+function envAt(it,arr,t,w){
+  const f=Math.round((t-it.tOff)*it.fps);let m=0;
+  for(let d=-w;d<=w;d++){const i=f+d;if(i>=0&&i<arr.length&&arr[i]>m)m=arr[i];}
+  return m;
+}
+// average kick / snare strength on each beat of the bar, and hi-hat strength at each 1/8 of a beat, for grid {bpm, fd}
+function grooveProfile(it,bpm,fd){
+  const spb=60/bpm,end=Math.min(it.duration,150)-spb;
+  const kick=[0,0,0,0],snr=[0,0,0,0],n=[0,0,0,0],hat=new Array(8).fill(0);
+  for(let k=Math.ceil((it.tOff+0.05-fd)/spb);fd+k*spb<end;k++){
+    const t=fd+k*spb,q=((k%4)+4)%4;
+    kick[q]+=envAt(it,it.kick,t,2);snr[q]+=envAt(it,it.snr,t,2);n[q]++;
+    for(let j=0;j<8;j++) hat[j]+=envAt(it,it.hat,t+j*spb/8,1);
+  }
+  for(let q=0;q<4;q++){kick[q]/=n[q]||1;snr[q]/=n[q]||1;}
+  const on=hat[0]+hat[2]+hat[4]+hat[6],off=hat[1]+hat[3]+hat[5]+hat[7];
+  return {kick,snr,
+    hatFill:on?off/on:0,                                       // ~1 = hats on every 1/8 beat, ~0 = only on 1/4s
+    hat8:hat[4]/(hat[0]||1e-6),                                // ~1 = hats on the off-beat 8ths too, ~0 = hats only on the beat
+    snare24:(snr[1]+snr[3])/((snr[0]+snr[2])||1e-6),           // >1 = snare on 2 and 4
+    snare3:snr[2]/(Math.max(snr[0],snr[1],snr[3])||1e-6)};     // >1 = snare on 3 only
+}
+// pick which beat is "1" for a half-time trap bar: kick on 1, snare on 3
+function trapDownbeat(it){
+  const spb=60/it.bpm,pr=grooveProfile(it,it.bpm,it.fd);
+  let bq=0,bs=-1e9;
+  for(let q=0;q<4;q++){const sc=pr.kick[q]+pr.snr[(q+2)%4]-0.5*pr.snr[q]-0.5*pr.kick[(q+2)%4];if(sc>bs){bs=sc;bq=q;}}
+  it.fd=normFd(it.fd+bq*spb,spb);
+}
+function setTempo(it,bpm){
+  if(it.kick) refit(it,bpm);
+  else{it.bpm=Math.round(bpm*100)/100;it.fd=normFd(it.fd,60/it.bpm);}
+}
+// After detection: spot trap counted at half speed, fix the tempo, and put the snare on 3. Sets it.feel.
+function checkFeel(it){
+  if(!it.kick||!it.hat) return;
+  let pr=grooveProfile(it,it.bpm,it.fd);
+  it.feelFix=null;
+  if(it.bpm<100&&it.bpm*2<=180&&pr.snare24>=FEEL_SNARE24&&pr.hatFill>=FEEL_HAT_FILL){
+    setTempo(it,it.bpm*2);it.feelFix="doubled";
+    pr=grooveProfile(it,it.bpm,it.fd);
+  }
+  // the opposite mistake: a slow boom bap counted at double speed has hats only on the beat and one snare per "bar"
+  else if(it.bpm>=120&&it.bpm/2>=60&&pr.hat8<FEEL_HAT8_MAX&&pr.snare3>=1.1&&pr.snare24<0.5){
+    setTempo(it,it.bpm/2);it.feelFix="halved";
+    pr=grooveProfile(it,it.bpm,it.fd);
+  }
+  if(it.bpm>=110){
+    trapDownbeat(it);pr=grooveProfile(it,it.bpm,it.fd);
+    it.feel=pr.snare3>=1.1?"trap":null;
+  }else it.feel=pr.snare24>=FEEL_SNARE24?"boombap":null;
+}
+// manual choice from the FEEL buttons
+function setFeel(it,feel){
+  if(feel==="trap"){
+    if(it.bpm<100) setTempo(it,Math.min(260,it.bpm*2));
+    if(it.kick) trapDownbeat(it);
+  }else if(it.bpm>=110) setTempo(it,Math.max(40,it.bpm/2));
+  it.feel=feel;it.feelFix="manual";
 }
 
 /* ================= BEAT THIS! (in-browser, ONNX) ================= */
@@ -661,7 +743,7 @@ async function dbAll(){const db=await openDB();return new Promise((res,rej)=>{co
 async function dbPut(rec){if(!dbOK)return;try{const db=await openDB();await new Promise((res,rej)=>{const tx=db.transaction("beats","readwrite");tx.objectStore("beats").put(rec);tx.oncomplete=res;tx.onerror=()=>rej(tx.error);});}catch(e){dbOK=false;renderNote();}}
 async function dbDel(id){if(!dbOK)return;try{const db=await openDB();await new Promise((res,rej)=>{const tx=db.transaction("beats","readwrite");tx.objectStore("beats").delete(id);tx.oncomplete=res;tx.onerror=()=>rej(tx.error);});}catch(e){}}
 function persist(it){
-  dbPut({id:it.id,name:it.name,blob:it.blob,duration:it.duration,bpm:it.bpm,fd:it.fd,sr:it.sr,hop:it.hop,fps:it.fps,tOff:it.tOff,env:it.env,low:it.low,added:it.added,engine:it.engine});
+  dbPut({id:it.id,name:it.name,blob:it.blob,duration:it.duration,bpm:it.bpm,fd:it.fd,sr:it.sr,hop:it.hop,fps:it.fps,tOff:it.tOff,env:it.env,low:it.low,kick:it.kick,snr:it.snr,hat:it.hat,feel:it.feel,feelFix:it.feelFix,added:it.added,engine:it.engine});
 }
 function renderNote(){
   document.getElementById("store-note").textContent=dbOK
@@ -678,6 +760,20 @@ async function loadLib(){
   try{const s=localStorage.getItem("fs-selected");if(s&&allItems().some(i=>i.id===s))SELECTED=s;}catch(e){}
   if(!SELECTED){const f=allItems()[0];SELECTED=f?f.id:null;}
   renderLib();
+  upgradeFeel();
+}
+// beats saved before the trap/boom bap check: measure their kick/snare/hat bands once (keeps the tempo grid), then check
+async function upgradeFeel(){
+  for(const it of LIB){
+    if(it.hat||!it.blob) continue;
+    try{
+      const a=analyzeBuffer(await ensureBuf(it));
+      Object.assign(it,{sr:a.sr,hop:a.hop,fps:a.fps,tOff:a.tOff,env:a.env,low:a.low,kick:a.kick,snr:a.snr,hat:a.hat});
+      if(!it.engine) it.engine="builtin";
+      checkFeel(it);persist(it);renderLib();
+    }catch(e){}
+    await new Promise(r=>setTimeout(r,30));
+  }
 }
 function allItems(){return LIB.concat(PRESETS);}
 function selItem(){return allItems().find(i=>i.id===SELECTED)||null;}
@@ -718,6 +814,7 @@ async function addFiles(files){
       await new Promise(r=>setTimeout(r,10));
       Object.assign(it,analyzeBuffer(buf));   // built-in detector: always runs, keeps envelopes for the tempo buttons
       await runBT(it,buf);
+      checkFeel(it);
       it.status="ready";
       persist(it);
       if(!SELECTED||SELECTED.startsWith("click-")) setSelected(it.id);
@@ -742,7 +839,7 @@ function renderLib(){
   if(LIB.length){
     h+='<div class="lhdr">YOUR BEATS</div>';
     for(const it of LIB){
-      const meta=it.status==="analyzing"?(it.prog||"analyzing..."):it.status==="error"?"error":Math.round(it.bpm*10)/10+" BPM · "+fmtDur(it.duration);
+      const meta=it.status==="analyzing"?(it.prog||"analyzing..."):it.status==="error"?"error":Math.round(it.bpm*10)/10+" BPM · "+(it.feel==="trap"?"trap · ":it.feel==="boombap"?"boom bap · ":"")+fmtDur(it.duration);
       h+='<div class="lrow'+(it.id===SELECTED?" sel":"")+'" data-id="'+it.id+'"><div class="lname">'+esc(it.name)+'</div><div class="lmeta">'+meta+'</div><button class="ldel" data-del="'+it.id+'" title="Remove">&#10005;</button></div>';
     }
   }
@@ -767,6 +864,12 @@ function renderDetail(){
   eng.parentElement.style.display=it.builtin?"none":"flex";
   document.getElementById("rebt-btn").style.display=it.engine==="beat-this"?"none":"inline-block";
   document.getElementById("row-offset").style.display=it.builtin?"none":"flex";
+  document.getElementById("row-feel").style.display=it.builtin?"none":"flex";
+  document.getElementById("feel-trap").setAttribute("aria-pressed",String(it.feel==="trap"));
+  document.getElementById("feel-boombap").setAttribute("aria-pressed",String(it.feel==="boombap"));
+  document.getElementById("feel-lbl").textContent=it.feelFix==="doubled"?"Read as trap: tempo doubled so the click lands on every quarter note"
+    :it.feelFix==="halved"?"Read as boom bap: tempo halved so the snare lands on 2 and 4"
+    :!it.feel&&!it.builtin?"Not sure. Pick one if the snare isn't where you expect.":"";
   document.getElementById("grid-cv").style.display=it.builtin?"none":"block";
   document.getElementById("grid-note").style.display=it.builtin?"none":"block";
   if(!it.builtin) drawGrid(it);
@@ -794,7 +897,7 @@ async function drawGrid(it){
     const x=(t-t0)/span*w,down=((k%4)+4)%4===0;
     g.fillStyle=down?"#1ed760":"rgba(255,255,255,.3)";
     g.fillRect(Math.round(x),0,down?3:1,h);
-    if(down){g.fillStyle="#ffffff";g.font="bold 11px Georgia";g.fillText(String(Math.floor(k/4)+1),x+5,12);}
+    if(down){g.fillStyle="#ffffff";g.font="bold 11px Fraunces, Georgia, serif";g.fillText(String(Math.floor(k/4)+1),x+5,12);}
   }
 }
 
@@ -1967,7 +2070,7 @@ document.getElementById("detail").addEventListener("click",e=>{
     if(previewing){previewing=false;stopPlayer();resetDots();}
     btFailed=null;it.status="analyzing";renderLib();
     (async()=>{
-      try{await runBT(it,await ensureBuf(it));persist(it);}catch(e){it.btErr=e.message;}
+      try{await runBT(it,await ensureBuf(it));checkFeel(it);persist(it);}catch(e){it.btErr=e.message;}
       it.status="ready";renderLib();
     })();
     return;
@@ -1980,6 +2083,8 @@ document.getElementById("detail").addEventListener("click",e=>{
     case "off-":it.fd=normFd(it.fd-0.01,60/it.bpm);break;
     case "off+":it.fd=normFd(it.fd+0.01,60/it.bpm);break;
     case "shift":it.fd=normFd(it.fd+60/it.bpm,60/it.bpm);break;
+    case "feel-trap":if(!it.builtin)setFeel(it,"trap");break;
+    case "feel-boombap":if(!it.builtin)setFeel(it,"boombap");break;
   }
   if(!it.builtin) persist(it);
   if(wasPreviewing){previewing=false;stopPlayer();resetDots();}

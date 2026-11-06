@@ -14,7 +14,7 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   screen `#191414` (Spotify brand black, its official playback-view fallback). Text `#ffffff` / secondary `#b3b3b3` /
   subdued `#7c7c7c`. Accent Spotify green `#1ed760` (hover `#1db954`) with black text on it; selected pills are green.
   Pill-shaped buttons (radius 500px). Warning `#ffa42b`, error `#f3727f`, toast blue `#539df5`.
-- Font: Georgia (serif fallback) for ALL text, including buttons and numbers. No icon fonts.
+- Font: Fraunces (Google Fonts, same as the "football explained." page), Georgia fallback, for ALL text incl. buttons, numbers and the grid canvas. No icon fonts.
 - Rhyme groups are colored, in order: green `#1ed760`, orange `#ffa42b`, blue `#539df5`, pink `#f3727f`, lavender
   `#b49bc8`, white. A rhyme cell has a 2px outline and word text in its group's color. Hidden words get a dashed
   outline and faded, struck-through text.
@@ -88,7 +88,7 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   the model's output is quantized to 20 ms. The item stores `engine: "beat-this" | "builtin"`.
 - Needs a normal web origin: `import()` of ORT from jsdelivr and `fetch("models/...")`. The Claude artifact's CSP
   blocks both, so there it silently falls back to the built-in detector (UI says so; "Re-analyze with Beat This!"
-  button appears for non-Beat-This items). Real use = GitHub Pages: https://zchris07.github.io/freestyle/ (when enabled).
+  button appears for non-Beat-This items). Real use = GitHub Pages: https://zchris07.github.io/freestyle/ and the custom domain https://freestyle.wtf (CNAME file in repo root; domain bought by Chris on Nov 6 2026).
 - Cost: ~16 s for a 40 s track on one wasm thread (GitHub Pages cannot send COOP/COEP headers, so no threads);
   150 s cap means up to ~1 min. Runs in an ORT worker (`env.wasm.proxy`), UI stays responsive, progress shown on the row.
 - Tested only on synthetic loops (92 BPM boom-bap-ish, 140 BPM trap-ish with a 6 s silent intro, 44.1 kHz stereo):
@@ -117,3 +117,14 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
 - Artifact constraints: external stylesheets/fetches are blocked by CSP, so keep everything inline
   and use text glyphs for icons. The page must work at phone width.
 - Commits end with: `Co-Authored-By: Claude <noreply@anthropic.com>`.
+
+## Feel check (trap vs boom bap)
+- analyzeBuffer keeps 3 onset bands per item: kick (<150 Hz), snr (150-3000 Hz), hat (3-8 kHz).
+- checkFeel(it) runs after every detection (built-in and Beat This!). grooveProfile() gives per-beat kick/snare
+  strength and hi-hat strength at each 1/8 of a beat.
+- Trap counted at half speed: bpm<100, snare on 2+4 (FEEL_SNARE24) and hats in the 1/8-beat gaps (FEEL_HAT_FILL,
+  i.e. 16ths of the real tempo) -> tempo doubled, then trapDownbeat() puts kick on 1 and snare on 3.
+- Boom bap counted at double speed: bpm>=120, hats only on the beat (FEEL_HAT8_MAX), one snare per bar -> halved.
+- Known gap: trap with only 8th-note hats looks identical to 16th-hat boom bap at half the tempo; the FEEL toggle
+  (Trap / Boom bap) in the detail panel fixes it by hand. Older saved beats get the bands via upgradeFeel() on load.
+- Tested on synthetic loops only (trap 140/150, boom bap 75/85/90/98); thresholds not yet tuned on real songs.
