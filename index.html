@@ -340,9 +340,11 @@ body.preintro .root{opacity:0;}
 .carving{background-color:transparent!important;border-color:transparent!important;box-shadow:none!important;}
 .carved{transition:background-color .45s ease,border-color .45s ease,box-shadow .45s ease!important;}
 .carve-svg{position:absolute;pointer-events:none;overflow:visible;transition:opacity .4s ease;z-index:1;}
-.carve-svg rect{fill:none;stroke-width:1.5;stroke-linecap:round;stroke-dasharray:var(--len) 100000;stroke-dashoffset:var(--len);
-  animation:carve-draw .75s cubic-bezier(.6,.05,.3,1) forwards;animation-delay:var(--d);}
-@keyframes carve-draw{to{stroke-dashoffset:0;}}
+/* each outline starts at a random point on its edge, goes clockwise or counter-clockwise, at its own speed: the
+   rect's perimeter is normalised to 100 (pathLength), the drawn dash grows from 0 to 100 starting at --off */
+.carve-svg rect{fill:none;stroke-width:1.5;stroke-linecap:butt;stroke-dasharray:0 100;stroke-dashoffset:var(--off);
+  animation:carve-draw var(--dur) cubic-bezier(.6,.05,.3,1) forwards;animation-delay:var(--d);}
+@keyframes carve-draw{to{stroke-dasharray:100 0;}}
 .carve-svg.done{opacity:0;}
 .wipe{animation:wipe .9s cubic-bezier(.6,.05,.3,1) both;animation-delay:var(--d);}
 @keyframes wipe{from{clip-path:inset(0 100% 0 0);}}
@@ -2639,7 +2641,11 @@ function carveOutline(el,d){
   g.style.left=-bl+"px";g.style.top=-bt+"px";g.setAttribute("aria-hidden","true");
   const rect=document.createElementNS(SVGNS,"rect");
   rect.setAttribute("x",.75);rect.setAttribute("y",.75);rect.setAttribute("width",Math.max(0,w-1.5));rect.setAttribute("height",Math.max(0,h-1.5));rect.setAttribute("rx",Math.max(0,r-.75));
-  rect.style.stroke=stroke;rect.style.setProperty("--len",Math.ceil(2*(w+h)-(8-2*Math.PI)*r)+2);rect.style.setProperty("--d",d+"ms");
+  const dur=Math.round(650+Math.random()*250);   // a slightly different speed per shape
+  rect.setAttribute("pathLength","100");
+  rect.style.stroke=stroke;rect.style.setProperty("--off",(-Math.random()*100).toFixed(2));rect.style.setProperty("--dur",dur+"ms");rect.style.setProperty("--d",d+"ms");
+  if(Math.random()<0.5) rect.setAttribute("transform","translate("+w+" 0) scale(-1 1)");   // mirrored: counter-clockwise
+  g.dataset.dur=dur;
   g.append(rect);el.append(g);
   return g;
 }
@@ -2698,9 +2704,10 @@ function drawIn(root){
   for(const [el,d] of delays){
     const g=carveOutline(el,d);if(g) svgs.push(g);
     el.classList.add("carving");
-    timers.push(setTimeout(()=>el.classList.remove("carving"),d+600));
-    if(g) timers.push(setTimeout(()=>g.classList.add("done"),d+950));
-    end=Math.max(end,d+1050);
+    const dur=g?+g.dataset.dur:650;
+    timers.push(setTimeout(()=>el.classList.remove("carving"),d+dur-50));
+    if(g) timers.push(setTimeout(()=>g.classList.add("done"),d+dur+300));
+    end=Math.max(end,d+dur+400);
   }
   void root.offsetWidth;
   root.classList.remove("notrans");els.forEach(e=>{e.classList.remove("notrans");e.classList.add("carved");});
@@ -2752,9 +2759,10 @@ async function runIntro(){
   for(const [el,d] of delays){
     const g=carveOutline(el,d);if(g) svgs.push(g);   // reads the element's real colours, so before it is emptied
     el.classList.add("carving");
-    setTimeout(()=>el.classList.remove("carving"),d+700);   // the outline is drawn: fill it in
-    if(g) setTimeout(()=>g.classList.add("done"),d+1050);   // then let the drawn line fade into the real border
-    end=Math.max(end,d+1150);
+    const dur=g?+g.dataset.dur:750;
+    setTimeout(()=>el.classList.remove("carving"),d+dur);   // the outline is drawn: fill it in
+    if(g) setTimeout(()=>g.classList.add("done"),d+dur+350);   // then let the drawn line fade into the real border
+    end=Math.max(end,d+dur+450);
   }
   void root.offsetWidth;
   root.classList.remove("notrans");

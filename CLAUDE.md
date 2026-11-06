@@ -36,6 +36,9 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   All text writes itself in with the football explainer's writing animation (`runIntro`, `carveOutline`, `writeWord`:
   an SVG copy of each word, each letter's outline stroked on then inked; words 1/60 s apart, letters 14 ms).
   Everything is staggered from the top left, and children start 180 ms after their container.
+  Each outline starts at a random point on its edge (rect `pathLength="100"`, a growing dash from a random
+  `--off`), about half run counter-clockwise (mirrored rect), and each takes 0.65-0.9 s. A shape fills in when its
+  own outline completes (`g.dataset.dur`).
   The intro must end exactly where the page rests: each text run is wrapped in one inline `.wl` span (words as
   `.w` inside it), so in flex boxes like START SESSION or the metronome label the words stay one flex item and don't
   pick up the box's gap. Nothing shifts when the intro hands back plain text.
