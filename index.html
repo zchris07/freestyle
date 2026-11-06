@@ -42,9 +42,9 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 .topbar{height:var(--top-h);flex-shrink:0;display:flex;align-items:center;gap:12px;padding:0 20px;}
 .brand{font-size:24px;font-weight:700;letter-spacing:-.02em;color:var(--text);text-decoration:none;line-height:1;font-variation-settings:"opsz" 144;}
 .brand .tld{color:var(--green);}
-.wtf-btn{margin-left:auto;background:transparent;border:1px solid rgba(30,215,96,.45);border-radius:500px;padding:5px 14px;color:var(--green);
-  font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;transition:background .15s,color .15s,transform .15s;}
-.wtf-btn:hover{background:var(--green);color:var(--on-accent);transform:scale(1.05);}
+.wtf-btn{margin-left:auto;background:none;border:none;padding:4px 2px;color:var(--green);
+  font-family:inherit;font-size:20px;font-weight:700;letter-spacing:-.01em;cursor:pointer;transition:color .15s;}
+.wtf-btn:hover{color:var(--green-hover);}
 /* the guide opens like the builder: a circle growing out of the wtf? button */
 .guide{position:fixed;inset:0;z-index:52;overflow-y:auto;background:linear-gradient(180deg,rgba(30,215,96,.28) 0,rgba(18,18,18,0) 340px) var(--bg);
   clip-path:circle(0 at var(--ox,100%) var(--oy,0));visibility:hidden;transition:clip-path .65s var(--ease),visibility 0s linear .65s;}
@@ -147,14 +147,14 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 
 /* beat library */
 /* upload dialog: the page recedes and blurs behind it */
-.root{transition:filter .4s ease,transform .45s var(--ease);transform-origin:50% 30%;}
-.root.modal-open{filter:blur(8px) brightness(.55);transform:scale(.97);}
-.modal{position:fixed;inset:0;z-index:55;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.3);
-  opacity:0;visibility:hidden;transition:opacity .3s ease,visibility 0s linear .3s;}
-.modal.open{opacity:1;visibility:visible;transition:opacity .3s ease;}
-.modal-card{position:relative;width:min(460px,100%);background:var(--surface);border:1px solid var(--border-soft);border-radius:16px;padding:22px 22px 24px;
-  box-shadow:0 30px 80px rgba(0,0,0,.6);transform:translateY(22px) scale(.95);transition:transform .5s var(--ease);}
-.modal.open .modal-card{transform:none;}
+/* upload dialog: the page stays where it is and is only blurred behind frosted glass (no shrinking, no darkening);
+   the dialog itself is drawn in like the intro */
+.modal{position:fixed;inset:0;z-index:55;display:flex;align-items:center;justify-content:center;padding:16px;background:transparent;
+  -webkit-backdrop-filter:blur(16px) saturate(150%);backdrop-filter:blur(16px) saturate(150%);
+  opacity:0;visibility:hidden;transition:opacity .35s ease,visibility 0s linear .35s;}
+.modal.open{opacity:1;visibility:visible;transition:opacity .35s ease;}
+.modal-card{position:relative;width:min(460px,100%);background:rgba(28,28,28,.72);border:1px solid rgba(255,255,255,.14);border-radius:18px;
+  padding:22px 22px 24px;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 24px 60px rgba(0,0,0,.35);}
 .modal-title{font-size:22px;font-weight:700;margin-bottom:16px;}
 .modal-x{position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:50%;border:none;background:var(--high);color:var(--text);cursor:pointer;font-size:13px;}
 .modal-x:hover{background:var(--high-hover);}
@@ -427,7 +427,7 @@ body.preintro .root{opacity:0;}
         <span class="dlbl">CHECK</span>
         <button class="btn go" id="prev-btn">&#9654; Preview</button>
         <div class="dots" id="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-        <label class="chk" style="margin-left:auto;"><input type="checkbox" id="click-toggle"> Click track during session</label>
+        <label class="chk" style="margin-left:auto;"><input type="checkbox" id="click-toggle"> Play metronome during session</label>
       </div>
       <canvas class="gv" id="grid-cv"></canvas>
     </div>
@@ -485,7 +485,7 @@ body.preintro .root{opacity:0;}
     <div class="gsec rise" style="--d:3"><div class="gnum">2</div><div><h3>Or build your own</h3>
       <p><b>+ Build</b> opens the builder. Tap boxes to place a rhyme, tap a word again to hide it, once more to remove it. <b>+ Create new rhyme</b> starts the next one, each in its own colour. Make any rhyme 2 syllable, then confirm or save it for later.</p></div></div>
     <div class="gsec rise" style="--d:4"><div class="gnum">3</div><div><h3>Pick a beat</h3>
-      <p>Trap or boom bap, from the library, or upload your own with the upload chip. Every beat is read for its tempo, its "one" and its drop, and you always get 8 beats of lead-in right before the drop. <b>Preview</b> lets you check the grid; turn on the click track if you want a metronome on top.</p></div></div>
+      <p>Trap or boom bap, from the library, or upload your own with the upload chip. Every beat is read for its tempo, its "one" and its drop, and you always get 8 beats of lead-in right before the drop. <b>Preview</b> lets you check the grid; turn on <b>Play metronome during session</b> if you want a click on top.</p></div></div>
     <div class="gsec rise" style="--d:5"><div class="gnum">4</div><div><h3>Start session</h3>
       <p>Two prep bars, then 32 bars. The lit box is the beat; rhyme words light up as you reach them. Every session deals new words. <b>Space</b> pauses, <b>Esc</b> stops.</p></div></div>
     <div class="gsec why rise" style="--d:6"><div class="gnum">?</div><div><h3>Why does this exist</h3>
@@ -2134,12 +2134,13 @@ function wordFor(info,block,ng){
   return fam[(info.pos+RND.rot+k*7)%w];
 }
 
+function extrasHTML(){return Object.keys(SCHEMES).filter(s=>!MAIN_SCHEMES.includes(s)).map(s=>'<div class="spill xtra'+(G.kind==="preset"&&G.scheme===s?" sel":"")+'" data-s="'+s+'">'+s+'</div>').join("");}
 function renderSetup(){
   const chip=(s,extra)=>'<div class="spill'+(extra?" xtra":"")+(G.kind==="preset"&&G.scheme===s?" sel":"")+'" data-s="'+s+'">'+s+'</div>';
   // first row never changes: the four main schemes and the more / < chip in the same spot
   document.getElementById("scheme-pills").innerHTML=MAIN_SCHEMES.map(s=>chip(s,false)).join("")
     +'<div class="spill more" data-more="'+(MORE_OPEN?"0":"1")+'" title="'+(MORE_OPEN?"Fewer schemes":"More schemes")+'">'+(MORE_OPEN?"&lt;":"more")+'</div>';
-  document.getElementById("scheme-more").innerHTML=MORE_OPEN?Object.keys(SCHEMES).filter(s=>!MAIN_SCHEMES.includes(s)).map(s=>chip(s,true)).join(""):"";
+  document.getElementById("scheme-more").innerHTML=MORE_OPEN?extrasHTML():"";
   let h="";
   for(const s of SAVED) h+='<div class="spill'+(G.kind==="custom"&&G.custom.id===s.id?" sel":"")+'" data-saved="'+s.id+'">'+esc(s.name)+'<span class="x" data-delsaved="'+s.id+'" title="Delete saved scheme">&#10005;</span></div>';
   if(G.kind==="custom"&&!G.custom.id) h+='<div class="spill sel">'+esc(G.custom.name)+'</div>';
@@ -2253,25 +2254,25 @@ document.getElementById("scheme-col").addEventListener("click",e=>{
   else if(el.dataset.saved){const s=SAVED.find(x=>x.id===el.dataset.saved);if(s){G.kind="custom";G.custom=clone(s);}}
   renderSetup();
 });
-// "more" opens the other schemes in a row below the main chips and "<" folds them away: only that row's height glides,
-// its chips pop in (or out) one after another, and nothing else in the panel's top moves.
+// "more" opens the other schemes in a row below the main chips and "<" folds them away. Both start the instant you
+// click and either can interrupt the other: the row's height glides from wherever it is, the chips pop in at once
+// (or out), and the toggle chip is clickable again straight away.
+let moreTimer=0;
 function toggleMore(open){
-  const box=document.getElementById("scheme-more");
-  if(box.classList.contains("sizing")) return;
-  const settle=()=>setTimeout(()=>{box.classList.remove("sizing");box.style.height="";box.querySelectorAll(".pop-in").forEach(c=>{c.classList.remove("pop-in");c.style.animationDelay="";});},480);
+  const box=document.getElementById("scheme-more"),t=document.querySelector('#scheme-pills .spill.more');
+  MORE_OPEN=open;clearTimeout(moreTimer);
+  t.dataset.more=open?"0":"1";t.innerHTML=open?"&lt;":"more";t.title=open?"Fewer schemes":"More schemes";
+  const from=box.offsetHeight;
   if(open){
-    MORE_OPEN=true;renderSetup();
-    const h1=box.offsetHeight;
-    box.style.height="0px";box.classList.add("sizing");void box.offsetHeight;box.style.height=h1+"px";
-    box.querySelectorAll(".xtra").forEach((c,i)=>{c.style.animationDelay=(80+i*45)+"ms";c.classList.add("pop-in");});
-    settle();
+    box.innerHTML=extrasHTML();
+    box.style.height="";const to=box.offsetHeight;
+    box.style.height=from+"px";box.classList.add("sizing");void box.offsetHeight;box.style.height=to+"px";
+    box.querySelectorAll(".xtra").forEach((c,i)=>{c.style.animationDelay=(i*28)+"ms";c.classList.add("pop-in");});
+    moreTimer=setTimeout(()=>{box.classList.remove("sizing");box.style.height="";box.querySelectorAll(".pop-in").forEach(c=>{c.classList.remove("pop-in");c.style.animationDelay="";});},480);
   }else{
-    const t=document.querySelector('#scheme-pills .spill.more');t.dataset.more="1";t.textContent="more";t.title="More schemes";
-    box.querySelectorAll(".xtra").forEach((c,i)=>{c.style.animationDelay=(i*25)+"ms";c.classList.add("pop-out");});
-    setTimeout(()=>{
-      box.style.height=box.offsetHeight+"px";box.classList.add("sizing");void box.offsetHeight;box.style.height="0px";
-      setTimeout(()=>{MORE_OPEN=false;renderSetup();box.classList.remove("sizing");box.style.height="";},460);
-    },180);
+    box.style.height=from+"px";box.classList.add("sizing");void box.offsetHeight;box.style.height="0px";
+    box.querySelectorAll(".xtra").forEach(c=>{c.classList.remove("pop-in");c.style.animationDelay="";c.classList.add("pop-out");});
+    moreTimer=setTimeout(()=>{box.innerHTML="";box.classList.remove("sizing");box.style.height="";},460);
   }
 }
 document.getElementById("syl-main").addEventListener("click",()=>{
@@ -2428,13 +2429,12 @@ const fileIn=document.getElementById("file-in"),drop=document.getElementById("dr
 let UP_FEEL="auto";
 function openUpload(){
   UP_FEEL="auto";document.querySelectorAll("#up-feel .vpill").forEach(p=>p.classList.toggle("sel",p.dataset.feel==="auto"));
-  upModal.classList.add("open");upModal.setAttribute("aria-hidden","false");
-  document.getElementById("root").classList.add("modal-open");document.body.classList.add("lock");
+  upModal.classList.add("open");upModal.setAttribute("aria-hidden","false");document.body.classList.add("lock");
+  drawIn(upModal.querySelector(".modal-card"));
   setTimeout(()=>drop.focus({preventScroll:true}),60);
 }
 function closeUpload(){
-  upModal.classList.remove("open");upModal.setAttribute("aria-hidden","true");
-  document.getElementById("root").classList.remove("modal-open");document.body.classList.remove("lock");
+  upModal.classList.remove("open");upModal.setAttribute("aria-hidden","true");document.body.classList.remove("lock");
 }
 function takeFiles(files){if(!files.length) return;closeUpload();addFiles(files,UP_FEEL);}
 document.getElementById("upload-chip").addEventListener("click",openUpload);
@@ -2654,7 +2654,10 @@ function wrapWords(el){
       if(/^\s+$/.test(part)){frag.append(part);continue;}
       const w=document.createElement("span");w.className="w";const t=document.createElement("span");t.className="wt";t.textContent=part;w.append(t);frag.append(w);
     }
-    n.replaceWith(frag);
+    // one inline wrapper per text run: inside a flex box (START SESSION, the metronome label) the words stay a single
+    // flex item, so they sit exactly where the plain text will, and nothing shifts when the intro hands back
+    const line=document.createElement("span");line.className="wl";line.append(frag);
+    n.replaceWith(line);
   }
   return [...el.querySelectorAll(".w")];
 }
@@ -2677,6 +2680,46 @@ function writeWord(w,d0){
   });
   w.classList.add("writing");
   return last;
+}
+// Draw one container in the way the page intro does: outlines stroked on then filled, text written in, icons assembled.
+let drawInDone=null;
+function drawIn(root){
+  if(drawInDone){drawInDone();drawInDone=null;}   // finish any previous run at once
+  const carveSel=".modal-card,.drop,.vpill,.modal-x",textSel=".modal-title,.drop-main,.lbl,.vpill,.modal-x",asmSel=".drop svg";
+  const els=[root,...root.querySelectorAll(carveSel)].filter((e,i,a)=>a.indexOf(e)===i&&(e===root||e.matches(carveSel)));
+  const r0=root.getBoundingClientRect();
+  const delayOf=el=>{if(el===root) return 0;const r=el.getBoundingClientRect();return Math.round(160+(r.top-r0.top)*0.6+(r.left-r0.left)*0.15);};
+  const delays=new Map(els.map(e=>[e,delayOf(e)]));
+  const timers=[];let end=0;
+  const texts=[...root.querySelectorAll(textSel)].filter(el=>!el.parentElement.closest(textSel));
+  for(const el of texts){const start=delayOf(el)+200;wrapWords(el).forEach((w,i)=>{end=Math.max(end,writeWord(w,start+Math.round(i*1000/60)));});}
+  const svgs=[];
+  root.classList.add("notrans");els.forEach(e=>e.classList.add("notrans"));
+  for(const [el,d] of delays){
+    const g=carveOutline(el,d);if(g) svgs.push(g);
+    el.classList.add("carving");
+    timers.push(setTimeout(()=>el.classList.remove("carving"),d+600));
+    if(g) timers.push(setTimeout(()=>g.classList.add("done"),d+950));
+    end=Math.max(end,d+1050);
+  }
+  void root.offsetWidth;
+  root.classList.remove("notrans");els.forEach(e=>{e.classList.remove("notrans");e.classList.add("carved");});
+  const rnd=(a,b)=>(a+Math.random()*(b-a)).toFixed(1);
+  root.querySelectorAll(asmSel).forEach(el=>{
+    el.style.setProperty("--d",(delayOf(el)+250)+"ms");el.style.setProperty("--ax",rnd(-14,14)+"px");el.style.setProperty("--ay",rnd(-12,12)+"px");el.style.setProperty("--ar",rnd(-25,25)+"deg");
+    el.classList.add("assemble");
+  });
+  const finish=()=>{
+    timers.forEach(clearTimeout);
+    root.querySelectorAll(".w").forEach(w=>w.replaceWith(w.firstChild.textContent));
+    root.querySelectorAll(".wl").forEach(l=>l.replaceWith(l.textContent));
+    svgs.forEach(g=>g.remove());
+    [root,...root.querySelectorAll("[data-carve-pos]")].forEach(el=>{if(el.dataset.carvePos){el.style.position="";delete el.dataset.carvePos;}});
+    [root,...root.querySelectorAll(".carving,.carved")].forEach(el=>el.classList.remove("carving","carved"));
+    root.querySelectorAll(".assemble").forEach(el=>{el.classList.remove("assemble");["--d","--ax","--ay","--ar"].forEach(v=>el.style.removeProperty(v));});
+  };
+  timers.push(setTimeout(()=>{finish();drawInDone=null;},end+700));
+  drawInDone=finish;
 }
 async function runIntro(){
   const done=()=>{document.body.classList.remove("preintro");INTRO=false;if(INTRO_PENDING){INTRO_PENDING=false;renderLib();}};
@@ -2727,6 +2770,7 @@ async function runIntro(){
   // hand everything back to plain markup once it is all drawn, filled and inked
   setTimeout(()=>{
     document.querySelectorAll(".w").forEach(w=>w.replaceWith(w.firstChild.textContent));
+    document.querySelectorAll(".wl").forEach(l=>l.replaceWith(l.textContent));
     svgs.forEach(g=>g.remove());
     document.querySelectorAll("[data-carve-pos]").forEach(el=>{el.style.position="";delete el.dataset.carvePos;});
     document.querySelectorAll(".carving,.carved").forEach(el=>el.classList.remove("carving","carved"));

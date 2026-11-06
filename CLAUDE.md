@@ -25,7 +25,7 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   with its own wordmark row, content centred at about 1040px. Phones (640px and below) get edge-to-edge content and a 50px top bar.
 - Keep it minimal: no caption under the scheme pills, no "Beat timing" label or drag instructions (just "← drag →"
   under the rhyme column), no upload instructions (the button says "+ Upload beat"), no notes under the library.
-  Under the library only TEMPO (+ DOWNBEAT for uploads) and CHECK (Preview, "Click track during session") remain:
+  Under the library only TEMPO (+ DOWNBEAT for uploads) and CHECK (Preview, "Play metronome during session") remain:
   no click-only tempos, no feel / drop / grid-by rows. Button labels: "Preview", "START SESSION". The session screen shows only the beat name and STOP on top, then
   the bar grid with no bar/prep labels, no beat numbers in the cells and no status texts (no PREPARE / SPIT IT!).
   The lit outline is the beat indicator; STOP turns into BACK after bar 32.
@@ -36,16 +36,20 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   All text writes itself in with the football explainer's writing animation (`runIntro`, `carveOutline`, `writeWord`:
   an SVG copy of each word, each letter's outline stroked on then inked; words 1/60 s apart, letters 14 ms).
   Everything is staggered from the top left, and children start 180 ms after their container.
+  The intro must end exactly where the page rests: each text run is wrapped in one inline `.wl` span (words as
+  `.w` inside it), so in flex boxes like START SESSION or the metronome label the words stay one flex item and don't
+  pick up the box's gap. Nothing shifts when the intro hands back plain text.
   The intro must start from a blank page: the empty starting state is set with transitions switched off (`.notrans`),
   otherwise the finished page visibly fades away first. Outline colours are read before an element is emptied. A
   1px `.paint-dot` in the page colour gives the browser an early paint, so a refresh doesn't keep showing the
   previous page. The session opens as a
   clip-path circle from START SESSION and collapses into the STOP button.
 - Upload: no upload panel in the library. An upload chip (inline SVG icon) next to the Trap / Boom bap tabs opens
-  `#upload-modal` over the page, which recedes and blurs (`.root.modal-open`). Drop files or click to browse.
+  `#upload-modal` over the page. The page doesn't move or darken: it is only blurred by a frosted-glass overlay
+  (`backdrop-filter`), and the dialog is drawn in like the intro (`drawIn`: outlines, fill, written text). Drop files or click to browse.
   Beat style Auto (default, reset each time) / Trap / Boom bap: Auto runs checkFeel, the others setFeel
   (`addFiles(files,feel)`).
-- wtf? button top right opens `#guide`, a full-page guide that grows as a circle out of the button with its
+- wtf? button top right (plain green text, no outline; hover only darkens the green) opens `#guide`, a full-page guide that grows as a circle out of the button with its
   sections rising in: how to use every part of the site, plus "every other freestyle app out there right now is ass".
 - Session title: the beat name is large (26px, 34px wide, 21px phone). The session's boxes pop in, staggered like
   the builder grid (`.bars-scroll.pop`).
@@ -69,7 +73,7 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   and on the right a fixed "Show words" cluster with "2 syllable rhyme" under it, behind a divider that never moves.
   The first chip row never changes: AABB (default), AAAA, ABAB, AA_A and a green "more" chip, which turns into "<" in
   place. The extras (A_A_, aAaA, aAbB, aBaB, aA_A, _AaA) open in their own row below (`#scheme-more`, only its height
-  glides, `toggleMore`). Saved custom schemes sit in a row under that. For custom schemes the right cluster dims
+  glides, `toggleMore`). There is no delay either way, and opening or folding can interrupt each other. Saved custom schemes sit in a row under that. For custom schemes the right cluster dims
   instead of hiding. Below 700px of panel width (a container query) the cluster stacks under the chips. Column schemes (AABB, AAAA, ABAB, AA_A, A_A_): one letter per bar, same letter = same rhyme, _ = none.
   Only the first four are draggable; A_A_ sits on beat 4. Two-beat schemes (`SCHEMES[k]` is an array of 2 bars):
   per bar the beat-2 letter (lowercase) then the beat-4 letter (UPPERCASE); bars 3-4 repeat the shape with fresh
