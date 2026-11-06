@@ -78,6 +78,23 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
 - Regenerate with `pip install wordfreq` then `python tools/build_rhymes.py`. Currently 800 families,
   3233 words, 26 KB.
 
+## Drop detection (long intros)
+- Every song gets exactly 8 prep beats (PREP_BARS=2) right before the drop: playback starts at drop - 2 bars, bar 1
+  of the 32 lands on the drop, and the loop repeats from the drop (never the intro). If the drop comes less than
+  8 beats into the song, the missing prep beats are a click count-in (`P.countIn`).
+- detectDrop(it,anchor) works per beat on the stored kick/hat/low bands (beatScores). "Full level" = the 75th
+  percentile of 4-bar averages. The drop is the first beat whose next 4 bars reach DROP_FULL x full and
+  DROP_JUMP x the 4 bars before, with no 4-bar stretch before it above DROP_QUIET x full. A song that starts full
+  gets no drop, so a later breakdown is never picked. Refined to the sharpest 4-beat step.
+- anchor=true on fresh analysis (upload, Re-analyze): drops land on a "1", so the grid's downbeat moves onto the
+  drop (this also fixes a "1" that was off by a beat). anchor=false after hand edits, Auto and old saved beats: the
+  grid stays, and the drop snaps to its nearest bar line.
+- Stored as `dropT` (seconds) plus `dropManual`. The DROP row in the detail panel moves it +-1/+-4 bars (sets
+  manual); Auto re-detects. The waveform shades P1/P2 and marks "1 DROP".
+- Tested on synthetic beats (boom bap 85-95, trap 140-150, intros of 0/1/4/8/16 bars, hats-only or 25% drums in the
+  intro, breakdowns in songs that start full): drop within 2 ms. Drums at half volume in the intro read as "beat
+  already in". Not yet tuned on real songs.
+
 ## Beat This! in the browser
 
 - Model: `models/beat_this_small.onnx` (2.1M params, 9.4 MB, fp32, dynamic time axis), exported by

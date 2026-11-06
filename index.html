@@ -104,6 +104,7 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 .drow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
 .dlbl{font-size:10px;letter-spacing:.1em;color:var(--muted);width:78px;}
 .bpmv{font-size:20px;font-weight:700;min-width:70px;text-align:center;color:var(--green);}
+.dropv{font-size:13px;font-weight:700;min-width:118px;text-align:center;color:var(--warn);}
 .dots{display:flex;gap:6px;margin-left:6px;}
 .dot{width:14px;height:14px;border-radius:50%;background:var(--high);border:1.5px solid var(--border);}
 .dot.on{background:var(--green);border-color:var(--green);}
@@ -263,9 +264,9 @@ canvas.gv{width:100%;height:78px;background:var(--bg);border:1px solid var(--bor
       <div style="flex:1;min-width:160px;" id="vis-wrap">
         <div class="lbl">SHOW WORDS</div>
         <div class="vis-pills" id="vis-pills">
-          <div class="vpill sel" data-v="first">First only</div>
+          <div class="vpill sel" data-v="all">All words</div>
+          <div class="vpill" data-v="first">First only</div>
           <div class="vpill" data-v="last">Last only</div>
-          <div class="vpill" data-v="all">All words</div>
         </div>
       </div>
     </div>
@@ -302,6 +303,15 @@ canvas.gv{width:100%;height:78px;background:var(--bg);border:1px solid var(--bor
         <button class="btn feel" data-act="feel-boombap" id="feel-boombap" aria-pressed="false" title="Snare on beats 2 and 4">Boom bap (snare on 2 and 4)</button>
         <span class="muted" id="feel-lbl"></span>
       </div>
+      <div class="drow" id="row-drop">
+        <span class="dlbl">DROP</span>
+        <button class="btn" data-act="drop-4" title="Move the drop 4 bars earlier">&#9664; 4</button>
+        <button class="btn" data-act="drop-1" title="Move the drop 1 bar earlier">&#9664; 1</button>
+        <span class="dropv" id="drop-lbl">--</span>
+        <button class="btn" data-act="drop+1" title="Move the drop 1 bar later">1 &#9654;</button>
+        <button class="btn" data-act="drop+4" title="Move the drop 4 bars later">4 &#9654;</button>
+        <button class="btn" data-act="drop-auto" id="drop-auto" title="Find the drop automatically again">Auto</button>
+      </div>
       <div class="drow" id="row-offset">
         <span class="dlbl">DOWNBEAT</span>
         <button class="btn" data-act="off-">&#9664; 10ms</button>
@@ -320,7 +330,7 @@ canvas.gv{width:100%;height:78px;background:var(--bg);border:1px solid var(--bor
         <label class="chk" style="margin-left:auto;"><input type="checkbox" id="click-toggle"> Click track in game</label>
       </div>
       <canvas class="gv" id="grid-cv"></canvas>
-      <div class="note" id="grid-note">Thick lines are bar downbeats (beat 1). If they don't sit on your kick, nudge or press "Next beat = 1".</div>
+      <div class="note" id="grid-note">Thick lines are bar downbeats (beat 1). If they don't sit on your kick, nudge or press "Next beat = 1". The shaded bars P1 and P2 are your 8 prep beats; bar 1 starts on the drop.</div>
     </div>
     <div class="note" id="store-note"></div>
   </div>
@@ -607,6 +617,63 @@ function setFeel(it,feel){
   it.feel=feel;it.feelFix="manual";
 }
 
+/* ================= DROP: WHERE THE FULL BEAT COMES IN ================= */
+// Long intros: find where the drums come in for good, so playback starts PREP_BARS (8 beats) before it and bar 1 of
+// the 32 lands on the drop. Works per beat (so a "1" that is off by a beat can't hide the step): each beat scores
+// kick onsets + low-band energy + half-weighted hi-hat onsets, each scaled by its 75th percentile.
+// "Full level" = the 75th percentile of 4-bar (16-beat) averages. The drop starts at the first beat j whose next
+// 4 bars reach DROP_FULL x full, are DROP_JUMP x the 4 bars before, and with no 4-bar stretch before j above
+// DROP_QUIET x full (so a song that starts full never gets a drop, and a later breakdown is never picked).
+// The exact beat is the sharpest 4-beat step in the 8 beats from j.
+// anchor=true (fresh analysis): drops land on a "1", so the grid's downbeat moves onto the drop.
+// anchor=false (after hand edits / Auto): the grid stays, and the drop snaps to its nearest bar line.
+// Stored as it.dropT (seconds); it.dropManual keeps a hand-set drop when the grid changes.
+const DROP_FULL=0.7,DROP_JUMP=1.6,DROP_QUIET=0.55,DROP_WIN=16;
+function beatScores(it){
+  const spb=60/it.bpm,end=Math.min(it.duration,150),nb=Math.max(0,Math.floor((end-it.fd)/spb));
+  const k=[],h=[],e=[];
+  for(let b=0;b<nb;b++){
+    const f0=Math.max(0,Math.round((it.fd+b*spb-it.tOff)*it.fps)),f1=Math.min(it.kick.length,Math.round((it.fd+(b+1)*spb-it.tOff)*it.fps));
+    let sk=0,sh=0,se=0;for(let f=f0;f<f1;f++){sk+=it.kick[f];sh+=it.hat[f];se+=it.low[f];}
+    const n=Math.max(1,f1-f0);k.push(sk/n);h.push(sh/n);e.push(se/n);
+  }
+  const p75=a=>{const v=a.slice().sort((x,y)=>x-y)[Math.floor(a.length*0.75)];return v>0?v:1;};
+  const K=p75(k),H=p75(h),E=p75(e);
+  return k.map((_,b)=>(k[b]/K+e[b]/E+0.5*h[b]/H)/2.5);
+}
+function detectDrop(it,anchor){
+  it.dropManual=false;it.dropT=it.fd;
+  if(!it.kick||!it.hat||!it.low) return;
+  const s=beatScores(it),n=s.length,spb=60/it.bpm;
+  const avg=(a,b)=>{let t=0,c=0;for(let i=Math.max(0,a);i<Math.min(n,b);i++){t+=s[i];c++;}return c?t/c:0;};
+  if(n<DROP_WIN+1) return;
+  const R=[];for(let i=0;i<=n-DROP_WIN;i++) R.push(avg(i,i+DROP_WIN));
+  const full=R.slice().sort((a,b)=>a-b)[Math.floor(R.length*0.75)]||1;
+  let maxBefore=0;   // loudest 4-bar stretch that ends at or before j
+  for(let j=1;j<=n-DROP_WIN;j++){
+    if(j>=DROP_WIN) maxBefore=Math.max(maxBefore,R[j-DROP_WIN]);
+    const before=j>=DROP_WIN?maxBefore:avg(0,j);
+    if(before>DROP_QUIET*full) break;
+    const after=R[j];
+    if(after>=DROP_FULL*full&&after>=DROP_JUMP*avg(j-DROP_WIN,j)){
+      let best=j,bs=-1e9;
+      for(let c=j;c<Math.min(j+8,n-4);c++){const d=avg(c,c+4)-avg(c-4,c);if(d>bs){bs=d;best=c;}}
+      const t=it.fd+best*spb;
+      if(anchor){it.fd=normFd(t,spb);it.dropT=t;}
+      else it.dropT=it.fd+Math.round(best/4)*4*spb;
+      return;
+    }
+  }
+}
+// the drop on the current grid: its time and how many bars after the first downbeat it is
+function dropInfo(it){
+  if(it.builtin||it.dropT==null) return {t:it.fd,bar:0};
+  const bar=240/it.bpm,b=Math.max(0,Math.round((it.dropT-it.fd)/bar));
+  return {t:it.fd+b*bar,bar:b};
+}
+// after any tempo / downbeat change: find the drop again, or keep a hand-set one on the nearest bar line
+function regridDrop(it){if(it.dropManual) it.dropT=dropInfo(it).t; else detectDrop(it,false);}
+
 /* ================= BEAT THIS! (in-browser, ONNX) ================= */
 // Beat This! (small) in-browser pipeline: mel spectrogram -> ONNX model -> peak picking.
 // Matches CPJKU/beat_this: 22.05 kHz mono, 1024-pt FFT, hop 441, 128 Slaney mel bins 30-11000 Hz.
@@ -799,7 +866,7 @@ async function dbAll(){const db=await openDB();return new Promise((res,rej)=>{co
 async function dbPut(rec){if(!dbOK)return;try{const db=await openDB();await new Promise((res,rej)=>{const tx=db.transaction("beats","readwrite");tx.objectStore("beats").put(rec);tx.oncomplete=res;tx.onerror=()=>rej(tx.error);});}catch(e){dbOK=false;renderNote();}}
 async function dbDel(id){if(!dbOK)return;try{const db=await openDB();await new Promise((res,rej)=>{const tx=db.transaction("beats","readwrite");tx.objectStore("beats").delete(id);tx.oncomplete=res;tx.onerror=()=>rej(tx.error);});}catch(e){}}
 function persist(it){
-  dbPut({id:it.id,name:it.name,blob:it.blob,duration:it.duration,bpm:it.bpm,fd:it.fd,sr:it.sr,hop:it.hop,fps:it.fps,tOff:it.tOff,env:it.env,low:it.low,kick:it.kick,snr:it.snr,hat:it.hat,feel:it.feel,feelFix:it.feelFix,added:it.added,engine:it.engine});
+  dbPut({id:it.id,name:it.name,blob:it.blob,duration:it.duration,bpm:it.bpm,fd:it.fd,sr:it.sr,hop:it.hop,fps:it.fps,tOff:it.tOff,env:it.env,low:it.low,kick:it.kick,snr:it.snr,hat:it.hat,feel:it.feel,feelFix:it.feelFix,dropT:it.dropT,dropManual:it.dropManual,added:it.added,engine:it.engine});
 }
 function renderNote(){
   document.getElementById("store-note").textContent=dbOK
@@ -821,12 +888,13 @@ async function loadLib(){
 // beats saved before the trap/boom bap check: measure their kick/snare/hat bands once (keeps the tempo grid), then check
 async function upgradeFeel(){
   for(const it of LIB){
+    if(it.hat&&it.dropT===undefined){detectDrop(it,false);persist(it);renderLib();continue;}   // keep their grid
     if(it.hat||!it.blob) continue;
     try{
       const a=analyzeBuffer(await ensureBuf(it));
       Object.assign(it,{sr:a.sr,hop:a.hop,fps:a.fps,tOff:a.tOff,env:a.env,low:a.low,kick:a.kick,snr:a.snr,hat:a.hat});
       if(!it.engine) it.engine="builtin";
-      checkFeel(it);persist(it);renderLib();
+      checkFeel(it);detectDrop(it,false);persist(it);renderLib();
     }catch(e){}
     await new Promise(r=>setTimeout(r,30));
   }
@@ -871,6 +939,7 @@ async function addFiles(files){
       Object.assign(it,analyzeBuffer(buf));   // built-in detector: always runs, keeps envelopes for the tempo buttons
       await runBT(it,buf);
       checkFeel(it);
+      detectDrop(it,true);
       it.status="ready";
       persist(it);
       if(!SELECTED||SELECTED.startsWith("click-")) setSelected(it.id);
@@ -921,6 +990,12 @@ function renderDetail(){
   document.getElementById("rebt-btn").style.display=it.engine==="beat-this"?"none":"inline-block";
   document.getElementById("row-offset").style.display=it.builtin?"none":"flex";
   document.getElementById("row-feel").style.display=it.builtin?"none":"flex";
+  document.getElementById("row-drop").style.display=it.builtin?"none":"flex";
+  if(!it.builtin){
+    const d=dropInfo(it);
+    document.getElementById("drop-lbl").textContent=(d.bar?"Bar "+(d.bar+1)+" · "+fmtDur(d.t):"Starts right away")+(it.dropManual?" (set)":"");
+    document.getElementById("drop-auto").disabled=!it.dropManual;
+  }
   document.getElementById("feel-trap").setAttribute("aria-pressed",String(it.feel==="trap"));
   document.getElementById("feel-boombap").setAttribute("aria-pressed",String(it.feel==="boombap"));
   document.getElementById("feel-lbl").textContent=it.feelFix==="doubled"?"Read as trap: tempo doubled so the click lands on every quarter note"
@@ -939,8 +1014,8 @@ async function drawGrid(it){
   const w=cv.clientWidth,h=cv.clientHeight;
   cv.width=w*dpr;cv.height=h*dpr;
   const g=cv.getContext("2d");g.scale(dpr,dpr);g.clearRect(0,0,w,h);
-  const spb=60/it.bpm,span=Math.min(buf.duration,4*spb*8+spb);
-  const t0=Math.max(0,it.fd-spb);
+  const spb=60/it.bpm,bar=4*spb,span=Math.min(buf.duration,bar*8+spb),drop=dropInfo(it).t;
+  const t0=Math.max(0,drop-PREP_BARS*bar-spb);
   const data=buf.getChannelData(0),sr=buf.sampleRate;
   g.fillStyle="#4d4d4d";
   for(let x=0;x<w;x++){
@@ -948,12 +1023,20 @@ async function drawGrid(it){
     let mx=0;for(let i=s0;i<s1&&i<data.length;i+=4){const v=Math.abs(data[i]);if(v>mx)mx=v;}
     const hh=Math.min(1,mx)*h*0.9;g.fillRect(x,(h-hh)/2,1,hh);
   }
-  for(let k=-1;t0+span>it.fd+k*spb;k++){
-    const t=it.fd+k*spb;if(t<t0)continue;
-    const x=(t-t0)/span*w,down=((k%4)+4)%4===0;
-    g.fillStyle=down?"#1ed760":"rgba(255,255,255,.3)";
+  // prep bars shaded; bar numbers count from the drop (= bar 1), prep bars are P1 and P2
+  const px0=Math.max(0,(drop-PREP_BARS*bar-t0)/span*w),px1=(drop-t0)/span*w;
+  g.fillStyle="rgba(255,164,43,.08)";g.fillRect(px0,0,px1-px0,h);
+  g.font="bold 11px Fraunces, Georgia, serif";
+  for(let k=Math.ceil((t0-it.fd)/spb);it.fd+k*spb<t0+span;k++){
+    const t=it.fd+k*spb,x=(t-t0)/span*w,down=((k%4)+4)%4===0;
+    const j=Math.round((t-drop)/bar),isDrop=down&&j===0;
+    g.fillStyle=isDrop?"#ffa42b":down?"#1ed760":"rgba(255,255,255,.3)";
     g.fillRect(Math.round(x),0,down?3:1,h);
-    if(down){g.fillStyle="#ffffff";g.font="bold 11px Fraunces, Georgia, serif";g.fillText(String(Math.floor(k/4)+1),x+5,12);}
+    if(down){
+      g.fillStyle=isDrop?"#ffa42b":"#ffffff";
+      const lbl=isDrop?"1 DROP":j>0?String(j+1):j>=-PREP_BARS?"P"+(PREP_BARS+j+1):"";
+      if(lbl) g.fillText(lbl,x+5,12);
+    }
   }
 }
 
@@ -973,22 +1056,26 @@ async function startPlayer(it,opts){
   const ac=getCtx();
   let buf=null;
   if(!it.builtin) buf=await ensureBuf(it);
-  P.spb=60/it.bpm;P.cb=opts.onBeat;P.click=!!opts.click;P.last=-1;P.nextIdx=0;
+  P.spb=60/it.bpm;P.cb=opts.onBeat;P.click=!!opts.click;P.last=-1;P.nextIdx=0;P.countIn=0;
   P.t0=ac.currentTime+0.25;
   if(buf){
-    const bar=4*P.spb;
-    const bars=Math.floor((buf.duration-it.fd)/bar);
+    // prep beat 1 = PREP_BARS before the drop, so bar 1 lands on it; the loop repeats from the drop, never the intro
+    const bar=4*P.spb,drop=dropInfo(it).t,start=drop-PREP_BARS*bar;
+    const bars=Math.floor((buf.duration-drop)/bar);
     const src=ac.createBufferSource();src.buffer=buf;
-    if(bars>=1){src.loop=true;src.loopStart=it.fd;src.loopEnd=it.fd+bars*bar;}
-    src.connect(ac.destination);src.start(P.t0,it.fd);P.src=src;
+    if(bars>=1){src.loop=true;src.loopStart=drop;src.loopEnd=drop+bars*bar;}
+    src.connect(ac.destination);P.src=src;
+    if(start>=0) src.start(P.t0,start);
+    else{src.start(P.t0-start,0);P.countIn=Math.ceil(-start/P.spb-0.02);}   // drop too early for 8 beats: click count-in
   }
   P.timer=setInterval(playerTick,20);
 }
 function playerTick(){
   const ac=AC;if(!ac) return;
   const now=ac.currentTime;
-  if(P.click){
-    while(P.t0+P.nextIdx*P.spb<now+0.1){clickAt(P.t0+P.nextIdx*P.spb,P.nextIdx%4===0);P.nextIdx++;}
+  while(P.t0+P.nextIdx*P.spb<now+0.1){
+    if(P.click||P.nextIdx<P.countIn) clickAt(P.t0+P.nextIdx*P.spb,P.nextIdx%4===0);
+    P.nextIdx++;
   }
   const idx=Math.floor((now-P.t0)/P.spb);
   while(P.last<idx){P.last++;if(P.last>=0&&P.cb)P.cb(P.last);}
@@ -1846,7 +1933,7 @@ function gColor(g){return GROUP_COLORS[g%GROUP_COLORS.length];}
 function gLetter(g){return String.fromCharCode(65+g);}
 const PRESET_ROWS={AABB:[[0,1],[2,3]],AAAA:[[0,1,2,3]],AA_A:[[0,1,3]]};
 const SCHEME_DESC={AABB:"Lines 1&2 rhyme · Lines 3&4 rhyme (2 color sets)",AAAA:"All 4 lines rhyme (1 color set)",AA_A:"Lines 1, 2 & 4 rhyme · Line 3 is free"};
-let G={kind:"preset",scheme:"AABB",vis:"first",rhymeCol:3,custom:null,running:false,curGlobalBeat:-1};
+let G={kind:"preset",scheme:"AABB",vis:"all",rhymeCol:3,custom:null,running:false,curGlobalBeat:-1};
 let SAVED=[];
 try{SAVED=JSON.parse(localStorage.getItem("fs-schemes")||"[]");if(!Array.isArray(SAVED))SAVED=[];}catch(e){SAVED=[];}
 function persistSaved(){try{localStorage.setItem("fs-schemes",JSON.stringify(SAVED));return true;}catch(e){return false;}}
@@ -2126,7 +2213,7 @@ document.getElementById("detail").addEventListener("click",e=>{
     if(previewing){previewing=false;stopPlayer();resetDots();}
     btFailed=null;it.status="analyzing";renderLib();
     (async()=>{
-      try{await runBT(it,await ensureBuf(it));checkFeel(it);persist(it);}catch(e){it.btErr=e.message;}
+      try{await runBT(it,await ensureBuf(it));checkFeel(it);detectDrop(it,true);persist(it);}catch(e){it.btErr=e.message;}
       it.status="ready";renderLib();
     })();
     return;
@@ -2141,7 +2228,13 @@ document.getElementById("detail").addEventListener("click",e=>{
     case "shift":it.fd=normFd(it.fd+60/it.bpm,60/it.bpm);break;
     case "feel-trap":if(!it.builtin)setFeel(it,"trap");break;
     case "feel-boombap":if(!it.builtin)setFeel(it,"boombap");break;
+    case "drop-auto":if(!it.builtin)detectDrop(it,false);break;
   }
+  const act=b.dataset.act,m=/^drop([+-]\d+)$/.exec(act);
+  if(m&&!it.builtin){
+    const bar=240/it.bpm,maxBar=Math.max(0,Math.floor((it.duration-it.fd)/bar)-1);
+    it.dropT=it.fd+Math.min(maxBar,Math.max(0,dropInfo(it).bar+parseInt(m[1],10)))*bar;it.dropManual=true;
+  }else if(!it.builtin&&act!=="drop-auto") regridDrop(it);
   if(!it.builtin) persist(it);
   if(wasPreviewing){previewing=false;stopPlayer();resetDots();}
   renderLib();
