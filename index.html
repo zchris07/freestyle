@@ -63,7 +63,7 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 .spill .x{font-size:10px;opacity:.55;padding:0 2px;}
 .spill .x:hover{opacity:1;}
 .vis-pills{display:flex;gap:6px;flex-wrap:wrap;}
-.vpill{background:var(--high);border-radius:500px;padding:7px 14px;font-size:12px;color:var(--text);cursor:pointer;transition:background .15s;flex:1;text-align:center;font-weight:700;white-space:nowrap;}
+.vpill{background:var(--high);border:none;font-family:inherit;border-radius:500px;padding:7px 14px;font-size:12px;color:var(--text);cursor:pointer;transition:background .15s;flex:1;text-align:center;font-weight:700;white-space:nowrap;}
 .vpill:hover{background:var(--high-hover);}
 .vpill.sel{background:var(--green);color:var(--on-accent);}
 
@@ -74,15 +74,32 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 .gcell{height:62px;border-radius:8px;background:var(--elev);border:1px solid var(--border-soft);display:flex;align-items:center;justify-content:center;position:relative;}
 .gcell.rc{background:var(--high);border:2px solid var(--gc);}
 .gcell.rc.hid{border-style:dashed;}
-.gcell.drag{cursor:grab;touch-action:none;}
-.gcell.drag:active{cursor:grabbing;}
-.gcell.lift{z-index:2;box-shadow:0 12px 28px rgba(0,0,0,.55);}
 .gcell.target{border:2px dashed var(--green);background:rgba(30,215,96,.06);}
+/* presets: the rhyme column is its own layer above a full grid of empty boxes, so the boxes it leaves stay visible */
+#grid-panel{position:relative;}
+.rhyme-col{position:absolute;top:0;left:calc((100% - 21px) / 4 * var(--col) + 7px * var(--col));width:calc((100% - 21px) / 4);
+  display:flex;flex-direction:column;gap:7px;z-index:2;cursor:grab;touch-action:none;will-change:transform;}
+.rhyme-col.dragging{cursor:grabbing;}
+.rhyme-col .gcell.rc{transition:box-shadow .25s,background .25s;}
+.rhyme-col.dragging .gcell.rc{background:#2c2c2c;box-shadow:0 16px 34px rgba(0,0,0,.6);}
+.rhyme-col .slot{visibility:hidden;}
 .word-text{font-size:16px;font-weight:700;letter-spacing:.02em;text-align:center;padding:0 6px;color:var(--gc);}
 .word-text.hidden-word{visibility:hidden;}
-.grid-wrap.dragcol{padding-bottom:26px;}
-.col-hint{position:absolute;bottom:4px;left:calc((100% - 21px) / 4 * (var(--col) + .5) + 7px * var(--col));transform:translateX(-50%);font-size:11px;letter-spacing:.08em;color:var(--muted);white-space:nowrap;pointer-events:none;}
+/* the drag hint hangs below the rhyme scheme panel, under the rhyme column, and fades away while you drag */
+#grid-panel.has-hint{margin-bottom:70px;}
+.col-hint{position:absolute;top:calc(100% + 16px);left:0;transform:translateX(-50%);display:flex;align-items:center;gap:12px;
+  padding:10px 20px;border-radius:500px;background:var(--surface);border:1px solid rgba(30,215,96,.4);color:var(--text);
+  font-size:14px;font-weight:700;letter-spacing:.24em;white-space:nowrap;pointer-events:none;
+  box-shadow:0 0 0 5px rgba(30,215,96,.06),0 10px 26px rgba(0,0,0,.45);transition:opacity .28s ease,transform .28s ease;}
+.col-hint::before{content:"";position:absolute;top:-6px;left:50%;width:10px;height:10px;background:var(--surface);
+  border-left:1px solid rgba(30,215,96,.4);border-top:1px solid rgba(30,215,96,.4);transform:translateX(-50%) rotate(45deg);}
+.col-hint .ar{color:var(--green);font-size:18px;letter-spacing:0;display:inline-block;animation:nudge 1.6s ease-in-out infinite;}
+.col-hint .ar.l{--dir:-1;}
+.col-hint .ar.r{--dir:1;}
+@keyframes nudge{50%{transform:translateX(calc(var(--dir) * 5px));}}
+.col-hint.away{opacity:0;transform:translateX(-50%) translateY(8px) scale(.9);}
 .col-hint[hidden]{display:none;}
+#syl-wrap{align-self:flex-end;}
 
 /* beat library */
 .drop{border:2px dashed var(--border);border-radius:8px;padding:14px;text-align:center;background:var(--elev);transition:all .15s;}
@@ -145,8 +162,12 @@ canvas.gv{width:100%;height:78px;background:var(--bg);border:1px solid var(--bor
 .pcell.prep-cell{background:var(--surface);}
 .pcell.rhyme-cell.upcoming{background:var(--high);border:2px solid var(--gc);}
 .pcell.rhyme-cell.upcoming .pword{color:var(--gc);opacity:.5;}
-.pcell.current-beat{background:var(--green);border-color:var(--green);}
-.pcell.current-rhyme{background:var(--gc);border:2px solid var(--gc);}
+/* the beat indicator lights the box's outline (border + glow) and never fills it, so a rhyme word stays readable */
+.pcell{transition:background .1s,border-color .1s,box-shadow .12s;}
+.pcell.current-beat{border:2px solid var(--green);box-shadow:0 0 0 3px rgba(30,215,96,.22),0 0 18px rgba(30,215,96,.35);}
+.pcell.current-rhyme{background:var(--high);border:3px solid var(--gc);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--gc) 28%,transparent),0 0 22px color-mix(in srgb,var(--gc) 45%,transparent);}
+.pcell.current-rhyme .pword{color:var(--gc);opacity:1;}
 .pcell.played{background:var(--surface);border-color:transparent;}
 .pcell.played .pword{color:var(--gc);opacity:.6;}
 
@@ -216,6 +237,7 @@ canvas.gv{width:100%;height:78px;background:var(--bg);border:1px solid var(--bor
     grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);grid-template-areas:"scheme lib" "scheme play";grid-template-rows:auto 1fr;}
   #setup-screen .panel{margin:0;padding:20px 22px;}
   #grid-panel{grid-area:scheme;}
+  #grid-panel.has-hint{margin-bottom:70px;}
   #lib-panel{grid-area:lib;}
   .play-btn{grid-area:play;align-self:start;width:100%;margin:0;padding:18px;font-size:16px;}
   .gcell{height:86px;}
@@ -275,11 +297,13 @@ body.preintro .root{opacity:0;}
           <div class="vpill" data-v="last">Last only</div>
         </div>
       </div>
+      <div id="syl-wrap"><button class="vpill" id="syl-btn" aria-pressed="false">2-syllable rhymes</button></div>
     </div>
     <div class="beat-labels">
       <div class="beat-lbl">BEAT 1</div><div class="beat-lbl">BEAT 2</div><div class="beat-lbl">BEAT 3</div><div class="beat-lbl">BEAT 4</div>
     </div>
-    <div class="grid-wrap" id="grid-wrap"><div class="bar-grid" id="setup-grid"></div><div class="col-hint" id="col-hint" hidden>&#8592; drag &#8594;</div></div>
+    <div class="grid-wrap" id="grid-wrap"><div class="bar-grid" id="setup-grid"></div></div>
+    <div class="col-hint" id="col-hint" hidden><span class="ar l">&#8592;</span>DRAG<span class="ar r">&#8594;</span></div>
   </div>
 
   <div class="panel" id="lib-panel">
@@ -1917,16 +1941,27 @@ const BANK2=[
 const GROUP_COLORS=["#1ed760","#ffa42b","#539df5","#f3727f","#b49bc8","#ffffff"];
 function gColor(g){return GROUP_COLORS[g%GROUP_COLORS.length];}
 function gLetter(g){return String.fromCharCode(65+g);}
-const PRESET_ROWS={AABB:[[0,1],[2,3]],ABAB:[[0,2],[1,3]],AAAA:[[0,1,2,3]],AA_A:[[0,1,3]],A_A_:[[0,2]]};
-let G={kind:"preset",scheme:"AABB",vis:"all",rhymeCol:3,custom:null,running:false,curGlobalBeat:-1};
+// Preset schemes, one letter per bar of the 4-bar grid: same letter = same rhyme, UPPERCASE = the word is shown,
+// lowercase = its box keeps the outline but hides the word, _ = no rhyme in that bar. "_A_A_B_B" is written over
+// 8 bars; the grid repeats every 4 bars with fresh words, so it is "_A_A" on the grid.
+const SCHEMES={AABB:"AABB",AAAA:"AAAA",ABAB:"ABAB",AA_A:"AA_A",A_A_:"A_A_",aAaA:"aAaA",aAbB:"aAbB",aBaB:"aBaB",aA_A:"aA_A",_AaA:"_AaA",_A_A_B_B:"_A_A"};
+const schemeFixesVis=k=>/[a-z]/.test(SCHEMES[k]);   // lowercase letters set the visibility themselves
+let G={kind:"preset",scheme:"AABB",vis:"all",multi:false,rhymeCol:3,custom:null,running:false,curGlobalBeat:-1};
+try{G.multi=localStorage.getItem("fs-syl")==="2";}catch(e){}
 let SAVED=[];
 try{SAVED=JSON.parse(localStorage.getItem("fs-schemes")||"[]");if(!Array.isArray(SAVED))SAVED=[];}catch(e){SAVED=[];}
 function persistSaved(){try{localStorage.setItem("fs-schemes",JSON.stringify(SAVED));return true;}catch(e){return false;}}
 function clone(o){return JSON.parse(JSON.stringify(o));}
 
 function presetGroups(){
-  return PRESET_ROWS[G.scheme].map(rows=>({cells:rows.map((r,i)=>({r,c:G.rhymeCol,
-    show:G.vis==="all"||(G.vis==="first"?i===0:i===rows.length-1)}))}));
+  const pat=SCHEMES[G.scheme],fixed=schemeFixesVis(G.scheme),groups=new Map();
+  [...pat].forEach((ch,r)=>{
+    if(ch==="_") return;
+    const k=ch.toUpperCase();if(!groups.has(k)) groups.set(k,[]);
+    groups.get(k).push({r,upper:ch!==ch.toLowerCase()});
+  });
+  return [...groups.values()].map(rows=>({...(G.multi?{multi:true}:{}),cells:rows.map((x,i)=>({r:x.r,c:G.rhymeCol,
+    show:fixed?x.upper:G.vis==="all"||(G.vis==="first"?i===0:i===rows.length-1)}))}));
 }
 function activeGroups(){return G.kind==="custom"?G.custom.groups:presetGroups();}
 function schemeName(){return G.kind==="custom"?G.custom.name:G.scheme;}
@@ -1955,65 +1990,87 @@ function wordFor(info,block,ng){
 
 function renderSetup(){
   let h="";
-  for(const s of Object.keys(PRESET_ROWS)) h+='<div class="spill'+(G.kind==="preset"&&G.scheme===s?" sel":"")+'" data-s="'+s+'">'+s+'</div>';
+  for(const s of Object.keys(SCHEMES)) h+='<div class="spill'+(G.kind==="preset"&&G.scheme===s?" sel":"")+'" data-s="'+s+'">'+s+'</div>';
   for(const s of SAVED) h+='<div class="spill'+(G.kind==="custom"&&G.custom.id===s.id?" sel":"")+'" data-saved="'+s.id+'">'+esc(s.name)+'<span class="x" data-delsaved="'+s.id+'" title="Delete saved scheme">&#10005;</span></div>';
   if(G.kind==="custom"&&!G.custom.id) h+='<div class="spill sel">'+esc(G.custom.name)+'</div>';
   document.getElementById("scheme-pills").innerHTML=h;
   const preset=G.kind==="preset";
-  document.getElementById("vis-wrap").style.display=preset?"":"none";
-  document.querySelectorAll(".vpill").forEach(p=>p.classList.toggle("sel",p.dataset.v===G.vis));
+  document.getElementById("vis-wrap").style.display=preset&&!schemeFixesVis(G.scheme)?"":"none";
+  document.getElementById("syl-wrap").style.display=preset?"":"none";   // custom schemes set syllables per rhyme in Build
+  const syl=document.getElementById("syl-btn");syl.classList.toggle("sel",G.multi);syl.setAttribute("aria-pressed",String(G.multi));
+  document.querySelectorAll("#vis-pills .vpill").forEach(p=>p.classList.toggle("sel",p.dataset.v===G.vis));
   buildSetupGrid();
 }
 function buildSetupGrid(){
-  const grid=document.getElementById("setup-grid");grid.innerHTML="";
+  const grid=document.getElementById("setup-grid"),wrap=document.getElementById("grid-wrap");
+  grid.innerHTML="";wrap.querySelector(".rhyme-col")?.remove();
   const groups=activeGroups(),m=cellMap(groups),preset=G.kind==="preset";
-  for(let r=0;r<4;r++)for(let c=0;c<4;c++){
-    const cell=document.createElement("div");cell.className="gcell";
-    const info=m.get(r*4+c);
-    if(info){
-      cell.classList.add("rc");if(preset)cell.classList.add("drag");if(!info.show)cell.classList.add("hid");
-      cell.style.setProperty("--gc",gColor(info.g));
-      const wt=document.createElement("div");const w=wordFor(info,0,groups.length);wt.className="word-text"+(info.show?"":" hidden-word")+(w.length>7?" long":"");wt.textContent=w;cell.appendChild(wt);
-    }
-    grid.appendChild(cell);
-  }
-  // presets: the drag hint sits under the rhyme column
+  const box=cls=>{const d=document.createElement("div");d.className=cls;return d;};
+  const rhymeCell=info=>{
+    const cell=box("gcell rc"+(info.show?"":" hid"));cell.style.setProperty("--gc",gColor(info.g));
+    const wt=document.createElement("div"),w=wordFor(info,0,groups.length);
+    wt.className="word-text"+(info.show?"":" hidden-word")+(w.length>7?" long":"");wt.textContent=w;cell.appendChild(wt);
+    return cell;
+  };
+  // presets draw only empty boxes here; their rhyme column is a separate layer on top (it can be dragged)
+  for(let r=0;r<4;r++)for(let c=0;c<4;c++){const info=preset?null:m.get(r*4+c);grid.appendChild(info?rhymeCell(info):box("gcell"));}
   const hint=document.getElementById("col-hint");
-  hint.hidden=!preset;hint.style.setProperty("--col",G.rhymeCol);
-  document.getElementById("grid-wrap").classList.toggle("dragcol",preset);
-  if(preset) setupDrag();
+  hint.hidden=!preset;document.getElementById("grid-panel").classList.toggle("has-hint",preset);
+  if(!preset) return;
+  const col=box("rhyme-col");col.style.setProperty("--col",G.rhymeCol);
+  for(let r=0;r<4;r++){const info=m.get(r*4+G.rhymeCol);col.appendChild(info?rhymeCell(info):box("gcell slot"));}
+  wrap.appendChild(col);
+  placeHint();
+  setupDrag(col);
 }
-// Drag the rhyme column sideways: it follows the pointer (no floating copy), the column it would land in lights up,
-// and on release it springs into that column before the grid is rebuilt there.
-function setupDrag(){
-  const grid=document.getElementById("setup-grid"),hint=document.getElementById("col-hint");
-  grid.querySelectorAll(".gcell.drag").forEach(c=>c.addEventListener("pointerdown",down));
-  function down(e){
+// centre the drag hint under the rhyme column (offsets, so it is right even while the page is scaled by an animation)
+function placeHint(){
+  const wrap=document.getElementById("grid-wrap"),col=wrap.querySelector(".rhyme-col"),hint=document.getElementById("col-hint");
+  if(!col||hint.hidden) return;
+  hint.style.left=(wrap.offsetLeft+col.offsetLeft+col.offsetWidth/2)+"px";
+}
+// Dragging the rhyme column: it follows the pointer through magnetic detents (sticky near each column, quick to jump
+// across the gap to the next, with rubbery resistance past the ends), leans with its speed, and on release a spring
+// settles it into the nearest column. The empty boxes underneath stay put; the column it is heading for lights up.
+function setupDrag(col){
+  const hint=document.getElementById("col-hint"),grid=document.getElementById("setup-grid");
+  col.addEventListener("pointerdown",e=>{
     if(e.button>0) return;
     e.preventDefault();
-    const cells=[...grid.querySelectorAll(".gcell.rc")],all=[...grid.children];
-    const pitch=all[1].getBoundingClientRect().left-all[0].getBoundingClientRect().left;
-    const col=G.rhymeCol,x0=e.clientX;
-    let dx=0;
-    cells.forEach(c=>{c.style.transition="none";c.classList.add("lift");});
-    hint.style.transition="none";
-    const move=ev=>{
-      dx=Math.max(-col*pitch,Math.min((3-col)*pitch,ev.clientX-x0));
-      cells.forEach(c=>c.style.transform="translateX("+dx+"px) scale(1.04)");
-      hint.style.transform="translateX(calc(-50% + "+dx+"px))";
-      const t=col+Math.round(dx/pitch);
-      all.forEach((g,i)=>g.classList.toggle("target",t!==col&&i%4===t&&!g.classList.contains("rc")));
+    const pitch=grid.children[1].offsetLeft-grid.children[0].offsetLeft,c0=G.rhymeCol,x0=e.clientX;
+    let x=0,v=0,target=0,dragging=true,near=c0,dest=c0;
+    col.classList.add("dragging");hint.classList.add("away");
+    const detent=raw=>{
+      const lo=-c0*pitch,hi=(3-c0)*pitch;
+      if(raw<lo) return lo+(raw-lo)*0.22;
+      if(raw>hi) return hi+(raw-hi)*0.22;
+      const n=Math.round(raw/pitch),d=raw-n*pitch,h=pitch/2;
+      return n*pitch+Math.sign(d)*h*Math.pow(Math.abs(d)/h,2.4);   // flat near a column (magnet), steep between two
     };
+    const light=t=>[...grid.children].forEach((g,i)=>g.classList.toggle("target",t!==c0&&i%4===t));
+    const frame=()=>{
+      const k=dragging?0.2:0.15,damp=dragging?0.64:0.76;   // spring: snappy while held, a soft overshoot on release
+      v=(v+(target-x)*k)*damp;x+=v;
+      const lean=Math.max(-5,Math.min(5,v*0.5));
+      col.style.transform="translateX("+x.toFixed(2)+"px) rotate("+lean.toFixed(2)+"deg) scale("+(dragging?1.035:1)+")";
+      const now=Math.max(0,Math.min(3,c0+Math.round(x/pitch)));
+      if(dragging&&now!==near){near=now;light(now);try{navigator.vibrate&&navigator.vibrate(6);}catch(err){}}
+      if(!dragging&&Math.abs(v)<0.04&&Math.abs(target-x)<0.3){land();return;}
+      requestAnimationFrame(frame);
+    };
+    const move=ev=>{target=detent(ev.clientX-x0);};
     const up=()=>{
       document.removeEventListener("pointermove",move);document.removeEventListener("pointerup",up);document.removeEventListener("pointercancel",up);
-      const t=Math.max(0,Math.min(3,col+Math.round(dx/pitch))),fx=(t-col)*pitch,spring="transform .38s cubic-bezier(.3,1.45,.5,1)";
-      all.forEach(g=>g.classList.remove("target"));
-      cells.forEach(c=>{c.style.transition=spring+",box-shadow .3s";c.style.transform="translateX("+fx+"px)";c.classList.remove("lift");});
-      hint.style.transition=spring;hint.style.transform="translateX(calc(-50% + "+fx+"px))";
-      setTimeout(()=>{G.rhymeCol=t;hint.style.transition="none";hint.style.transform="";buildSetupGrid();},400);
+      dragging=false;col.classList.remove("dragging");light(-1);
+      dest=Math.max(0,Math.min(3,c0+Math.round(x/pitch)));target=(dest-c0)*pitch;
+    };
+    const land=()=>{
+      G.rhymeCol=dest;col.style.transform="";col.style.setProperty("--col",dest);
+      placeHint();hint.classList.remove("away");
     };
     document.addEventListener("pointermove",move);document.addEventListener("pointerup",up);document.addEventListener("pointercancel",up);
-  }
+    requestAnimationFrame(frame);
+  });
 }
 
 document.getElementById("scheme-pills").addEventListener("click",e=>{
@@ -2027,6 +2084,10 @@ document.getElementById("scheme-pills").addEventListener("click",e=>{
   const el=e.target.closest(".spill");if(!el)return;
   if(el.dataset.s){G.kind="preset";G.scheme=el.dataset.s;}
   else if(el.dataset.saved){const s=SAVED.find(x=>x.id===el.dataset.saved);if(s){G.kind="custom";G.custom=clone(s);}}
+  renderSetup();
+});
+document.getElementById("syl-btn").addEventListener("click",()=>{
+  G.multi=!G.multi;try{localStorage.setItem("fs-syl",G.multi?"2":"1");}catch(err){}
   renderSetup();
 });
 document.getElementById("vis-pills").addEventListener("click",e=>{
@@ -2392,7 +2453,7 @@ async function runIntro(){
 renderSetup();
 renderLib();
 loadLib().then(runIntro,runIntro);
-window.addEventListener("resize",()=>{const it=selItem();if(it&&!it.builtin&&!document.getElementById("detail").hidden)drawGrid(it);});
+window.addEventListener("resize",()=>{placeHint();const it=selItem();if(it&&!it.builtin&&!document.getElementById("detail").hidden)drawGrid(it);});
 </script>
 </body>
 </html>

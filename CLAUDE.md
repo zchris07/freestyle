@@ -28,18 +28,28 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   Under the library only TEMPO (+ DOWNBEAT for uploads) and CHECK (Preview, "Click track during session") remain:
   no click-only tempos, no feel / drop / grid-by rows. Button labels: "Preview", "START SESSION". The session screen shows only the beat name and STOP on top, then
   the bar grid with no bar/prep labels, no beat numbers in the cells and no status texts (no PREPARE / SPIT IT!).
-  The lit cell is the beat indicator; STOP turns into BACK after bar 32.
+  The lit outline is the beat indicator; STOP turns into BACK after bar 32.
 - Wants to upload many trap and boom bap beats and have the metronome indicator structured correctly.
 - Motion: on every load the page grows into place (each element scales up out of a blur, staggered from the top
   left) while all text writes itself in with the football explainer's writing animation (`runIntro`, `writeWord`:
   an SVG copy of each word, each letter's outline stroked on then inked; words 1/60 s apart, letters 14 ms). The
-  session opens and closes like the builder, as a clip-path circle from the START SESSION button. Dragging the rhyme
-  column moves the real cells (no floating copy), lights the target column and springs into place on release.
+  session opens and closes like the builder, as a clip-path circle from the START SESSION button.
+- Dragging (presets): the rhyme column is its own layer (`.rhyme-col`) above a full grid of empty boxes, so the
+  boxes it leaves stay visible. While held it moves through magnetic detents (sticky near each column, then it
+  snaps across), resists past the ends, leans with its speed, and a spring settles it on release (rAF in
+  `setupDrag`). The target column's boxes light up in dashed green. The drag hint is a "← DRAG →" capsule below
+  the rhyme scheme panel, centred under the column (`placeHint`); it fades out on grab and back in after landing.
+- Session beat indicator: the current box lights up its outline (border + glow) and is never filled, so a rhyme
+  word stays readable (a plain beat in green, a rhyme in its group's color).
 
 ## Architecture (all in `index.html`)
 
-- **Setup screen**: one "RHYME SCHEME" panel (scheme pills: AABB / ABAB / AAAA / AA_A / A_A_ plus saved custom
-  schemes; word visibility all/first/last for presets; 4x4 grid, drag the column for presets) with a **Build**
+- **Setup screen**: one "RHYME SCHEME" panel (scheme pills from `SCHEMES`: AABB (default), AAAA, ABAB, AA_A, A_A_,
+  aAaA, aAbB, aBaB, aA_A, _AaA, _A_A_B_B, plus saved custom schemes; one letter per bar, same letter = same rhyme,
+  UPPERCASE = word shown, lowercase = outline with the word hidden, _ = no rhyme; "_A_A_B_B" is written over 8 bars
+  and is "_A_A" on the repeating 4-bar grid. Word visibility all/first/last applies to the all-uppercase presets
+  only (hidden for lowercase ones). A single "2-syllable rhymes" toggle button makes every preset rhyme 2-syllable (`G.multi`,
+  localStorage `fs-syl`); custom schemes set it per rhyme in Build. 4x4 grid, drag the column for presets) with a **Build**
   button, then the beat library (Trap / Boom bap tabs: `LIB_TAB`, by each beat's `feel`; uploads with no feel yet
   show in both) and START SESSION.
 - **Scheme model**: every scheme is a list of rhyme groups `{cells:[{r,c,show}]}` over the 4x4 grid (rows = bars 1-4,
