@@ -21,7 +21,7 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
 - No panel numbering.
 - Layout: the top bar with the "freestyle.wtf" wordmark top-left (".wtf" in green, no caption) has no colour of its
   own: it sits on the page background (`#121212`). At 1000px and wider, setup is two columns (rhyme scheme | beat
-  library + START SESSION) with bigger grids. The session screen (`#perf-screen`, `#191414`) is a full-window overlay
+  library + START SESSION, 1.45fr : 1fr, max 1440px, centred) with bigger grids; below that a single 840px column. The session screen (`#perf-screen`, `#191414`) is a full-window overlay
   with its own wordmark row, content centred at about 1040px. Phones (640px and below) get edge-to-edge content and a 50px top bar.
 - Keep it minimal: no caption under the scheme pills, no "Beat timing" label or drag instructions (just "← drag →"
   under the rhyme column), no upload instructions (the button says "+ Upload beat"), no notes under the library.
@@ -35,7 +35,11 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   pieces (`ASSEMBLE_SEL`: beat dots, checkbox, drag arrows) fly in and lock into place, and the waveform wipes on.
   All text writes itself in with the football explainer's writing animation (`runIntro`, `carveOutline`, `writeWord`:
   an SVG copy of each word, each letter's outline stroked on then inked; words 1/60 s apart, letters 14 ms).
-  Everything is staggered from the top left, and children start 180 ms after their container. The session opens as a
+  Everything is staggered from the top left, and children start 180 ms after their container.
+  The intro must start from a blank page: the empty starting state is set with transitions switched off (`.notrans`),
+  otherwise the finished page visibly fades away first. Outline colours are read before an element is emptied. A
+  1px `.paint-dot` in the page colour gives the browser an early paint, so a refresh doesn't keep showing the
+  previous page. The session opens as a
   clip-path circle from START SESSION and collapses into the STOP button.
 - Session controls: PAUSE / RESUME next to STOP (Space toggles it). Pause suspends the AudioContext, so the beat,
   the clicks and the beat clock stop together. Both "2 syllable" toggles say only "2 syllable" and show their state
@@ -44,16 +48,21 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   boxes it leaves stay visible. While held it glides through magnetic detents (holds near each column, then slides
   across), resists past the ends, and eases into the nearest column on release. No lean, wobble, vibration or
   overshoot (Chris asked). One state and one rAF loop per column, so a quick re-grab carries on (`setupDrag`). The target column's boxes light up in dashed green. The drag hint is a "← DRAG →" capsule below
-  the rhyme scheme panel, centred under the column (`placeHint`); it fades out on grab and back in after landing.
+  the rhyme scheme panel, under the column (`placeHint`; kept inside the panel, with its pointer tip shifted over
+  the column). It can be dragged to move the column, and a tap on its left or right half steps the column one beat.
+  It fades out on grab and back in after landing.
+- No text cursor or text selection anywhere (`body{cursor:default;user-select:none}`), except real text inputs.
 - Session beat indicator: the current box lights up its outline (border + glow) and is never filled, so a rhyme
   word stays readable (a plain beat in green, a rhyme in its group's color).
 
 ## Architecture (all in `index.html`)
 
-- **Setup screen**: one "RHYME SCHEME" panel. Scheme chips: AABB (default), AAAA, ABAB, AA_A, then a green "more"
-  chip that reveals A_A_, aAaA, aAbB, aBaB, aA_A, _AaA (and a green "<" chip that folds them away; the row's height
-  glides and the chips pop in/out, `toggleMore`). A selected extra stays visible when folded. Saved custom schemes
-  follow. Column schemes (AABB, AAAA, ABAB, AA_A, A_A_): one letter per bar, same letter = same rhyme, _ = none.
+- **Setup screen**: one "RHYME SCHEME" panel. Its top is two columns (`.scheme-controls`): scheme chips on the left,
+  and on the right a fixed "Show words" cluster with "2 syllable rhyme" under it, behind a divider that never moves.
+  The first chip row never changes: AABB (default), AAAA, ABAB, AA_A and a green "more" chip, which turns into "<" in
+  place. The extras (A_A_, aAaA, aAbB, aBaB, aA_A, _AaA) open in their own row below (`#scheme-more`, only its height
+  glides, `toggleMore`). Saved custom schemes sit in a row under that. For custom schemes the right cluster dims
+  instead of hiding. Below 700px of panel width (a container query) the cluster stacks under the chips. Column schemes (AABB, AAAA, ABAB, AA_A, A_A_): one letter per bar, same letter = same rhyme, _ = none.
   Only the first four are draggable; A_A_ sits on beat 4. Two-beat schemes (`SCHEMES[k]` is an array of 2 bars):
   per bar the beat-2 letter (lowercase) then the beat-4 letter (UPPERCASE); bars 3-4 repeat the shape with fresh
   rhymes. aAaA = beats 2+4 of both bars one rhyme; aAbB = a new rhyme each bar; aBaB = the 2s rhyme, the 4s rhyme;
