@@ -31,16 +31,17 @@
   --ease:cubic-bezier(.77,0,.18,1);
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--base);font-family:"Fraunces",Georgia,'Times New Roman',serif;font-optical-sizing:auto;color:var(--text);}
+body{background:var(--bg);font-family:"Fraunces",Georgia,'Times New Roman',serif;font-optical-sizing:auto;color:var(--text);}
 body.lock{overflow:hidden;}
 button,input{font-family:inherit;}
 button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--green);outline-offset:2px;}
-.root{--top-h:56px;background:var(--base);color:var(--text);min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;}
+.root{--top-h:56px;background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;}
 .topbar{height:var(--top-h);flex-shrink:0;display:flex;align-items:center;gap:12px;padding:0 20px;}
 .brand{font-size:24px;font-weight:700;letter-spacing:-.02em;color:var(--text);text-decoration:none;line-height:1;font-variation-settings:"opsz" 144;}
 .brand span{color:var(--green);}
 .brand:hover span{color:var(--green-hover);}
-.main{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--bg);border-radius:8px 8px 0 0;margin:0 8px;overflow:hidden;}
+.main{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
+.root.playing{background:var(--player);}   /* header matches the play screen too */
 #setup-screen{width:100%;max-width:760px;margin:0 auto;padding-bottom:6px;}
 .screen{display:none;flex-direction:column;}
 .screen.active{display:flex;}
@@ -61,7 +62,7 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 .spill.sel{background:var(--green);color:var(--on-accent);}
 .spill .x{font-size:10px;opacity:.55;padding:0 2px;}
 .spill .x:hover{opacity:1;}
-.vis-pills{display:flex;gap:6px;}
+.vis-pills{display:flex;gap:6px;flex-wrap:wrap;}
 .vpill{background:var(--high);border-radius:500px;padding:7px 14px;font-size:12px;color:var(--text);cursor:pointer;transition:background .15s;flex:1;text-align:center;font-weight:700;white-space:nowrap;}
 .vpill:hover{background:var(--high-hover);}
 .vpill.sel{background:var(--green);color:var(--on-accent);}
@@ -104,6 +105,7 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 .drow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
 .dlbl{font-size:10px;letter-spacing:.1em;color:var(--muted);width:78px;}
 .bpmv{font-size:20px;font-weight:700;min-width:70px;text-align:center;color:var(--green);}
+#detail.ro [data-act]{display:none;}
 .dropv{font-size:13px;font-weight:700;min-width:118px;text-align:center;color:var(--warn);}
 .dots{display:flex;gap:6px;margin-left:6px;}
 .dot{width:14px;height:14px;border-radius:50%;background:var(--high);border:1.5px solid var(--border);}
@@ -121,34 +123,21 @@ canvas.gv{width:100%;height:78px;background:var(--bg);border:1px solid var(--bor
 /* performance */
 #perf-screen{background:var(--player);height:calc(100vh - var(--top-h));height:calc(100dvh - var(--top-h));--inset:14px;}
 #perf-screen.active{display:flex;}
-.perf-hdr{background:var(--base);padding:14px 18px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border-soft);gap:10px;}
-.perf-chips{display:flex;gap:16px;flex-wrap:wrap;min-width:0;}
-.pchip{font-size:11px;color:var(--muted);letter-spacing:.08em;}
-.pchip span{color:var(--green);font-weight:700;}
+.perf-hdr{padding:14px var(--inset) 4px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.pname{font-size:16px;font-weight:700;color:var(--text);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .stop-btn{background:transparent;border:1px solid var(--outline);border-radius:500px;padding:6px 14px;font-size:12px;color:var(--text);cursor:pointer;letter-spacing:.06em;white-space:nowrap;font-weight:700;transition:border-color .15s,transform .15s;}
 .stop-btn:hover{border-color:var(--text);transform:scale(1.04);}
-.status-panel{background:var(--surface);margin:12px var(--inset) 0;border-radius:8px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;}
-.status-main{font-size:22px;font-weight:700;color:var(--text);letter-spacing:.06em;}
-.status-main.prep-mode{color:var(--warn);}
-.beat-big{font-size:36px;font-weight:700;color:var(--green);min-width:52px;text-align:right;}
-.bar-sub{font-size:11px;color:var(--muted);letter-spacing:.1em;margin-top:2px;}
 .bars-scroll{overflow-y:auto;flex:1;min-height:0;padding:12px var(--inset) 20px;}
 .bar-block{margin-bottom:10px;}
-.bar-block-label{font-size:10px;color:var(--muted);letter-spacing:.1em;margin-bottom:4px;padding-left:2px;font-weight:700;}
 .bar-row-perf{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;}
 .pcell{height:64px;border-radius:8px;background:var(--elev);border:1px solid var(--border-soft);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;transition:background .1s,border-color .1s;}
-.pcell .pbeat-num{font-size:17px;font-weight:700;color:var(--subdued);}
 .pcell .pword{font-size:13px;font-weight:700;color:transparent;text-align:center;padding:0 4px;line-height:1.2;}
 .pcell.prep-cell{background:var(--surface);}
-.pcell.prep-cell .pbeat-num{color:var(--border);}
 .pcell.rhyme-cell.upcoming{background:var(--high);border:2px solid var(--gc);}
 .pcell.rhyme-cell.upcoming .pword{color:var(--gc);opacity:.5;}
 .pcell.current-beat{background:var(--green);border-color:var(--green);}
-.pcell.current-beat .pbeat-num{color:var(--on-accent);}
 .pcell.current-rhyme{background:var(--gc);border:2px solid var(--gc);}
-.pcell.current-rhyme .pbeat-num,.pcell.current-rhyme .pword{color:var(--on-accent);}
 .pcell.played{background:var(--surface);border-color:transparent;}
-.pcell.played .pbeat-num{color:var(--border);}
 .pcell.played .pword{color:var(--gc);opacity:.6;}
 
 /* rhyme builder page */
@@ -210,7 +199,6 @@ canvas.gv{width:100%;height:78px;background:var(--bg);border:1px solid var(--bor
   .root{--top-h:50px;}
   .topbar{padding:0 16px;}
   .brand{font-size:21px;}
-  .main{margin:0;border-radius:0;}
 }
 /* full-size windows: two columns on setup, bigger grids, performance centred and filling the height */
 @media (min-width:1000px){
@@ -225,13 +213,9 @@ canvas.gv{width:100%;height:78px;background:var(--bg);border:1px solid var(--bor
   .word-text.long{font-size:16px;}
   .lib{max-height:340px;}
   #perf-screen{--inset:max(24px,calc((100% - 1040px) / 2));}
-  .perf-hdr{padding:16px var(--inset) 14px;}
-  .status-panel{padding:18px 24px;}
-  .status-main{font-size:28px;}
-  .beat-big{font-size:44px;}
+  .perf-hdr{padding:18px var(--inset) 6px;}
   .bar-row-perf{gap:10px;}
   .pcell{height:88px;}
-  .pcell .pbeat-num{font-size:22px;}
   .pcell .pword{font-size:19px;}
   .bar-block{margin-bottom:14px;}
   .build-in{max-width:1040px;padding:28px 24px 48px;}
@@ -259,7 +243,6 @@ canvas.gv{width:100%;height:78px;background:var(--bg);border:1px solid var(--bor
       <div>
         <div class="lbl">SCHEME</div>
         <div class="scheme-pills" id="scheme-pills"></div>
-        <div class="muted" style="margin-top:8px;" id="scheme-desc"></div>
       </div>
       <div style="flex:1;min-width:160px;" id="vis-wrap">
         <div class="lbl">SHOW WORDS</div>
@@ -340,22 +323,8 @@ canvas.gv{width:100%;height:78px;background:var(--bg);border:1px solid var(--bor
 
 <div id="perf-screen" class="screen">
   <div class="perf-hdr">
-    <div class="perf-chips">
-      <div class="pchip">BEAT <span id="p-beat-name">--</span></div>
-      <div class="pchip">BPM <span id="p-bpm">--</span></div>
-      <div class="pchip">SCHEME <span id="p-scheme">--</span></div>
-    </div>
-    <button class="stop-btn" onclick="stopPerf()">&#9632; STOP</button>
-  </div>
-  <div class="status-panel">
-    <div>
-      <div class="status-main" id="p-status">PREPARE...</div>
-      <div class="bar-sub" id="p-bar-sub">bar -- / 32</div>
-    </div>
-    <div style="text-align:right;">
-      <div class="beat-big" id="p-beat-counter">--</div>
-      <div class="bar-sub">beat</div>
-    </div>
+    <div class="pname" id="p-beat-name">--</div>
+    <button class="stop-btn" id="stop-btn" onclick="stopPerf()">&#9632; STOP</button>
   </div>
   <div class="bars-scroll" id="bars-scroll"></div>
 </div>
@@ -624,11 +593,11 @@ function setFeel(it,feel){
 // "Full level" = the 75th percentile of 4-bar (16-beat) averages. The drop starts at the first beat j whose next
 // 4 bars reach DROP_FULL x full, are DROP_JUMP x the 4 bars before, and with no 4-bar stretch before j above
 // DROP_QUIET x full (so a song that starts full never gets a drop, and a later breakdown is never picked).
-// The exact beat is the sharpest 4-beat step in the 8 beats from j.
-// anchor=true (fresh analysis): drops land on a "1", so the grid's downbeat moves onto the drop.
+// The exact beat is the sharpest 4-beat step in the 8 beats from j (or the grid's bar line next to it, if nearly as sharp).
+// anchor=true (fresh analysis): drops land on a "1", so the grid's downbeat moves onto the drop (as far as the groove allows).
 // anchor=false (after hand edits / Auto): the grid stays, and the drop snaps to its nearest bar line.
 // Stored as it.dropT (seconds); it.dropManual keeps a hand-set drop when the grid changes.
-const DROP_FULL=0.7,DROP_JUMP=1.6,DROP_QUIET=0.55,DROP_WIN=16;
+const DROP_FULL=0.7,DROP_JUMP=1.6,DROP_QUIET=0.65,DROP_WIN=16;
 function beatScores(it){
   const spb=60/it.bpm,end=Math.min(it.duration,150),nb=Math.max(0,Math.floor((end-it.fd)/spb));
   const k=[],h=[],e=[];
@@ -656,8 +625,16 @@ function detectDrop(it,anchor){
     if(before>DROP_QUIET*full) break;
     const after=R[j];
     if(after>=DROP_FULL*full&&after>=DROP_JUMP*avg(j-DROP_WIN,j)){
+      const step=c=>avg(c,c+4)-avg(c-4,c);
       let best=j,bs=-1e9;
-      for(let c=j;c<Math.min(j+8,n-4);c++){const d=avg(c,c+4)-avg(c-4,c);if(d>bs){bs=d;best=c;}}
+      for(let c=j;c<Math.min(j+8,n-4);c++){const d=step(c);if(d>bs){bs=d;best=c;}}
+      // a fill or riser blurs the step: if the grid's own bar line is a beat away and nearly as sharp, keep it
+      for(const c of [best-1,best+1]) if(c>0&&c%4===0&&step(c)>=0.8*bs){best=c;break;}
+      // a recognized groove pins the grid's phase: trap (snare on 3) fixes the "1" outright; boom bap (kick on 1 and 3,
+      // snare on 2 and 4) can't tell 1 from 3, so the drop may move the "1" by 2 beats but never by 1 (an odd step
+      // is a fill or pickup: snap to the neighbouring bar line)
+      if(anchor&&it.feel==="trap") best=Math.round(best/4)*4;
+      else if(anchor&&it.feel==="boombap"&&best%2) best+=best%4===3?1:-1;
       const t=it.fd+best*spb;
       if(anchor){it.fd=normFd(t,spb);it.dropT=t;}
       else it.dropT=it.fd+Math.round(best/4)*4*spb;
@@ -847,6 +824,16 @@ async function analyzeBT(buf,onProg){
 
 /* ================= LIBRARY + STORAGE ================= */
 let LIB=[],BUF=new Map(),SELECTED=null,dbOK=true;
+// Default beats: hosted in beats/ and analyzed once ahead of time (tempo, first downbeat, drop, feel), so anyone can
+// pick them without uploading. The audio downloads the first time a beat is picked. Read-only: no delete, no grid edits.
+const DEFAULTS=[
+  {"id":"d-ominous","name":"Ominous","file":"beats/ominous.mp3","bpm":134.01,"fd":0.112,"dropT":14.44,"feel":"trap","engine":"beat-this","duration":177.17},
+  {"id":"d-jcole1","name":"J. Cole type 1","file":"beats/j-cole-type-1.mp3","bpm":93.03,"fd":2.574,"dropT":18.053,"feel":"boombap","engine":"beat-this","duration":187.63},
+  {"id":"d-jcole2","name":"J. Cole type 2","file":"beats/j-cole-type-2.mp3","bpm":89.17,"fd":0.151,"dropT":10.917,"feel":"boombap","engine":"beat-this","duration":192.48},
+  {"id":"d-guitar","name":"Guitar","file":"beats/guitar.mp3","bpm":68.99,"fd":0.206,"dropT":28.036,"feel":"boombap","engine":"beat-this","duration":187.68},
+  {"id":"d-93","name":"93","file":"beats/93.mp3","bpm":103.09,"fd":0.757,"dropT":19.381,"feel":"boombap","engine":"beat-this","duration":292.05},
+  {"id":"d-still-tippin","name":"Still Tippin'","file":"beats/still-tippin.mp3","bpm":71.58,"fd":0.267,"dropT":0.267,"feel":"boombap","engine":"beat-this","duration":154.53}
+].map(d=>({...d,isDefault:true,status:"ready"}));
 const PRESETS=[
   {id:"click-85",builtin:true,name:"Metronome 85",bpm:85,fd:0},
   {id:"click-95",builtin:true,name:"Metronome 95",bpm:95,fd:0},
@@ -899,14 +886,25 @@ async function upgradeFeel(){
     await new Promise(r=>setTimeout(r,30));
   }
 }
-function allItems(){return LIB.concat(PRESETS);}
+function allItems(){return LIB.concat(DEFAULTS,PRESETS);}
 function selItem(){return allItems().find(i=>i.id===SELECTED)||null;}
 async function ensureBuf(it){
   if(BUF.has(it.id)) return BUF.get(it.id);
-  const ab=await it.blob.arrayBuffer();
-  const b=await getCtx().decodeAudioData(ab);
-  BUF.set(it.id,b);
-  return b;
+  if(!it._load) it._load=(async()=>{
+    await null;   // let it._load be set before anything below re-enters ensureBuf
+    let ab;
+    if(it.blob) ab=await it.blob.arrayBuffer();
+    else{   // default beat: fetch it from beats/ the first time it's used
+      it.prog="loading...";renderLib();
+      try{const r=await fetch(it.file);if(!r.ok) throw new Error("Could not load "+it.file);ab=await r.arrayBuffer();}
+      finally{it.prog=null;}
+    }
+    const b=await getCtx().decodeAudioData(ab);
+    BUF.set(it.id,b);
+    if(!it.blob) renderLib();
+    return b;
+  })().finally(()=>{it._load=null;});
+  return it._load;
 }
 // Beat This! frames are 20 ms; nudge the downbeat onto the nearest onset peak (+-30 ms) of the 10 ms envelope
 function snapPhase(it,g){
@@ -968,6 +966,11 @@ function renderLib(){
       h+='<div class="lrow'+(it.id===SELECTED?" sel":"")+'" data-id="'+it.id+'"><div class="lname">'+esc(it.name)+'</div><div class="lmeta">'+meta+'</div><button class="ldel" data-del="'+it.id+'" title="Remove">&#10005;</button></div>';
     }
   }
+  h+='<div class="lhdr">DEFAULT BEATS</div>';
+  for(const it of DEFAULTS){
+    const meta=it.prog||Math.round(it.bpm*10)/10+" BPM · "+(it.feel==="trap"?"trap · ":it.feel==="boombap"?"boom bap · ":"")+fmtDur(it.duration);
+    h+='<div class="lrow'+(it.id===SELECTED?" sel":"")+'" data-id="'+it.id+'"><div class="lname">'+esc(it.name)+'</div><div class="lmeta">'+meta+'</div></div>';
+  }
   h+='<div class="lhdr">CLICK-ONLY TEMPOS</div>';
   for(const it of PRESETS){
     h+='<div class="lrow'+(it.id===SELECTED?" sel":"")+'" data-id="'+it.id+'"><div class="lname">'+esc(it.name)+'</div><div class="lmeta">'+it.bpm+' BPM · no audio</div></div>';
@@ -983,12 +986,14 @@ function renderDetail(){
   const it=selItem(),d=document.getElementById("detail");
   if(!it||it.status!=="ready"&&!it.builtin){d.hidden=true;return;}
   d.hidden=false;
+  d.classList.toggle("ro",!!it.isDefault);   // default beats: show the grid, hide the edit buttons
   document.getElementById("bd-bpm").textContent=it.bpm.toFixed(1);
   const eng=document.getElementById("engine-lbl");
-  eng.textContent=it.builtin?"":it.engine==="beat-this"?"Beat This! (neural model)":"built-in detector"+(it.btErr?" (Beat This! unavailable here)":"");
+  eng.textContent=it.builtin?"":it.isDefault?"Pre-analyzed ("+(it.engine==="beat-this"?"Beat This!":"built-in detector")+")"
+    :it.engine==="beat-this"?"Beat This! (neural model)":"built-in detector"+(it.btErr?" (Beat This! unavailable here)":"");
   eng.parentElement.style.display=it.builtin?"none":"flex";
   document.getElementById("rebt-btn").style.display=it.engine==="beat-this"?"none":"inline-block";
-  document.getElementById("row-offset").style.display=it.builtin?"none":"flex";
+  document.getElementById("row-offset").style.display=it.builtin||it.isDefault?"none":"flex";
   document.getElementById("row-feel").style.display=it.builtin?"none":"flex";
   document.getElementById("row-drop").style.display=it.builtin?"none":"flex";
   if(!it.builtin){
@@ -998,7 +1003,8 @@ function renderDetail(){
   }
   document.getElementById("feel-trap").setAttribute("aria-pressed",String(it.feel==="trap"));
   document.getElementById("feel-boombap").setAttribute("aria-pressed",String(it.feel==="boombap"));
-  document.getElementById("feel-lbl").textContent=it.feelFix==="doubled"?"Read as trap: tempo doubled so the click lands on every quarter note"
+  document.getElementById("feel-lbl").textContent=it.isDefault?(it.feel==="trap"?"Trap (snare on 3)":it.feel==="boombap"?"Boom bap (snare on 2 and 4)":"")
+    :it.feelFix==="doubled"?"Read as trap: tempo doubled so the click lands on every quarter note"
     :it.feelFix==="halved"?"Read as boom bap: tempo halved so the snare lands on 2 and 4"
     :!it.feel&&!it.builtin?"Not sure. Pick one if the snare isn't where you expect.":"";
   document.getElementById("grid-cv").style.display=it.builtin?"none":"block";
@@ -1932,7 +1938,6 @@ const GROUP_COLORS=["#1ed760","#ffa42b","#539df5","#f3727f","#b49bc8","#ffffff"]
 function gColor(g){return GROUP_COLORS[g%GROUP_COLORS.length];}
 function gLetter(g){return String.fromCharCode(65+g);}
 const PRESET_ROWS={AABB:[[0,1],[2,3]],AAAA:[[0,1,2,3]],AA_A:[[0,1,3]]};
-const SCHEME_DESC={AABB:"Lines 1&2 rhyme · Lines 3&4 rhyme (2 color sets)",AAAA:"All 4 lines rhyme (1 color set)",AA_A:"Lines 1, 2 & 4 rhyme · Line 3 is free"};
 let G={kind:"preset",scheme:"AABB",vis:"all",rhymeCol:3,custom:null,running:false,curGlobalBeat:-1};
 let SAVED=[];
 try{SAVED=JSON.parse(localStorage.getItem("fs-schemes")||"[]");if(!Array.isArray(SAVED))SAVED=[];}catch(e){SAVED=[];}
@@ -1967,11 +1972,6 @@ function wordFor(info,block,ng){
   const w=Math.min(fam.length,info.n+2);
   return fam[(info.pos+RND.rot+k*7)%w];
 }
-function describe(groups){
-  const n=groups.length,beats=groups.reduce((s,g)=>s+g.cells.length,0),hid=groups.reduce((s,g)=>s+g.cells.filter(c=>!c.show).length,0);
-  const two=groups.filter(g=>g.multi).length;
-  return n+" rhyme"+(n===1?"":"s")+(two?" ("+two+" two-syllable)":"")+" · "+beats+" rhyme beat"+(beats===1?"":"s")+(hid?" · "+hid+" hidden":"");
-}
 
 function renderSetup(){
   let h="";
@@ -1980,7 +1980,6 @@ function renderSetup(){
   if(G.kind==="custom"&&!G.custom.id) h+='<div class="spill sel">'+esc(G.custom.name)+'</div>';
   document.getElementById("scheme-pills").innerHTML=h;
   const preset=G.kind==="preset";
-  document.getElementById("scheme-desc").textContent=preset?SCHEME_DESC[G.scheme]:"Custom · "+describe(G.custom.groups);
   document.getElementById("vis-wrap").style.display=preset?"":"none";
   document.querySelectorAll(".vpill").forEach(p=>p.classList.toggle("sel",p.dataset.v===G.vis));
   document.getElementById("grid-hint").textContent=preset
@@ -2206,7 +2205,7 @@ document.getElementById("lib").addEventListener("click",e=>{
 });
 document.getElementById("detail").addEventListener("click",e=>{
   const b=e.target.closest("[data-act]");if(!b)return;
-  const it=selItem();if(!it)return;
+  const it=selItem();if(!it||it.isDefault)return;
   const wasPreviewing=previewing;
   if(b.dataset.act==="rebt"){
     if(it.builtin||it.status!=="ready") return;
@@ -2250,11 +2249,9 @@ function build32Bars(){
   for(let bar=0;bar<PREP_BARS+TOTAL_BARS;bar++){
     const isPrep=bar<PREP_BARS,realBar=bar-PREP_BARS;
     const block=document.createElement("div");block.className="bar-block";block.id="barblock-"+bar;
-    const lbl=document.createElement("div");lbl.className="bar-block-label";lbl.textContent=isPrep?"PREP "+(bar+1):"BAR "+(realBar+1);block.appendChild(lbl);
     const row=document.createElement("div");row.className="bar-row-perf";
     for(let beat=0;beat<4;beat++){
       const cell=document.createElement("div");cell.className="pcell"+(isPrep?" prep-cell":" upcoming");cell.id="pc-"+bar+"-"+beat;
-      const num=document.createElement("div");num.className="pbeat-num";num.textContent=beat+1;
       const wd=document.createElement("div");wd.className="pword";
       const info=isPrep?null:m.get((realBar%4)*4+beat);
       if(info){
@@ -2262,7 +2259,7 @@ function build32Bars(){
         wd.textContent=info.show?w:"";wd.dataset.word=w;wd.dataset.shouldshow=info.show?"1":"0";
         cell.classList.add("rhyme-cell");cell.style.setProperty("--gc",gColor(info.g));
       }
-      cell.appendChild(num);cell.appendChild(wd);row.appendChild(cell);
+      cell.appendChild(wd);row.appendChild(cell);
     }
     block.appendChild(row);scroll.appendChild(block);
   }
@@ -2271,30 +2268,25 @@ async function startPerf(){
   const it=selItem();if(!it) return;
   if(previewing){previewing=false;stopPlayer();resetDots();}
   document.getElementById("p-beat-name").textContent=it.name.length>22?it.name.slice(0,21)+"…":it.name;
-  document.getElementById("p-bpm").textContent=it.bpm.toFixed(1);
-  document.getElementById("p-scheme").textContent=schemeName();
+  document.getElementById("stop-btn").innerHTML="&#9632; STOP";
+  document.getElementById("root").classList.add("playing");
   rerollWords();
   build32Bars();
   document.getElementById("setup-screen").classList.remove("active");
   document.getElementById("perf-screen").classList.add("active");
   G.running=true;G.curGlobalBeat=-1;
-  document.getElementById("p-status").textContent="PREPARE...";
-  document.getElementById("p-status").className="status-main prep-mode";
-  document.getElementById("p-bar-sub").textContent="bar -- / 32";
-  document.getElementById("p-beat-counter").textContent="--";
   const click=it.builtin||document.getElementById("click-toggle").checked;
   try{await startPlayer(it,{click,onBeat:handleBeat});}
-  catch(e){document.getElementById("p-status").textContent="Could not play this file";}
+  catch(e){document.getElementById("p-beat-name").textContent="Could not play this file";}
 }
 function handleBeat(globalBeat){
   const totalCells=(PREP_BARS+TOTAL_BARS)*4;
   if(globalBeat>=totalCells){
     stopPlayer();
-    document.getElementById("p-status").textContent="DONE!";
-    document.getElementById("p-status").className="status-main";
+    document.getElementById("stop-btn").innerHTML="&#8592; BACK";   // 32 bars done
     return;
   }
-  const bar=Math.floor(globalBeat/4),beat=globalBeat%4,isPrep=bar<PREP_BARS,realBar=bar-PREP_BARS;
+  const bar=Math.floor(globalBeat/4),beat=globalBeat%4;
   if(G.curGlobalBeat>=0){
     const prev=document.getElementById("pc-"+Math.floor(G.curGlobalBeat/4)+"-"+(G.curGlobalBeat%4));
     if(prev){
@@ -2313,18 +2305,10 @@ function handleBeat(globalBeat){
     if(block){const bR=block.getBoundingClientRect(),sR=sc.getBoundingClientRect();
       if(bR.bottom>sR.bottom-40||bR.top<sR.top+10) block.scrollIntoView({behavior:"smooth",block:"nearest"});}
   }
-  if(isPrep){
-    document.getElementById("p-status").textContent="PREPARE... "+(PREP_BARS-bar);
-    document.getElementById("p-status").className="status-main prep-mode";
-    document.getElementById("p-bar-sub").textContent="prep bar "+(bar+1)+" / "+PREP_BARS;
-  }else{
-    if(realBar===0&&beat===0){document.getElementById("p-status").textContent="SPIT IT!";document.getElementById("p-status").className="status-main";}
-    document.getElementById("p-bar-sub").textContent="bar "+(realBar+1)+" / "+TOTAL_BARS;
-  }
-  document.getElementById("p-beat-counter").textContent=beat+1;
 }
 function stopPerf(){
   stopPlayer();G.running=false;
+  document.getElementById("root").classList.remove("playing");
   document.getElementById("perf-screen").classList.remove("active");
   document.getElementById("setup-screen").classList.add("active");
   renderSetup();   // the grid preview shows this session's words

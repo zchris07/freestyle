@@ -9,8 +9,8 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
 
 ## User preferences (decided, don't re-litigate)
 
-- Palette: Spotify dark theme (changed from the old cream look on 2026-10-20), as CSS tokens in `:root`. Black app chrome
-  `#000000`, page `#121212`, panels `#181818`, cells `#1f1f1f`, pills/raised `#282828` (hover `#3e3e3e`), performance
+- Palette: Spotify dark theme (changed from the old cream look on 2026-10-20), as CSS tokens in `:root`. Page and header
+  `#121212`, panels `#181818`, cells `#1f1f1f`, pills/raised `#282828` (hover `#3e3e3e`), performance
   screen `#191414` (Spotify brand black, its official playback-view fallback). Text `#ffffff` / secondary `#b3b3b3` /
   subdued `#7c7c7c`. Accent Spotify green `#1ed760` (hover `#1db954`) with black text on it; selected pills are green.
   Pill-shaped buttons (radius 500px). Warning `#ffa42b`, error `#f3727f`, toast blue `#539df5`.
@@ -19,10 +19,13 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   `#b49bc8`, white. A rhyme cell has a 2px outline and word text in its group's color. Hidden words get a dashed
   outline and faded, struck-through text.
 - No panel numbering.
-- Layout: a black top bar with the "freestyle.wtf" wordmark top-left (".wtf" in green, no caption), over a rounded
-  `#121212` `.main` area. At 1000px and wider, setup is two columns (rhyme scheme on the left, beat library + PLAY on
-  the right), and grids and performance cells are bigger. The performance screen fills the window height with its
-  content centred at about 1040px. Phones (640px and below) get edge-to-edge content and a 50px top bar.
+- Layout: the top bar with the "freestyle.wtf" wordmark top-left (".wtf" in green, no caption) has no colour of its
+  own: it sits on the page background (`#121212`, or `#191414` while playing via `.root.playing`). At 1000px and wider,
+  setup is two columns (rhyme scheme | beat library + PLAY) with bigger grids. The play screen fills the window height,
+  with content centred at about 1040px. Phones (640px and below) get edge-to-edge content and a 50px top bar.
+- Keep it minimal: no caption under the scheme pills. The play screen shows only the beat name and STOP on top, then
+  the bar grid with no bar/prep labels, no beat numbers in the cells and no status texts (no PREPARE / SPIT IT!).
+  The lit cell is the beat indicator; STOP turns into BACK after bar 32.
 - Wants to upload many trap and boom bap beats and have the metronome indicator structured correctly.
 
 ## Architecture (all in `index.html`)
@@ -84,16 +87,33 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   8 beats into the song, the missing prep beats are a click count-in (`P.countIn`).
 - detectDrop(it,anchor) works per beat on the stored kick/hat/low bands (beatScores). "Full level" = the 75th
   percentile of 4-bar averages. The drop is the first beat whose next 4 bars reach DROP_FULL x full and
-  DROP_JUMP x the 4 bars before, with no 4-bar stretch before it above DROP_QUIET x full. A song that starts full
+  DROP_JUMP x the 4 bars before, with no 4-bar stretch before it above DROP_QUIET (0.65) x full. A song that starts full
   gets no drop, so a later breakdown is never picked. Refined to the sharpest 4-beat step.
 - anchor=true on fresh analysis (upload, Re-analyze): drops land on a "1", so the grid's downbeat moves onto the
-  drop (this also fixes a "1" that was off by a beat). anchor=false after hand edits, Auto and old saved beats: the
+  drop, as far as the groove allows: trap (snare on 3) keeps the grid; boom bap may move the "1" by 2 beats
+  (kick 1/3 ambiguity) but never 1; an unclear groove follows the drop. A bar line within a beat of the sharpest
+  step wins if it is nearly as sharp (fills and risers). anchor=false after hand edits, Auto and old saved beats: the
   grid stays, and the drop snaps to its nearest bar line.
 - Stored as `dropT` (seconds) plus `dropManual`. The DROP row in the detail panel moves it +-1/+-4 bars (sets
   manual); Auto re-detects. The waveform shades P1/P2 and marks "1 DROP".
 - Tested on synthetic beats (boom bap 85-95, trap 140-150, intros of 0/1/4/8/16 bars, hats-only or 25% drums in the
   intro, breakdowns in songs that start full): drop within 2 ms. Drums at half volume in the intro read as "beat
   already in". Not yet tuned on real songs.
+
+## Default beats (for everyone)
+- Audio lives in `beats/`. `const DEFAULTS` in index.html holds each beat's pre-analyzed grid: bpm, fd (first downbeat),
+  dropT, feel, engine, duration. The library lists them under DEFAULT BEATS, between your uploads and the
+  metronomes. New visitors start on the first one.
+- ensureBuf() fetches a default's audio the first time it is picked (row shows "loading..."), then caches it in
+  BUF for the session. Default beats are read-only: no delete, and `#detail.ro` hides the edit buttons
+  (preview and click toggle stay). The fetch needs a web origin, so they don't play in the Claude artifact.
+- To add one: copy the mp3 into beats/, run analyzeBuffer + runBT + checkFeel + detectDrop(it,true) on it in the
+  browser (localhost), check the result, and add a row to DEFAULTS.
+- Current set (analyzed 2026-11-06 with Beat This!): Ominous 134.01 trap, drop bar 9 (14.44 s); J. Cole type 1 93.03
+  boom bap, drop bar 7 (18.05 s); J. Cole type 2 89.17 boom bap, drop bar 5 (10.92 s); Guitar 68.99 boom bap, drop
+  bar 9 (28.04 s); 93 103.09 boom bap, drop bar 9 (19.38 s); Still Tippin' 71.58 boom bap, no intro.
+  J. Cole type 2 was hand-corrected: checkFeel read its busy hi-hats as half-time trap and doubled it to 178.
+  Ominous, Guitar and both J. Cole type beats are Chris's own Suno tracks.
 
 ## Beat This! in the browser
 
