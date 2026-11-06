@@ -1,0 +1,67 @@
+<!doctype html>
+<!-- Source for og-image.png, the link-preview thumbnail (iMessage, Slack, X...). Render at 1200x630:
+     "C:\Program Files\Google\Chrome\Application\chrome.exe" --headless --hide-scrollbars --force-device-scale-factor=1
+       --window-size=1200,630 --virtual-time-budget=4000 --screenshot=og-image.png tools/og-image.html -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,900&display=block">
+<style>
+:root{--green:#1ed760;--orange:#ffa42b;--bg:#121212;--surface:#181818;--elev:#1f1f1f;--high:#282828;--muted:#b3b3b3;--subdued:#7c7c7c;}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:1200px;height:630px;overflow:hidden;}
+body{background:#000;font-family:"Fraunces",Georgia,serif;color:#fff;position:relative;}
+.glow{position:absolute;inset:0;background:
+  radial-gradient(620px 420px at 8% 0%,rgba(30,215,96,.30),transparent 70%),
+  radial-gradient(520px 420px at 100% 100%,rgba(30,215,96,.16),transparent 70%);}
+.copy{position:absolute;left:72px;top:0;bottom:0;width:640px;display:flex;align-items:center;}
+.brand{font-size:112px;font-weight:900;letter-spacing:-.035em;line-height:.95;font-variation-settings:"opsz" 144;}
+.brand span{color:var(--green);}
+.tag{margin-top:26px;font-size:40px;font-weight:400;line-height:1.18;color:#fff;font-variation-settings:"opsz" 72;}
+.tag em{font-style:italic;color:var(--green);}
+.chips{position:absolute;left:72px;bottom:64px;display:flex;gap:12px;}
+.chip{background:var(--high);border-radius:500px;padding:12px 22px;font-size:22px;font-weight:700;}
+.chip.on{background:var(--green);color:#000;}
+.card{position:absolute;left:706px;top:104px;width:452px;background:var(--surface);border-radius:22px;padding:26px 26px 30px;
+  transform:rotate(-5deg);box-shadow:0 30px 80px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06);}
+.ttl{font-size:15px;letter-spacing:.16em;font-weight:700;color:var(--muted);margin-bottom:14px;}
+.row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px;}
+.c{height:82px;border-radius:12px;background:var(--elev);border:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
+.n{font-size:22px;font-weight:700;color:var(--subdued);}
+.w{font-size:21px;font-weight:700;letter-spacing:-.01em;}
+.played{background:#1a1a1a;border-color:rgba(255,255,255,.05);}
+.played .n{color:#4d4d4d;}
+.r{background:var(--high);border:3px solid var(--gc);}
+.r .w{color:var(--gc);}
+.now{background:var(--green);border-color:var(--green);}
+.now .n{color:#000;}
+.hit{background:var(--gc);border:3px solid var(--gc);}
+.hit .n,.hit .w{color:#000;}
+</style>
+</head>
+<body>
+<div class="glow"></div>
+<div class="copy">
+  <div class="brand">freestyle<span>.wtf</span></div>
+</div>
+<div class="card">
+  <div class="ttl">BAR 5 – 8</div>
+  <div class="row">
+    <div class="c played"><div class="n">1</div></div><div class="c played"><div class="n">2</div></div><div class="c played"><div class="n">3</div></div>
+    <div class="c played r" style="--gc:var(--green)"><div class="n">4</div><div class="w">fiction</div></div>
+  </div>
+  <div class="row">
+    <div class="c played"><div class="n">1</div></div><div class="c played"><div class="n">2</div></div><div class="c played"><div class="n">3</div></div>
+    <div class="c hit" style="--gc:var(--green)"><div class="n">4</div><div class="w">friction</div></div>
+  </div>
+  <div class="row">
+    <div class="c"><div class="n">1</div></div><div class="c"><div class="n">2</div></div><div class="c"><div class="n">3</div></div>
+    <div class="c r" style="--gc:var(--orange)"><div class="n">4</div><div class="w">autumn</div></div>
+  </div>
+  <div class="row">
+    <div class="c"><div class="n">1</div></div><div class="c"><div class="n">2</div></div><div class="c"><div class="n">3</div></div>
+    <div class="c r" style="--gc:var(--orange)"><div class="n">4</div><div class="w">bottom</div></div>
+  </div>
+</div>
+</body>
+</html>

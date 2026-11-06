@@ -121,6 +121,8 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   and calling `analyzeBuffer(buf)` from the console (globals are top-level in `index.html`).
 - Artifact constraints: external stylesheets/fetches are blocked by CSP, so keep everything inline
   and use text glyphs for icons. The page must work at phone width.
+- Link preview: `og-image.png` (1200x630) is rendered from `tools/og-image.html` with headless Chrome (the command is in
+  that file). It shows only the freestyle.wtf wordmark and a rhyme grid, no tagline. `og:title` is "freestyle.wtf".
 - Commits end with: `Co-Authored-By: Claude <noreply@anthropic.com>`.
 
 ## Feel check (trap vs boom bap)
