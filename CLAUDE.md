@@ -16,23 +16,32 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   Pill-shaped buttons (radius 500px). Warning `#ffa42b`, error `#f3727f`, toast blue `#539df5`.
 - Font: Fraunces (Google Fonts, same as the "football explained." page), Georgia fallback, for ALL text incl. buttons, numbers and the grid canvas. No icon fonts.
 - Rhyme groups are colored, in order: green `#1ed760`, orange `#ffa42b`, blue `#539df5`, pink `#f3727f`, lavender
-  `#b49bc8`, white. A rhyme cell has a 2px outline and word text in its group's color. Hidden words get a dashed
-  outline and faded, struck-through text.
+  `#b49bc8`, white. A rhyme cell has a 2px outline and word text in its group's color. On the setup grid a hidden
+  word ("First only" / "Last only") keeps a dashed outline and shows no text; in the builder it is faded and struck.
 - No panel numbering.
 - Layout: the top bar with the "freestyle.wtf" wordmark top-left (".wtf" in green, no caption) has no colour of its
-  own: it sits on the page background (`#121212`, or `#191414` while playing via `.root.playing`). At 1000px and wider,
-  setup is two columns (rhyme scheme | beat library + PLAY) with bigger grids. The play screen fills the window height,
-  with content centred at about 1040px. Phones (640px and below) get edge-to-edge content and a 50px top bar.
-- Keep it minimal: no caption under the scheme pills. The play screen shows only the beat name and STOP on top, then
+  own: it sits on the page background (`#121212`). At 1000px and wider, setup is two columns (rhyme scheme | beat
+  library + START SESSION) with bigger grids. The session screen (`#perf-screen`, `#191414`) is a full-window overlay
+  with its own wordmark row, content centred at about 1040px. Phones (640px and below) get edge-to-edge content and a 50px top bar.
+- Keep it minimal: no caption under the scheme pills, no "Beat timing" label or drag instructions (just "← drag →"
+  under the rhyme column), no upload instructions (the button says "+ Upload beat"), no notes under the library.
+  Under the library only TEMPO (+ DOWNBEAT for uploads) and CHECK (Preview, "Click track during session") remain:
+  no click-only tempos, no feel / drop / grid-by rows. Button labels: "Preview", "START SESSION". The session screen shows only the beat name and STOP on top, then
   the bar grid with no bar/prep labels, no beat numbers in the cells and no status texts (no PREPARE / SPIT IT!).
   The lit cell is the beat indicator; STOP turns into BACK after bar 32.
 - Wants to upload many trap and boom bap beats and have the metronome indicator structured correctly.
+- Motion: on every load the page grows into place (each element scales up out of a blur, staggered from the top
+  left) while all text writes itself in with the football explainer's writing animation (`runIntro`, `writeWord`:
+  an SVG copy of each word, each letter's outline stroked on then inked; words 1/60 s apart, letters 14 ms). The
+  session opens and closes like the builder, as a clip-path circle from the START SESSION button. Dragging the rhyme
+  column moves the real cells (no floating copy), lights the target column and springs into place on release.
 
 ## Architecture (all in `index.html`)
 
-- **Setup screen**: one "RHYME SCHEME" panel (scheme pills: AABB / AAAA / AA_A plus saved custom schemes; word
-  visibility first/last/all for presets; 4x4 beat-timing grid, drag the column for presets) with a **Build** button,
-  then the beat library and PLAY.
+- **Setup screen**: one "RHYME SCHEME" panel (scheme pills: AABB / ABAB / AAAA / AA_A / A_A_ plus saved custom
+  schemes; word visibility all/first/last for presets; 4x4 grid, drag the column for presets) with a **Build**
+  button, then the beat library (Trap / Boom bap tabs: `LIB_TAB`, by each beat's `feel`; uploads with no feel yet
+  show in both) and START SESSION.
 - **Scheme model**: every scheme is a list of rhyme groups `{cells:[{r,c,show}]}` over the 4x4 grid (rows = bars 1-4,
   cols = beats 1-4), repeated every 4 bars. Presets are generated as groups (`presetGroups`); custom ones live in
   `G.custom`. `cellMap` + `wordFor` give each cell its word: each group draws from one `BANK` rhyme family, and each
@@ -48,8 +57,8 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   word hides it; clicking a hidden one removes it. "+ Create new rhyme" starts the next group, and chips switch or
   delete groups. A "2-syllable" toggle switches the active group to `BANK2` words. Confirm applies the scheme;
   Save rhyme scheme stores or updates it by name.
-- **Performance screen**: 2 prep bars then 32 bars, 4 cells per bar; current cell highlights, rhyme
-  word reveals on its beat.
+- **Session screen**: 2 prep bars then 32 bars, 4 cells per bar; current cell highlights, rhyme
+  word reveals on its beat. Esc or STOP closes it.
 - **Beat analysis, two engines.** (1) **Beat This! small** (CPJKU, MIT) running in the browser via
   `onnxruntime-web` (wasm, in a worker); (2) the built-in detector below. Both run on upload: the built-in one
   always (it supplies the onset envelopes for the tempo buttons), Beat This! on top when it can load. See
@@ -94,8 +103,9 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   (kick 1/3 ambiguity) but never 1; an unclear groove follows the drop. A bar line within a beat of the sharpest
   step wins if it is nearly as sharp (fills and risers). anchor=false after hand edits, Auto and old saved beats: the
   grid stays, and the drop snaps to its nearest bar line.
-- Stored as `dropT` (seconds) plus `dropManual`. The DROP row in the detail panel moves it +-1/+-4 bars (sets
-  manual); Auto re-detects. The waveform shades P1/P2 and marks "1 DROP".
+- Stored as `dropT` (seconds) plus `dropManual`. The DROP row (+-1/+-4 bars, Auto) was removed from the UI on
+  2026-11-06 at Chris's request; the code paths (`dropManual`, `regridDrop`) stay. The waveform shades P1/P2 and
+  marks "1 DROP".
 - Tested on synthetic beats (boom bap 85-95, trap 140-150, intros of 0/1/4/8/16 bars, hats-only or 25% drums in the
   intro, breakdowns in songs that start full): drop within 2 ms. Drums at half volume in the intro read as "beat
   already in". Not yet tuned on real songs.
@@ -110,8 +120,10 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
 - To add one: copy the mp3 into beats/, run analyzeBuffer + runBT + checkFeel + detectDrop(it,true) on it in the
   browser (localhost), check the result, and add a row to DEFAULTS.
 - Current set (analyzed 2026-11-06 with Beat This!): Ominous 134.01 trap, drop bar 9 (14.44 s); J. Cole type 1 93.03
-  boom bap, drop bar 7 (18.05 s); J. Cole type 2 89.17 boom bap, drop bar 5 (10.92 s); Guitar 68.99 boom bap, drop
-  bar 9 (28.04 s); 93 103.09 boom bap, drop bar 9 (19.38 s); Still Tippin' 71.58 boom bap, no intro.
+  boom bap, drop bar 7 (18.05 s); J. Cole type 2 89.17 boom bap, drop bar 5 (10.92 s); Guitar 137.98 trap, drop bar 17
+  (28.04 s); 93 103.09 boom bap, drop bar 9 (19.38 s); Still Tippin' 143.16 trap, no intro. Guitar and Still Tippin'
+  were re-timed as trap by hand (Beat This! counted them at half speed): setFeel(it,"trap") doubled the tempo and put
+  the snare on 3 (confirmed: snare strongest on beat 3).
   J. Cole type 2 was hand-corrected: checkFeel read its busy hi-hats as half-time trap and doubled it to 178.
   Ominous, Guitar and both J. Cole type beats are Chris's own Suno tracks.
 
@@ -128,8 +140,8 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   downbeat phase by vote; `snapPhase` then refines the downbeat against the 10 ms onset envelope (+-30 ms) because
   the model's output is quantized to 20 ms. The item stores `engine: "beat-this" | "builtin"`.
 - Needs a normal web origin: `import()` of ORT from jsdelivr and `fetch("models/...")`. The Claude artifact's CSP
-  blocks both, so there it silently falls back to the built-in detector (UI says so; "Re-analyze with Beat This!"
-  button appears for non-Beat-This items). Real use = GitHub Pages: https://zchris07.github.io/freestyle/ and the custom domain https://freestyle.wtf (CNAME file in repo root; domain bought by Chris on Nov 6 2026).
+  blocks both, so there it silently falls back to the built-in detector (the "Re-analyze with Beat This!" button
+  was removed from the UI on 2026-11-06). Real use = GitHub Pages: https://zchris07.github.io/freestyle/ and the custom domain https://freestyle.wtf (CNAME file in repo root; domain bought by Chris on Nov 6 2026).
   Pages was enabled 2026-11-05 and deploys from `main` /, so every push to main updates the site within a minute or two.
 - Cost: ~16 s for a 40 s track on one wasm thread (GitHub Pages cannot send COOP/COEP headers, so no threads);
   150 s cap means up to ~1 min. Runs in an ORT worker (`env.wasm.proxy`), UI stays responsive, progress shown on the row.
