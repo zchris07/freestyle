@@ -53,12 +53,12 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 .guide-in{max-width:720px;margin:0 auto;padding:22px 16px 48px;}
 .ghead{display:flex;align-items:center;gap:14px;margin-bottom:18px;}
 .glead{font-size:17px;line-height:1.5;color:var(--meta);margin-bottom:22px;}
-.gsec{display:flex;gap:16px;background:var(--surface);border-radius:12px;padding:18px;margin-bottom:12px;}
-.gsec h3{font-size:17px;margin-bottom:6px;}
+/* guide sections: plain blocks of text on the page background, no boxes or badges */
+.gsec{margin-bottom:26px;}
+.gsec h3{font-size:20px;margin-bottom:8px;}
 .gsec p{font-size:14px;line-height:1.55;color:var(--meta);margin-bottom:6px;}
 .gsec p b{color:var(--text);}
-.gnum{flex:none;width:30px;height:30px;border-radius:50%;background:var(--green);color:var(--on-accent);font-weight:700;display:flex;align-items:center;justify-content:center;}
-.gsec.why{border:1px solid rgba(30,215,96,.4);}
+.gnum{display:none;}
 .gsec.why p{font-size:17px;color:var(--text);font-weight:700;}
 #guide-done{margin-top:10px;}
 .brand:hover .tld{color:var(--green-hover);}
@@ -490,7 +490,7 @@ body.preintro .root{opacity:0;}
       <p>Trap or boom bap, from the library, or upload your own with the upload chip. Every beat is read for its tempo, its "one" and its drop, and you always get 8 beats of lead-in right before the drop. <b>Preview</b> lets you check the grid; turn on <b>Play metronome during session</b> if you want a click on top.</p></div></div>
     <div class="gsec rise" style="--d:5"><div class="gnum">4</div><div><h3>Start session</h3>
       <p>Two prep bars, then 32 bars. The lit box is the beat; rhyme words light up as you reach them. Every session deals new words. <b>Space</b> pauses, <b>Esc</b> stops.</p></div></div>
-    <div class="gsec why rise" style="--d:6"><div class="gnum">?</div><div><h3>Why does this exist</h3>
+    <div class="gsec why rise" style="--d:6"><div class="gnum">?</div><div><h3>why tf does this exist?</h3>
       <p>Because every other freestyle app out there right now is ass.</p></div></div>
     <button class="btn go big rise" style="--d:7" id="guide-done">Got it</button>
   </div>
