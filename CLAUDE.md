@@ -184,6 +184,7 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   P.I.M.P. 85.17 boom bap (first downbeat at 1.9 s after a pickup, so 6 clicks lead in), no intro. C.R.E.A.M. 90.09
   boom bap: its first 8 bars sit at ~72% of full energy, so they count as "drums already in" and it starts right away.
   Both are commercial instrumentals (50 Cent, Wu-Tang) that Chris chose to host.
+  Electric 98.03 boom bap (Beat This!, the built-in detector and checkFeel all agree), no intro; from a streaming site.
   Ominous, Guitar, both J. Cole type beats, Memphis and Minor are Chris's own Suno tracks.
 - Known issue: checkFeel's hi-hat test (FEEL_HAT_FILL) misreads busy-hat boom bap as half-time trap (2 of 4 real
   boom bap beats so far), which doubles the tempo and files an upload under Trap.
