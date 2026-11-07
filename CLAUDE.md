@@ -182,9 +182,14 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   Molly 109.95 trap (Beat This! and the built-in detector agree; snare strongly on 3), drop bar 9 (17.46 s).
   Downloaded from a streaming site like Still Tippin'.
   P.I.M.P. 85.17 boom bap (first downbeat at 1.9 s after a pickup, so 6 clicks lead in), no intro. C.R.E.A.M. 90.09
-  boom bap: its first 8 bars sit at ~72% of full energy, so they count as "drums already in" and it starts right away.
+  boom bap, drop bar 9 (21.34 s), set by hand from Chris's ear: its first 8 bars sit at ~72% of full energy, which
+  the detector reads as "drums already in".
   Both are commercial instrumentals (50 Cent, Wu-Tang) that Chris chose to host.
-  Electric 98.03 boom bap (Beat This!, the built-in detector and checkFeel all agree), no intro; from a streaming site.
+  Electric 98.03 boom bap (Beat This!, the built-in detector and checkFeel all agree), drop bar 7 (15.41 s), set by
+  hand from Chris's ear (~16 s). The intro is only slightly quieter than the rest, so the detector can't see it.
+  From a streaming site, no tags; possibly ATCQ's "Electric Relaxation" (unconfirmed).
+- Drop detection only sees intros that are clearly quieter than the beat (below 65% of full energy). Drums-in
+  intros like C.R.E.A.M. and Electric need the drop set by hand in DEFAULTS.
   Ominous, Guitar, both J. Cole type beats, Memphis and Minor are Chris's own Suno tracks.
 - Known issue: checkFeel's hi-hat test (FEEL_HAT_FILL) misreads busy-hat boom bap as half-time trap (2 of 4 real
   boom bap beats so far), which doubles the tempo and files an upload under Trap.
