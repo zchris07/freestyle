@@ -176,7 +176,7 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   so its grid fails the steadiness check. The built-in grid is used, and was checked against Beat This!'s
   main-section beats (they line up, and 40 of 49 of its downbeats fall on beat 1). Minor 134.8 trap (Beat This!
   said 67.4), snare on 3, drop bar 9 (14.47 s).
-  NYSOM 84.48 boom bap, no intro (checkFeel misread it as half-time trap and doubled it to 169, like J. Cole type 2;
+  NYSOM 84.48 boom bap, drop bar 9 (22.81 s), set by hand from Chris's ear (~23 s) (checkFeel misread it as half-time trap and doubled it to 169, like J. Cole type 2;
   set to boom bap by hand). Probably the "N.Y. State of Mind" instrumental, a commercial track like Still Tippin'
   and 93; Chris chose to host those.
   Molly 109.95 trap (Beat This! and the built-in detector agree; snare strongly on 3), drop bar 9 (17.46 s).
@@ -189,7 +189,7 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   hand from Chris's ear (~16 s). The intro is only slightly quieter than the rest, so the detector can't see it.
   From a streaming site, no tags; possibly ATCQ's "Electric Relaxation" (unconfirmed).
 - Drop detection only sees intros that are clearly quieter than the beat (below 65% of full energy). Drums-in
-  intros like C.R.E.A.M. and Electric need the drop set by hand in DEFAULTS.
+  intros like C.R.E.A.M., Electric and NYSOM need the drop set by hand in DEFAULTS.
   Ominous, Guitar, both J. Cole type beats, Memphis and Minor are Chris's own Suno tracks.
 - Known issue: checkFeel's hi-hat test (FEEL_HAT_FILL) misreads busy-hat boom bap as half-time trap (2 of 4 real
   boom bap beats so far), which doubles the tempo and files an upload under Trap.
