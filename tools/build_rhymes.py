@@ -1,8 +1,9 @@
 """Build the rhyme banks and write them into index.html: BANK (1-syllable) and BANK2 (2-syllable).
 
-A 1-syllable ("masculine") pure rhyme matches from the last vowel, which carries the stress, to the end:
-  time T [AY1 M]   climb K L [AY1 M]   sublime S AH0 B L [AY1 M]
-(monosyllables, plus longer words stressed on their final syllable). Common function words are left out.
+A 1-syllable pure rhyme matches from the word's only vowel to the end:
+  time T [AY1 M]   climb K L [AY1 M]   rhyme R [AY1 M]
+Only true one-syllable words go in (no "sublime" or "routine"), so the 1-syllable pool never deals a longer word.
+Common function words are left out.
 
 A 2-syllable ("feminine") pure rhyme: two words whose sounds match from the stressed vowel of the
 second-to-last syllable to the end, while the consonants right before that vowel differ.
@@ -11,7 +12,7 @@ second-to-last syllable to the end, while the consonants right before that vowel
 
 Pipeline:
   1. CMU Pronouncing Dictionary -> first pronunciation of every plain lowercase word.
-  2. 1-syllable: the last vowel has primary stress (or it is the only vowel).
+  2. 1-syllable: exactly one vowel.
      2-syllable: primary stress on the second-to-last vowel, last vowel unstressed.
   3. Rhyme key = phones from that stressed vowel to the end, normalized for how people actually hear them:
      stressed AO -> AA except before R (cot-caught merger; "corner" stays apart from "partner"),
@@ -107,14 +108,11 @@ def rhyme_parts(phones):
 
 
 def rhyme_parts1(phones):
-    """1-syllable: (key, onset) for a word whose last vowel carries the primary stress (or is its only vowel)."""
+    """1-syllable: (key, onset) for a word with exactly one vowel, else None."""
     vi = [i for i, p in enumerate(phones) if is_vowel(p)]
-    if not vi:
+    if len(vi) != 1:
         return None
-    last = vi[-1]
-    if len(vi) > 1 and phones[last][-1] != "1":
-        return None
-    return key_from(phones, last)
+    return key_from(phones, vi[0])
 
 
 def families(fams, min_words, max_words, max_families):
