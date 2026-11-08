@@ -42,6 +42,7 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 .topbar{height:var(--top-h);flex-shrink:0;display:flex;align-items:center;gap:12px;padding:0 20px;}
 .brand{font-size:24px;font-weight:700;letter-spacing:-.02em;color:var(--text);text-decoration:none;line-height:1;font-variation-settings:"opsz" 144;}
 .brand .tld{color:var(--green);}
+.brand-btn{background:none;border:none;padding:0;font-family:inherit;cursor:pointer;}
 .wtf-btn{margin-left:auto;background:none;border:none;padding:4px 2px;color:var(--green);
   font-family:inherit;font-size:20px;font-weight:700;letter-spacing:-.01em;cursor:pointer;transition:color .15s;}
 .wtf-btn:hover{color:var(--green-hover);}
@@ -457,7 +458,7 @@ body.preintro .root{opacity:0;}
 </div>
 
 <div id="perf-screen" aria-hidden="true">
-  <header class="topbar rise" style="--d:0"><span class="brand">freestyle<span class="tld">.wtf</span></span></header>
+  <header class="topbar rise" style="--d:0"><button class="brand brand-btn" id="p-home" aria-label="Back to the home page">freestyle<span class="tld">.wtf</span></button></header>
   <div class="perf-hdr rise" style="--d:1">
     <div class="pname" id="p-beat-name">--</div>
     <div class="perf-actions">
@@ -2952,8 +2953,8 @@ async function startPerf(){
   rerollWords();
   build32Bars();
   // the session opens like the rhyme builder: a circle growing out of the START SESSION button
-  const ps=document.getElementById("perf-screen"),r=document.getElementById("play-btn").getBoundingClientRect();
-  ps.style.setProperty("--ox",(r.left+r.width/2)+"px");ps.style.setProperty("--oy",(r.top+r.height/2)+"px");
+  const ps=document.getElementById("perf-screen");
+  sessionOrigin(document.getElementById("play-btn"));
   const sc=document.getElementById("bars-scroll");sc.scrollTop=0;
   sc.classList.remove("pop");void sc.offsetWidth;sc.classList.add("pop");setTimeout(()=>sc.classList.remove("pop"),1600);
   ps.classList.remove("intro");void ps.offsetWidth;ps.classList.add("intro");
@@ -3002,17 +3003,26 @@ function setPaused(on){
   document.getElementById("perf-screen").classList.toggle("paused",on);
 }
 function togglePause(){if(G.running) setPaused(!PAUSED);}
-function stopPerf(){
+// Move the session bubble's centre onto an element instantly (no transition), so the next open or close grows from or
+// collapses into exactly that spot instead of the centre sliding across the screen from wherever it was last.
+function sessionOrigin(el){
+  const ps=document.getElementById("perf-screen"),r=el.getBoundingClientRect();
+  ps.style.transition="none";
+  ps.style.setProperty("--ox",(r.left+r.width/2)+"px");ps.style.setProperty("--oy",(r.top+r.height/2)+"px");
+  void ps.offsetWidth;ps.style.transition="";
+}
+function stopPerf(intoEl){
   if(PAUSED) setPaused(false);
   stopPlayer();G.running=false;
-  // the session bubble collapses back into the STOP button
-  const ps=document.getElementById("perf-screen"),r=document.getElementById("stop-btn").getBoundingClientRect();
-  ps.style.setProperty("--ox",(r.left+r.width/2)+"px");ps.style.setProperty("--oy",(r.top+r.height/2)+"px");
+  // the session bubble collapses into the STOP button (or the logo, when that was clicked)
+  const ps=document.getElementById("perf-screen");
+  sessionOrigin(intoEl instanceof Element?intoEl:document.getElementById("stop-btn"));
   ps.classList.remove("open");ps.setAttribute("aria-hidden","true");
   document.getElementById("root").classList.remove("sessioning");document.body.classList.remove("lock");
   renderSetup();   // the grid preview shows this session's words
 }
 document.getElementById("play-btn").addEventListener("click",startPerf);
+document.getElementById("p-home").addEventListener("click",e=>stopPerf(e.currentTarget));   // logo: home, collapsing into the logo
 
 /* ================= INTRO: CARVED OUT, ASSEMBLED, TEXT WRITTEN IN ================= */
 // On every load the page is carved out: each container and button has its outline drawn on and is then filled in, the

@@ -51,8 +51,10 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   The intro must start from a blank page: the empty starting state is set with transitions switched off (`.notrans`),
   otherwise the finished page visibly fades away first. Outline colours are read before an element is emptied. A
   1px `.paint-dot` in the page colour gives the browser an early paint, so a refresh doesn't keep showing the
-  previous page. The session opens as a
-  clip-path circle from START SESSION and collapses into the STOP button.
+  previous page. The session opens as a clip-path circle growing out of START SESSION and collapses into
+  the STOP button, or into the freestyle.wtf logo when that is clicked during a session (it goes home).
+  `sessionOrigin(el)` snaps the circle's centre onto the element with transitions off first, so it never slides
+  across the screen from where it last closed.
 - Upload: no upload panel in the library. An upload chip (inline SVG icon) next to the Trap / Boom bap tabs opens
   `#upload-modal` over the page. The page doesn't move or darken: it is only blurred by a frosted-glass overlay
   (`backdrop-filter`), and the dialog is drawn in like the intro (`drawIn`: outlines, fill, written text). Drop files or click to browse.
