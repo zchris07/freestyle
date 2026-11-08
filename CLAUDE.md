@@ -42,6 +42,8 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   The intro must end exactly where the page rests: each text run is wrapped in one inline `.wl` span (words as
   `.w` inside it), so in flex boxes like START SESSION or the metronome label the words stay one flex item and don't
   pick up the box's gap. Nothing shifts when the intro hands back plain text.
+  Assemble selectors must target icons only (`.tab > svg:not(.carve-svg)`, `.drop > svg:not(.carve-svg)`): a loose
+  `.x svg` also catches the drawn copies of words and the outline overlays, which then fly in and snap at the end.
   The intro must start from a blank page: the empty starting state is set with transitions switched off (`.notrans`),
   otherwise the finished page visibly fades away first. Outline colours are read before an element is emptied. A
   1px `.paint-dot` in the page colour gives the browser an early paint, so a refresh doesn't keep showing the

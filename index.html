@@ -2627,7 +2627,7 @@ document.getElementById("play-btn").addEventListener("click",startPerf);
 let INTRO=false,INTRO_PENDING=false;
 const SVGNS="http://www.w3.org/2000/svg";
 const CARVE_SEL=".panel,.gcell,.btn,.spill,.vpill,.tab,.play-btn,.lrow.sel,.col-hint,.wtf-btn";
-const ASSEMBLE_SEL=".dot,.chk input,.col-hint .ar,.tab svg";
+const ASSEMBLE_SEL=".dot,.chk input,.col-hint .ar,.tab > svg:not(.carve-svg)";   // icons only: never a word's drawn copy or an outline
 const TEXT_SEL=".topbar .brand,.wtf-btn,.panel-title,.lbl,.spill,.vpill,.beat-lbl,.word-text,.col-hint,.btn,.tab,.lhdr,.lname,.lmeta,.lempty,.dlbl,.bpmv,.muted,.chk,.play-btn";
 function introDelay(el,y0){const r=el.getBoundingClientRect();return Math.min(1300,Math.round(40+(r.top-y0)*0.45+r.left*0.1));}
 // draw a rounded-rect outline over el (its own border box) and return the overlay
@@ -2694,7 +2694,7 @@ function writeWord(w,d0){
 let drawInDone=null;
 function drawIn(root){
   if(drawInDone){drawInDone();drawInDone=null;}   // finish any previous run at once
-  const carveSel=".modal-card,.drop,.vpill,.modal-x",textSel=".modal-title,.drop-main,.lbl,.vpill,.modal-x",asmSel=".drop svg";
+  const carveSel=".modal-card,.drop,.vpill,.modal-x",textSel=".modal-title,.drop-main,.lbl,.vpill,.modal-x",asmSel=".drop > svg:not(.carve-svg)";   // only the upload icon, not the drawn words or outlines
   const els=[root,...root.querySelectorAll(carveSel)].filter((e,i,a)=>a.indexOf(e)===i&&(e===root||e.matches(carveSel)));
   const r0=root.getBoundingClientRect();
   const delayOf=el=>{if(el===root) return 0;const r=el.getBoundingClientRect();return Math.round(160+(r.top-r0.top)*0.6+(r.left-r0.left)*0.15);};
