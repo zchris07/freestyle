@@ -79,6 +79,12 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   (`waveTiles`). Each Preview click moves the starting corner clockwise (TL, TR, BR, BL; `WAVE_CORNER`). From the
   drop, the current beat's box lights its outline (`lightGridBeat`), starting top left and looping round the 4 bars. The draggable
   rhyme column's box lights in its colour, and the indicator follows the column if it is dragged mid-preview.
+- Hover audition: hovering a library row for 1 s plays that beat from its very start without selecting it
+  (`audHover`; default beats start loading on hover, quietly). It works during Preview too, which is ducked to 12%
+  through `playerBus()`. The row's background becomes a live mirrored silhouette of the sound (`.lwave` canvas, an
+  AnalyserNode's frequency bands with a travelling ripple). It survives list re-renders (`audReattach`) and stops
+  on leaving the row or on any click in the list. Like all web audio, it needs one click on the page first
+  (browser autoplay rule).
 - Session beat indicator: the current box lights up its outline (border + glow) and is never filled, so a rhyme
   word stays readable (a plain beat in green, a rhyme in its group's color).
 

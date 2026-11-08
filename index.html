@@ -185,7 +185,11 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 .tab[aria-selected="true"]{background:var(--green);color:var(--on-accent);}
 .lempty{font-size:12px;color:var(--muted);padding:10px 2px;}
 .lhdr{font-size:10px;letter-spacing:.1em;color:var(--muted);margin:8px 2px 4px;}
-.lrow{display:flex;align-items:center;gap:10px;border-radius:6px;padding:9px 10px;cursor:pointer;transition:background .15s;}
+.lrow{position:relative;overflow:hidden;display:flex;align-items:center;gap:10px;border-radius:6px;padding:9px 10px;cursor:pointer;transition:background .15s;}
+.lrow>:not(.lwave){position:relative;z-index:1;}
+/* hover audition: a live silhouette of the beat's sound behind the row */
+.lwave{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity .3s ease;}
+.lwave.on{opacity:1;}
 .lrow:hover{background:var(--high);}
 .lrow.sel{background:var(--high);}
 .lrow.sel .lname{color:var(--green);}
@@ -1057,20 +1061,24 @@ async function upgradeFeel(){
 }
 function allItems(){return LIB.concat(DEFAULTS);}
 function selItem(){return allItems().find(i=>i.id===SELECTED)||null;}
-async function ensureBuf(it){
+// the preview / session audio goes through one gain, so a hover audition can duck it
+let PBUS=null;
+function playerBus(){const ac=getCtx();if(!PBUS||PBUS.context!==ac){PBUS=ac.createGain();PBUS.connect(ac.destination);}return PBUS;}
+function duckPlayer(on){const b=playerBus(),t=b.context.currentTime;b.gain.cancelScheduledValues(t);b.gain.setTargetAtTime(on?0.12:1,t,0.08);}
+async function ensureBuf(it,quiet){
   if(BUF.has(it.id)) return BUF.get(it.id);
   if(!it._load) it._load=(async()=>{
     await null;   // let it._load be set before anything below re-enters ensureBuf
     let ab;
     if(it.blob) ab=await it.blob.arrayBuffer();
     else{   // default beat: fetch it from beats/ the first time it's used
-      it.prog="loading...";renderLib();
+      if(!quiet){it.prog="loading...";renderLib();}   // a hover audition loads quietly
       try{const r=await fetch(it.file);if(!r.ok) throw new Error("Could not load "+it.file);ab=await r.arrayBuffer();}
       finally{it.prog=null;}
     }
     const b=await getCtx().decodeAudioData(ab);
     BUF.set(it.id,b);
-    if(!it.blob) renderLib();
+    if(!it.blob&&!quiet) renderLib();
     return b;
   })().finally(()=>{it._load=null;});
   return it._load;
@@ -1149,6 +1157,7 @@ function renderLib(){
   }
   if(!mine.length&&!defs.length) h='<div class="lempty">No '+(LIB_TAB==="trap"?"trap":"boom bap")+' beats yet.</div>';
   el.innerHTML=h;
+  audReattach();   // a hover audition carries on in the rebuilt row
   renderDetail();
   const p=selItem();
   document.getElementById("play-btn").disabled=!p||p.status==="analyzing"||p.status==="error";
@@ -1204,7 +1213,7 @@ async function drawGrid(it){
 const P={timer:null,src:null,t0:0,spb:0,last:-1,nextIdx:0,cb:null,click:false};
 function clickAt(time,accent){
   const ac=getCtx(),o=ac.createOscillator(),g=ac.createGain();
-  o.connect(g);g.connect(ac.destination);
+  o.connect(g);g.connect(playerBus());
   o.frequency.value=accent?1100:760;
   g.gain.setValueAtTime(0.0001,time);
   g.gain.exponentialRampToValueAtTime(accent?0.35:0.2,time+0.002);
@@ -1224,7 +1233,7 @@ async function startPlayer(it,opts){
     const bars=Math.floor((buf.duration-drop)/bar);
     const src=ac.createBufferSource();src.buffer=buf;
     if(bars>=1){src.loop=true;src.loopStart=drop;src.loopEnd=drop+bars*bar;}
-    src.connect(ac.destination);P.src=src;
+    src.connect(playerBus());P.src=src;
     if(start>=0) src.start(P.t0,start);
     else{src.start(P.t0-start,0);P.countIn=Math.ceil(-start/P.spb-0.02);}   // drop too early for 8 beats: click count-in
   }
@@ -2742,7 +2751,89 @@ document.getElementById("lib-tabs").addEventListener("click",e=>{
   if(!cur||!inTab(cur)){const f=allItems().find(inTab);if(f)setSelected(f.id);}   // keep the picked beat visible
   renderLib();
 });
+/* ================= HOVER AUDITION ================= */
+// Hovering a beat for 1 s plays it from the very start without selecting it (also during Preview, which is ducked
+// meanwhile). The row's background becomes a live, mirrored silhouette of the sound, drawn from an analyser on it.
+// Leaving the row fades it out. Default beats start loading as soon as they are hovered.
+const AUD={id:null,row:null,timer:0,src:null,gain:null,an:null,raf:0,cv:null,data:null};
+// the library list is rebuilt now and then (a beat finished loading, a tab switch): keep the audition on the new row
+function audReattach(){
+  if(!AUD.id) return;
+  const row=document.querySelector('#lib .lrow[data-id="'+AUD.id+'"]');
+  if(!row){audStop();return;}   // its row is gone (other tab)
+  AUD.row=row;if(AUD.cv) row.prepend(AUD.cv);
+}
+function audStop(){
+  clearTimeout(AUD.timer);AUD.timer=0;
+  if(AUD.src){
+    const t=AUD.gain.context.currentTime,s=AUD.src;
+    AUD.gain.gain.cancelScheduledValues(t);AUD.gain.gain.setTargetAtTime(0,t,0.04);
+    setTimeout(()=>{try{s.stop();}catch(e){}try{s.disconnect();}catch(e){}},250);
+    AUD.src=null;duckPlayer(false);
+  }
+  cancelAnimationFrame(AUD.raf);AUD.raf=0;
+  if(AUD.cv){const cv=AUD.cv;cv.classList.remove("on");setTimeout(()=>cv.remove(),320);AUD.cv=null;}
+  AUD.row=null;AUD.id=null;
+}
+function audHover(row){
+  if(AUD.id===row.dataset.id){AUD.row=row;return;}
+  audStop();
+  const it=allItems().find(i=>i.id===row.dataset.id);
+  if(!it||it.status!=="ready") return;
+  const id=it.id;AUD.id=id;AUD.row=row;
+  ensureBuf(it,true).catch(()=>{});   // start loading now
+  AUD.timer=setTimeout(async()=>{
+    let buf;try{buf=await ensureBuf(it,true);}catch(e){return;}
+    if(AUD.id!==id||!AUD.row||!AUD.row.isConnected) return;   // left meanwhile
+    const ac=getCtx();if(ac.state==="suspended") ac.resume().catch(()=>{});
+    const src=ac.createBufferSource();src.buffer=buf;
+    const g=ac.createGain();g.gain.value=0;g.gain.setTargetAtTime(0.9,ac.currentTime,0.05);
+    const an=ac.createAnalyser();an.fftSize=256;an.smoothingTimeConstant=0.8;
+    src.connect(g);g.connect(an);an.connect(ac.destination);src.start(0,0);
+    src.onended=()=>{if(AUD.src===src) audStop();};
+    AUD.src=src;AUD.gain=g;AUD.an=an;AUD.data=new Uint8Array(an.frequencyBinCount);duckPlayer(true);
+    const cv=document.createElement("canvas");cv.className="lwave";cv.setAttribute("aria-hidden","true");AUD.row.prepend(cv);AUD.cv=cv;
+    requestAnimationFrame(()=>cv.classList.add("on"));
+    AUD.raf=requestAnimationFrame(drawAudWave);
+  },1000);
+}
+function drawAudWave(now){
+  const cv=AUD.cv,an=AUD.an;if(!cv||!an) return;
+  const dpr=devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight;
+  if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);}
+  const g=cv.getContext("2d");g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
+  an.getByteFrequencyData(AUD.data);
+  const N=44,mid=h/2,amp=[];
+  for(let k=0;k<N;k++){
+    const i=Math.min(AUD.data.length-1,Math.floor(Math.pow(k/N,1.5)*AUD.data.length*0.75));   // low end gets more room
+    const a=AUD.data[i]/255,flow=0.78+0.22*Math.sin(k*0.45-now*0.005);                          // a travelling ripple
+    amp.push(Math.max(0.04,a*flow));
+  }
+  const xs=k=>(k/(N-1))*w;
+  const edge=(sign)=>{   // smooth curve through the band heights, above (sign -1) or below (+1) the centre line
+    g.lineTo(xs(0),mid+sign*amp[0]*mid*0.95);
+    for(let k=1;k<N;k++){const x0=xs(k-1),x1=xs(k),y0=mid+sign*amp[k-1]*mid*0.95,y1=mid+sign*amp[k]*mid*0.95;g.quadraticCurveTo(x0,y0,(x0+x1)/2,(y0+y1)/2);}
+    g.lineTo(xs(N-1),mid+sign*amp[N-1]*mid*0.95);
+  };
+  g.beginPath();g.moveTo(0,mid);edge(-1);g.lineTo(w,mid);
+  // back along the bottom, mirrored
+  for(let k=N-1;k>=0;k--) g.lineTo(xs(k),mid+amp[k]*mid*0.95);
+  g.closePath();
+  const grad=g.createLinearGradient(0,0,w,0);grad.addColorStop(0,"rgba(30,215,96,.30)");grad.addColorStop(1,"rgba(30,215,96,.12)");
+  g.fillStyle=grad;g.fill();
+  AUD.raf=requestAnimationFrame(drawAudWave);
+}
+const libEl=document.getElementById("lib");
+libEl.addEventListener("pointerover",e=>{
+  if(e.pointerType==="touch") return;   // hover only means something with a mouse or pen
+  const row=e.target.closest(".lrow");if(row) audHover(row);
+});
+libEl.addEventListener("pointerout",e=>{
+  const row=e.target.closest(".lrow");
+  if(row&&row===AUD.row&&!row.contains(e.relatedTarget)) audStop();
+});
 document.getElementById("lib").addEventListener("click",e=>{
+  audStop();   // picking or removing a beat ends the hover audition
   const del=e.target.closest("[data-del]");
   if(del){
     const id=del.dataset.del;
