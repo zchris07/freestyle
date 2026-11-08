@@ -3136,7 +3136,7 @@ async function startPerf(){
   ps.classList.add("open");ps.setAttribute("aria-hidden","false");
   document.getElementById("root").classList.add("sessioning");document.body.classList.add("lock");
   G.running=true;G.curGlobalBeat=-1;
-  NV.dropAt=null;NV.lo=NV.hi=NV.elo=NV.ehi=null;vizStart();buildNameViz();
+  NV.dropAt=null;NV.rng={};NV.rip=[];NV.lvl=0;vizStart();buildNameViz();
   const click=it.builtin||document.getElementById("click-toggle").checked;
   try{await startPlayer(it,{click,onBeat:handleBeat});}
   catch(e){document.getElementById("p-beat-name").textContent="Could not play this file";}
@@ -3174,7 +3174,7 @@ function vizStart(){
 // fill from below the lowest point of the text up to a rolling surface: a few travelling sine waves, the same average
 // height across the whole word. Its level and swell follow the music loosely (a slow-moving loudness), not band by band.
 // The letters stay plain white through the prep bars and fill up at the drop; the surface drifts slowly rightward.
-const NV={svg:null,back:null,front:null,w:0,h:0,base:0,cap:0,lvl:0,swell:0,dropAt:null};
+const NV={svg:null,back:null,front:null,w:0,h:0,base:0,cap:0,lvl:0,swell:0,dropAt:null,rng:{},rip:[],kickOn:false};
 function buildNameViz(){
   const el=document.getElementById("p-beat-name");
   el.querySelector("svg.nviz")?.remove();el.classList.remove("nv");NV.svg=null;
@@ -3198,41 +3198,51 @@ function buildNameViz(){
 }
 function vizName(tS){
   if(!NV.svg||!NV.svg.isConnected) return;
-  // loudness, scaled to this song's own recent range (slow floor and ceiling) and followed quickly, so the level
-  // rises and falls clearly with the music
-  const D=VIZ.data;let sum=0;for(let i=0;i<D.length*0.6;i++) sum+=D[i];const e=sum/(D.length*0.6*255);
-  NV.elo=Math.min(e,(NV.elo??e)+0.0015);NV.ehi=Math.max(e,(NV.ehi??e)-0.0015);
-  const eN=NV.ehi-NV.elo>0.03?(e-NV.elo)/(NV.ehi-NV.elo):0.5;
-  NV.lvl+=(eN-NV.lvl)*(eN>NV.lvl?0.35:0.15);
-  // the swell follows the kicks: bass scaled to this song's own recent range (slow floor and ceiling), so every kick
-  // pushes the waves across the full amplitude range and they settle back between kicks
-  let bass=0;for(let i=0;i<6;i++) bass+=D[i];bass/=6*255;
-  NV.lo=Math.min(bass,(NV.lo??bass)+0.002);NV.hi=Math.max(bass,(NV.hi??bass)-0.002);
-  const kick=NV.hi-NV.lo>0.04?(bass-NV.lo)/(NV.hi-NV.lo):0.5;
-  NV.swell+=(kick-NV.swell)*(kick>NV.swell?0.7:0.2);
+  const D=VIZ.data,L=D.length;
+  // each part of the spectrum, scaled to this song's own recent range (slow floor and ceiling) and followed quickly
+  const band=(key,i0,i1)=>{let m=0;for(let i=i0;i<i1;i++) m+=D[i];m/=(i1-i0)*255;
+    const r=NV.rng[key]||(NV.rng[key]={lo:m,hi:m,v:0});r.lo=Math.min(m,r.lo+0.002);r.hi=Math.max(m,r.hi-0.002);
+    const n=r.hi-r.lo>0.03?(m-r.lo)/(r.hi-r.lo):0.5;r.v+=(n-r.v)*(n>r.v?0.6:0.18);return r.v;};
+  const lowB=band("low",0,6),midB=band("mid",8,Math.floor(L*0.12)),highB=band("high",Math.floor(L*0.15),Math.floor(L*0.5));
+  // the level itself barely moves: a slow loudness, so the music shows in the surface bending, not the fill jumping
+  let sum=0;for(let i=0;i<L*0.6;i++) sum+=D[i];const e=sum/(L*0.6*255);NV.lvl+=(e-NV.lvl)*0.01;
+  // a kick drops a ripple into the liquid at a random spot; it runs outward both ways and fades
+  if(lowB>0.75&&!NV.kickOn&&NV.dropAt!=null){NV.kickOn=true;NV.rip.push({x:Math.random()*NV.w,t:tS,a:0.5+0.5*lowB});if(NV.rip.length>8) NV.rip.shift();}
+  if(lowB<0.45) NV.kickOn=false;
   // empty through the prep bars; at the drop it fills up (with a slosh), on the session's own beat clock
   const beatF=AC&&P.spb?(AC.currentTime-P.t0)/P.spb:-1;
   if(beatF>=PREP_BARS*4&&NV.dropAt==null) NV.dropAt=tS;
   const since=NV.dropAt==null?-1:tS-NV.dropAt,fill=since<0?0:1-Math.pow(1-Math.min(1,since/NV_FILL),3);
   const slosh=since<0?0:Math.max(0,1-since/(NV_FILL*2.5));   // extra swell while it pours in
-  const full=NV.base-NV.cap*(0.3+0.55*NV.lvl)*0.8,A=NV.cap*(0.1+0.2*NV.swell+0.18*slosh),empty=NV.h+A+4;
+  const C=NV.cap,full=NV.base-C*(0.3+0.3*Math.min(1,NV.lvl*1.4))*0.8,empty=NV.h+C*0.5+4;
   if(fill<=0){NV.back.setAttribute("d","");NV.front.setAttribute("d","");return;}
   const level=empty+(full-empty)*fill;   // the surface's average height: the same everywhere along the word
+  // the bass bends the long swells, the mids the middle waves, the highs a fine ripple on top
+  const A1=C*(0.07+0.16*lowB+0.15*slosh),A2=C*(0.04+0.11*midB),A3=C*(0.015+0.06*highB);
+  NV.rip=NV.rip.filter(r=>tS-r.t<2.2);
   const bottom=NV.h+2,drift=tS*NV_DRIFT;   // the whole surface drifts slowly to the right
-  // wave speeds 30% slower than first built, peaks and valleys ~1.5x further apart
-  const surf=(x,ph,sp)=>{const u=x-drift;return level+A*(0.5*Math.sin(u*0.026+tS*2.03*sp+ph)+0.32*Math.sin(u*0.062-tS*2.87*sp+ph*1.7)+0.18*Math.sin(u*0.14+tS*4.34*sp-ph));};
+  const surf=(x,ph,sp)=>{
+    const u=x-drift;
+    let y=level+A1*Math.sin(u*0.026+tS*2.03*sp+ph)+A2*Math.sin(u*0.062-tS*2.87*sp+ph*1.7)+A3*Math.sin(u*0.14+tS*4.34*sp-ph);
+    for(const r of NV.rip){   // kick ripples: a wave packet travelling outward from where it landed
+      const age=tS-r.t,d=Math.abs(x-r.x)-age*170,env=Math.exp(-age*1.6)*Math.exp(-(d*d)/(2*38*38));
+      y+=C*0.22*r.a*env*Math.cos(d*0.11);
+    }
+    return y;
+  };
   const path=(ph,sp,lift)=>{
     let d="M0 "+bottom+" L0 "+(surf(0,ph,sp)-lift).toFixed(1);
-    for(let x=5;x<NV.w+5;x+=5) d+=" L"+Math.min(x,NV.w).toFixed(1)+" "+(surf(x,ph,sp)-lift).toFixed(1);
+    for(let x=4;x<NV.w+4;x+=4) d+=" L"+Math.min(x,NV.w).toFixed(1)+" "+(surf(x,ph,sp)-lift).toFixed(1);
     return d+" L"+NV.w.toFixed(1)+" "+bottom+" Z";
   };
-  NV.back.setAttribute("d",path(2.1,0.8,NV.cap*0.07));   // a darker wave behind, a little higher and slower
+  NV.back.setAttribute("d",path(2.1,0.8,C*0.07));   // a darker wave behind, a little higher and slower
   NV.front.setAttribute("d",path(0,1,0));
   const c=VIZ.rgb;NV.front.setAttribute("fill","rgb("+c.map(Math.round).join(",")+")");
   NV.back.setAttribute("fill","rgb("+c.map(v=>Math.round(v*0.68)).join(",")+")");
 }
 const NV_FILL=0.9,NV_DRIFT=26;   // seconds to fill at the drop; drift to the right in px per second
 function vizStop(){cancelAnimationFrame(VIZ.raf);VIZ.raf=0;
+  {const tld=document.querySelector("#p-home .tld");if(tld) tld.style.color="";}
   {const el=document.getElementById("p-beat-name");el.querySelector("svg.nviz")?.remove();el.classList.remove("nv");NV.svg=null;}const cv=document.getElementById("perf-viz");cv.getContext("2d").clearRect(0,0,cv.width,cv.height);}
 function vizFrame(){
   const cv=document.getElementById("perf-viz"),dpr=Math.min(2,window.devicePixelRatio||1),w=cv.clientWidth,h=cv.clientHeight;
@@ -3266,6 +3276,7 @@ function vizFrame(){
     g.beginPath();g.roundRect?g.roundRect(x,h-bh,wd,bh,[Math.min(6,wd/2),Math.min(6,wd/2),0,0]):g.rect(x,h-bh,wd,bh);g.fill();
   }
   vizName(performance.now()/1000);
+  const tld=document.querySelector("#p-home .tld");if(tld) tld.style.color="rgb("+VIZ.rgb.map(Math.round).join(",")+")";   // the logo's .wtf too
   VIZ.raf=requestAnimationFrame(vizFrame);
 }
 // End of the 32 bars: when the last beat is over, its box goes dark, the clock and clicks stop, the beat fades to
