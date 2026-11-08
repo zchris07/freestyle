@@ -58,6 +58,11 @@ is am be it an a i oh ah uh um yeah yes""".split())
 EXTRA_BLOCK1 = set("""ab alt aw bob cal cam co cos cox dis ed en er gal gay gov ha hon hp hr id inc jay jun ken lee ma mac
 mag mar max meg mi min mod non oi om op oz pa pm pol pr reg rem rep sec sim sis sol sup ta tam tat ted tom val wan wen
 ya ye yep yup nah ugh he re xi mg pee em""".split())
+# always in (Chris's request): skip the dictionary, frequency and blocklist filters, and always keep their place in
+# their rhyme family (they win their onset slot, so "cum" stands in for "come" and "thot" for "thought").
+# A pronunciation is given for words cmudict lacks.
+ALLOW = {"fuck": None, "bitch": None, "shit": None, "pussy": None, "dick": None, "hoe": None, "thot": "TH AA1 T",
+         "ass": None, "slut": None, "glock": None, "tits": None, "cum": None}
 SCHWA = {"AH0", "IH0", "UH0"}
 
 
@@ -116,10 +121,11 @@ def rhyme_parts1(phones):
 
 
 def families(fams, min_words, max_words, max_families):
-    """one word per onset (the most common), families with >= min_words, best-known first"""
+    """one word per onset (the most common; an ALLOW word always wins its onset), families with >= min_words,
+    best-known first; ALLOW words are always kept"""
     out = []
     for key, items in fams.items():
-        items.sort(reverse=True)
+        items.sort(key=lambda x: (x[1] in ALLOW, x), reverse=True)
         seen, words = set(), []
         for z, w, onset in items:
             if onset in seen:
@@ -127,8 +133,13 @@ def families(fams, min_words, max_words, max_families):
             seen.add(onset)
             words.append((z, w))
         if len(words) >= min_words:
-            words = words[:max_words]
+            words.sort(reverse=True)
+            forced = [x for x in words[max_words:] if x[1] in ALLOW]
+            words = words[:max_words - len(forced)] + forced if forced else words[:max_words]
+            words.sort(reverse=True)
             score = sum(z for z, _ in words[:4]) / 4
+            # ALLOW words go first, so they are always inside the window of best-known words a session deals from
+            words.sort(key=lambda x: x[1] not in ALLOW)
             out.append((score, key, [w for _, w in words]))
     out.sort(reverse=True)
     return out[:max_families]
@@ -148,21 +159,23 @@ def main():
     stems = {l.split("/")[0] for l in fetch("en_US.dic")[1:]}
     bad = {l.strip().lower() for l in fetch("badwords.txt") if l.strip()}
     fams, fams1 = defaultdict(list), defaultdict(list)
-    for line in fetch("cmudict.dict"):
+    lines = fetch("cmudict.dict") + [w + " " + pr for w, pr in ALLOW.items() if pr]
+    for line in lines:
         line = line.split("#")[0].strip()
         if not line:
             continue
         word, *phones = line.split()
-        if not re.fullmatch(r"[a-z]{2,9}", word) or word not in stems or word in bad or word in EXTRA_BLOCK:
+        allow = word in ALLOW
+        if not allow and (not re.fullmatch(r"[a-z]{2,9}", word) or word not in stems or word in bad or word in EXTRA_BLOCK):
             continue
         z = zipf_frequency(word, "en")
-        if z < MIN_ZIPF:
+        if z < MIN_ZIPF and not allow:
             continue
         parts = rhyme_parts(phones) if len(word) >= 3 else None
         if parts:
             fams[parts[0]].append((z, word, parts[1]))
         parts1 = rhyme_parts1(phones)
-        if parts1 and z >= MIN_ZIPF1 and word not in STOP and word not in EXTRA_BLOCK1:
+        if parts1 and (allow or (z >= MIN_ZIPF1 and word not in STOP and word not in EXTRA_BLOCK1)):
             fams1[parts1[0]].append((z, word, parts1[1]))
 
     out = families(fams, MIN_WORDS, MAX_WORDS, MAX_FAMILIES)
