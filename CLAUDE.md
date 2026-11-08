@@ -240,8 +240,10 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   by the waveform itself lighting up (no white bar or wash, Chris asked): a beat-wide stretch ending at the playback
   position is brightest, with a two-bar trail fading out behind it; each bar line flares (brighter, wider,
   glowing in its own colour) for 0.7 s after the band crosses it (`songPos()` maps the audio clock to song time
-  through `P.song`, loop included); `gvFollow` repaints every frame and scrolls so the patch stays centred, unless the
-  strip was scrolled by hand in the last 2 s (`GV_USER`). It shows the whole song at a fixed 64 px per bar for every beat (`GV_BAR`) in a sideways-scrolling
+  through `P.song`, loop included); `gvFollow` repaints every frame and scrolls so the playhead stays centred, until the
+  strip is scrolled or dragged by hand: then it stays put for the rest of that preview (`GV_FOLLOW`), and the next
+  Preview follows again. A plain vertical mouse wheel over the strip scrolls it sideways; a press on its scrollbar is
+  left to the browser. It shows the whole song at a fixed 64 px per bar for every beat (`GV_BAR`) in a sideways-scrolling
   strip (`.gv`, scroll, shift-wheel or mouse drag); the canvas is pinned to the view (sticky) and `paintGrid` repaints
   what is visible from peaks computed once per beat/tempo (`GV`). A newly picked beat opens a beat before its prep bars. Picking a beat draws its waveform in like the
   page intro (`gvAnimate`, ~1.1 s, not during the intro itself, which wipes the strip on): columns grow out of the

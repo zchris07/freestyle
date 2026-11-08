@@ -1299,9 +1299,10 @@ function paintGrid(){
     }
   }
 }
-// During a preview the waveform repaints every frame and keeps the moving patch in view (centred once it passes the middle),
-// unless the strip was scrolled by hand in the last 2 s.
-let GV_USER=0,GV_LOOP=0;
+// During a preview the waveform repaints every frame and keeps the moving patch in view (centred once it passes the
+// middle). As soon as the strip is scrolled or dragged by hand it stops following for the rest of that preview, so it
+// can be browsed freely while the beat plays; the next Preview follows again.
+let GV_FOLLOW=false,GV_LOOP=0;
 // Picking a beat draws its waveform in like the page intro: columns grow out of the centre line from left to right,
 // the bar lines grow out of the centre line just behind them. About 1.1 s.
 const GV_SWEEP=450;
@@ -1317,11 +1318,12 @@ function gvAnimate(){
 }
 function gvFollow(){
   const wrap=document.getElementById("gv-wrap"),id=++GV_LOOP;   // one loop at a time, even after a quick stop/start
+  GV_FOLLOW=true;
   const step=()=>{
     if(id!==GV_LOOP) return;
     if(!previewing){paintGrid();return;}
     const pos=P.song&&P.song.it===GV.it?songPos():null;
-    if(pos!=null&&performance.now()-GV_USER>2000){
+    if(pos!=null&&GV_FOLLOW){
       const w=wrap.clientWidth,x=pos*GV.pps-wrap.scrollLeft;
       // past the middle, the strip scrolls along so the patch stays centred; after the loop jumps back, it glides back
       if(x<w*0.15||x>w*0.5){const target=pos*GV.pps-w*0.5,d=target-wrap.scrollLeft;wrap.scrollLeft+=Math.abs(d)<2?d:d*0.18;}
@@ -1333,11 +1335,22 @@ function gvFollow(){
 {
   const wrap=document.getElementById("gv-wrap");let raf=0;
   wrap.addEventListener("scroll",()=>{if(!raf) raf=requestAnimationFrame(()=>{raf=0;paintGrid();});},{passive:true});
-  for(const ev of ["wheel","touchstart","pointerdown"]) wrap.addEventListener(ev,()=>{GV_USER=performance.now();},{passive:true});
+  const handOn=()=>{GV_FOLLOW=false;};   // any hand scroll stops the follow until the next preview
+  wrap.addEventListener("touchstart",handOn,{passive:true});
+  // a plain mouse wheel scrolls the strip sideways (a trackpad's sideways swipe already does)
+  wrap.addEventListener("wheel",e=>{
+    const dx=Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY;if(!dx) return;
+    const max=wrap.scrollWidth-wrap.clientWidth;if(max<=0) return;
+    e.preventDefault();handOn();wrap.scrollLeft=Math.max(0,Math.min(max,wrap.scrollLeft+dx*(e.deltaMode===1?32:1)));
+  },{passive:false});
   // drag it sideways with the mouse (touch scrolls natively)
   let drag=null;
-  wrap.addEventListener("pointerdown",e=>{if(e.pointerType!=="mouse"||e.button!==0) return;drag={x:e.clientX,s:wrap.scrollLeft};wrap.classList.add("grabbing");e.preventDefault();});
-  document.addEventListener("pointermove",e=>{if(drag){wrap.scrollLeft=drag.s-(e.clientX-drag.x);GV_USER=performance.now();}});
+  wrap.addEventListener("pointerdown",e=>{
+    if(e.pointerType!=="mouse"||e.button!==0) return;
+    if(e.clientY>wrap.getBoundingClientRect().top+wrap.clientTop+wrap.clientHeight){handOn();return;}   // on the scrollbar: the browser drags it
+    drag={x:e.clientX,s:wrap.scrollLeft};wrap.classList.add("grabbing");e.preventDefault();
+  });
+  document.addEventListener("pointermove",e=>{if(drag&&Math.abs(e.clientX-drag.x)>2){wrap.scrollLeft=drag.s-(e.clientX-drag.x);handOn();}});
   document.addEventListener("pointerup",()=>{if(drag){drag=null;wrap.classList.remove("grabbing");}});
 }
 
