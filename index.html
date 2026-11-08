@@ -1284,8 +1284,8 @@ function paintGrid(){
       g.fillStyle=isDrop?"rgb(255,"+Math.round(164+80*f)+","+Math.round(43+190*f)+")":"rgb("+Math.round(30+200*f)+",255,"+Math.round(96+150*f)+")";
       const wd=3+3*f;g.fillRect(x+1.5-wd/2,0,wd,h);g.restore();
     }else{
-      const e=grow(x,180,320);   // drawing in: each line is drawn on from the top, a little behind the waveform
-      if(e>0){g.fillStyle=isDrop?"#ffa42b":"#1ed760";g.fillRect(x,0,3,h*e);}
+      const e=grow(x,180,320);   // drawing in: each line grows out of the centre line, a little behind the waveform
+      if(e>0){g.fillStyle=isDrop?"#ffa42b":"#1ed760";g.fillRect(x,h*(1-e)/2,3,h*e);}
     }
   }
 }
@@ -1293,7 +1293,7 @@ function paintGrid(){
 // unless the strip was scrolled by hand in the last 2 s.
 let GV_USER=0,GV_LOOP=0;
 // Picking a beat draws its waveform in like the page intro: columns grow out of the centre line from left to right,
-// the bar lines are drawn on from the top just behind them. About 1.1 s.
+// the bar lines grow out of the centre line just behind them. About 1.1 s.
 const GV_SWEEP=450;
 function gvAnimate(){
   if(matchMedia("(prefers-reduced-motion: reduce)").matches) return;

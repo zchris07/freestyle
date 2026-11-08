@@ -225,7 +225,7 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   strip (`.gv`, scroll, shift-wheel or mouse drag); the canvas is pinned to the view (sticky) and `paintGrid` repaints
   what is visible from peaks computed once per beat/tempo (`GV`). A newly picked beat opens a beat before its prep bars. Picking a beat draws its waveform in like the
   page intro (`gvAnimate`, ~1.1 s, not during the intro itself, which wipes the strip on): columns grow out of the
-  centre line from left to right, and the bar lines are drawn on from the top just behind them.
+  centre line from left to right, and the bar lines grow out of the centre line too, just behind them.
 - Tested on synthetic beats (boom bap 85-95, trap 140-150, intros of 0/1/4/8/16 bars, hats-only or 25% drums in the
   intro, breakdowns in songs that start full): drop within 2 ms. Drums at half volume in the intro read as "beat
   already in". Not yet tuned on real songs.
