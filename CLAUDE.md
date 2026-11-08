@@ -68,6 +68,9 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   https://github.com/zchris07. The sections are plain text on the background, no boxes. All text (title, lead,
   headings, paragraphs, Got it) shares one left edge; the X close button and the section numbers (green 36px
   circles: 1-4, "?" for the why and who sections) sit in a 36px gutter 14px to its left (`--gut`, `--gap`).
+  The guide has its own static logo (`#g-home`, a copy of the page logo's inked letters made in `openGuide`, same spot,
+  no animation). It closes around whatever closed it (`closeGuide(e)`, `guideOrigin(el)` snaps the centre): the X, Got
+  it, or the logo (home); Esc closes into the wtf? button.
 - Session title: the beat name is large (26px, 34px wide, 21px phone). The session's boxes pop in, staggered like
   the builder grid (`.bars-scroll.pop`).
 - Session controls: PAUSE / RESUME next to STOP (Space toggles it). Pause suspends the AudioContext, so the beat,

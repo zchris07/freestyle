@@ -504,6 +504,7 @@ body.preintro .root{opacity:0;}
 
 <!-- the wtf? guide -->
 <div class="guide" id="guide" role="dialog" aria-modal="true" aria-label="How freestyle.wtf works" aria-hidden="true">
+  <header class="topbar"><button class="brand brand-btn" id="g-home" aria-label="Back to the home page">freestyle<span class="tld">.wtf</span></button></header>
   <div class="guide-in">
     <div class="ghead rise" style="--d:0">
       <button class="back" id="guide-close" aria-label="Close guide">&#10005;</button>
@@ -2752,16 +2753,26 @@ document.getElementById("up-feel").addEventListener("click",e=>{
 });
 // The wtf? guide opens like the builder, as a circle out of the button, with its sections rising in.
 const guideEl=document.getElementById("guide");
-function guideOrigin(){const r=document.getElementById("wtf-btn").getBoundingClientRect();guideEl.style.setProperty("--ox",(r.left+r.width/2)+"px");guideEl.style.setProperty("--oy",(r.top+r.height/2)+"px");}
+// the bubble's centre is snapped onto an element (transitions off), so it never slides there from where it last was
+function guideOrigin(el){
+  const r=(el||document.getElementById("wtf-btn")).getBoundingClientRect();
+  guideEl.style.transition="none";
+  guideEl.style.setProperty("--ox",(r.left+r.width/2)+"px");guideEl.style.setProperty("--oy",(r.top+r.height/2)+"px");
+  void guideEl.offsetWidth;guideEl.style.transition="";
+}
 function openGuide(){
+  // the guide's logo is a copy of the page's (drawn letters included) in the same spot, so it stays put as the bubble grows
+  document.getElementById("g-home").innerHTML=document.querySelector("#root > .topbar .brand").innerHTML;
   guideOrigin();guideEl.scrollTop=0;
   guideEl.classList.remove("intro");void guideEl.offsetWidth;guideEl.classList.add("intro");
   guideEl.classList.add("open");guideEl.setAttribute("aria-hidden","false");document.body.classList.add("lock");
 }
-function closeGuide(){guideOrigin();guideEl.classList.remove("open");guideEl.setAttribute("aria-hidden","true");document.body.classList.remove("lock");}
+// it closes around whatever closed it: the X, Got it, or the logo (home); Esc closes into the wtf? button
+function closeGuide(e){guideOrigin(e&&e.currentTarget instanceof Element?e.currentTarget:null);guideEl.classList.remove("open");guideEl.setAttribute("aria-hidden","true");document.body.classList.remove("lock");}
 document.getElementById("wtf-btn").addEventListener("click",openGuide);
 document.getElementById("guide-close").addEventListener("click",closeGuide);
 document.getElementById("guide-done").addEventListener("click",closeGuide);
+document.getElementById("g-home").addEventListener("click",closeGuide);   // logo: home, collapsing into the logo
 document.getElementById("lib-tabs").addEventListener("click",e=>{
   const b=e.target.closest(".tab");if(!b||b.dataset.tab===LIB_TAB)return;
   LIB_TAB=b.dataset.tab;try{localStorage.setItem("fs-tab",LIB_TAB);}catch(err){}
