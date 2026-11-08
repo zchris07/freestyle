@@ -74,8 +74,10 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   the column). It can be dragged to move the column, and a tap on its left or right half steps the column one beat.
   It fades out on grab and back in after landing.
 - No text cursor or text selection anywhere (`body{cursor:default;user-select:none}`), except real text inputs.
-- Preview beat indicator: while Preview plays, the rhyme grid's box for the current beat lights its outline
-  (`lightGridBeat`), the drop on bar 1 and the 8 prep beats on bars 3-4, looping round the 4 bars. The draggable
+- Preview beat indicator: during the 8 prep beats no box is lit. Instead, on each prep beat a wave lifts the tiles
+  (tilt + rise + shadow, Web Animations) diagonally from one corner to the opposite one in about half a beat
+  (`waveTiles`). Each Preview click moves the starting corner clockwise (TL, TR, BR, BL; `WAVE_CORNER`). From the
+  drop, the current beat's box lights its outline (`lightGridBeat`), starting top left and looping round the 4 bars. The draggable
   rhyme column's box lights in its colour, and the indicator follows the column if it is dragged mid-preview.
 - Session beat indicator: the current box lights up its outline (border + glow) and is never filled, so a rhyme
   word stays readable (a plain beat in green, a rhyme in its group's color).

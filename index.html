@@ -1245,12 +1245,30 @@ function stopPlayer(){
   if(P.src){try{P.src.stop();}catch(e){}try{P.src.disconnect();}catch(e){}P.src=null;}
   P.cb=null;
 }
-// Preview: light the rhyme grid's box for the current beat (outline glow, like a session). Bar 1 of the grid is the
-// drop; the 8 prep beats before it fall on bars 3-4, so the indicator just loops round the 4 bars.
+// Preview: during the 8 prep beats a wave lifts the tiles from one corner to the opposite one, once per beat; from the
+// drop the current beat's box lights its outline (like a session), starting top left and looping round the 4 bars.
+// Each Preview click moves the wave's starting corner one step clockwise: top left, top right, bottom right, bottom left.
+let WAVE_CORNER=-1;
+function waveTiles(){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const corner=WAVE_CORNER,beatMs=P.spb*1000,step=beatMs*0.55/6;   // the wave crosses the grid in about half a beat
+  const dx=corner===0||corner===3?1:-1,dy=corner<2?1:-1;         // direction of travel
+  const lift="perspective(520px) rotateX("+(-dy*14)+"deg) rotateY("+(dx*14)+"deg) translateY(-7px) scale(1.05)";
+  const tile=(el,r,c)=>{
+    const d=(dy>0?r:3-r)+(dx>0?c:3-c);                           // steps from the starting corner
+    el.animate([{transform:"none"},{transform:lift,boxShadow:"0 14px 24px rgba(0,0,0,.5)",offset:.42},{transform:"none"}],
+      {duration:Math.min(520,beatMs*0.9),delay:d*step,easing:"cubic-bezier(.3,.7,.35,1)"});
+  };
+  const grid=document.getElementById("setup-grid");
+  [...grid.children].forEach((el,i)=>tile(el,Math.floor(i/4),i%4));
+  const col=document.querySelector("#grid-wrap .rhyme-col");
+  if(col) [...col.children].forEach((el,r)=>tile(el,r,G.rhymeCol));
+}
 function lightGridBeat(i){
   document.querySelectorAll("#grid-wrap .gcell.now").forEach(c=>c.classList.remove("now"));
   if(i==null) return;
-  const r=(((Math.floor(i/4)-PREP_BARS)%4)+4)%4,c=i%4,grid=document.getElementById("setup-grid");
+  if(i<PREP_BARS*4){waveTiles();return;}   // prep: the wave, no indicator
+  const r=(Math.floor(i/4)-PREP_BARS)%4,c=i%4,grid=document.getElementById("setup-grid");
   grid.children[r*4+c]?.classList.add("now");
   const col=document.querySelector("#grid-wrap .rhyme-col");   // the draggable rhyme column sits over its beat
   if(col&&G.rhymeCol===c) col.children[r]?.classList.add("now");
@@ -1264,7 +1282,7 @@ let previewing=false;
 async function togglePreview(){
   const it=selItem();if(!it) return;
   if(previewing){previewing=false;stopPlayer();resetDots();return;}
-  previewing=true;
+  previewing=true;WAVE_CORNER=(WAVE_CORNER+1)%4;   // next corner, clockwise
   document.getElementById("prev-btn").innerHTML="&#9632; Stop";
   await startPlayer(it,{click:true,onBeat:(i)=>{
     const dots=document.querySelectorAll("#dots .dot");
