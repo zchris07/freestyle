@@ -20,8 +20,10 @@ Pipeline:
   4. Keep real, common, clean words: a lowercase stem in the Hunspell en_US dictionary (drops names and
      inflected duplicates like "matters"), wordfreq Zipf >= MIN_ZIPF (MIN_ZIPF1 for 1-syllable), not on the
      LDNOOBW list or EXTRA_BLOCK (and not a STOP word for 1-syllable).
-  5. Group by key. Inside a family keep one word per onset (the consonants before the stressed vowel), the
-     most common one, so every pair is a true rhyme and never an identical one (diction/addiction, metal/medal).
+  5. Group by key. Inside a family keep one word per onset (the consonants that start the stressed syllable), the
+     most common one, so every pair is a true rhyme and never an identical one (diction/addiction, metal/medal,
+     circle/encircle, courage/encourage, inherent/adherent, patient/impatient). A word that is a common prefix plus
+     another word of its family (another/other, enable/able, disorder/order) is also dropped for the commoner one.
   6. Families with enough words, best-known first, are written between the RHYME1 / RHYME2 markers in index.html.
 
 Usage:  pip install wordfreq   then   python tools/build_rhymes.py
@@ -64,6 +66,38 @@ ya ye yep yup nah ugh he re xi mg pee em""".split())
 ALLOW = {"fuck": None, "bitch": None, "shit": None, "pussy": None, "dick": None, "hoe": None, "thot": "TH AA1 T",
          "ass": None, "slut": None, "glock": None, "tits": None, "cum": None}
 SCHWA = {"AH0", "IH0", "UH0"}
+# consonant clusters that can begin an English syllable (besides any single consonant other than NG); used to find
+# where the stressed syllable really starts inside a word (maximal onset), so "encircle" (en-cir-cle) has the same
+# onset as "circle" and the two are never paired as a rhyme
+CLUSTERS = set(tuple(c.split()) for c in (
+    "P L,P R,B L,B R,T R,D R,K L,K R,G L,G R,F L,F R,TH R,SH R,T W,D W,K W,G W,"
+    "S P,S T,S K,S M,S N,S L,S W,S F,S P L,S P R,S T R,S K R,S K W,S K L,P Y,B Y,F Y,K Y,M Y,V Y,HH Y").split(","))
+
+
+# a word that is one of these plus another word of its family is the same rhyme with a prefix on it (another/other,
+# enable/able, disorder/order, mistaken/taken, whatever/ever): only the more common of the two is kept
+PREFIXES = """a an ab ad be co com con de dis em en ex il im in ir mis non ob out over per pre pro re self sub super
+trans un under up down mid hard salt what wher where which whom who any some every""".split()
+
+
+def prefixed(a, b):
+    """True if one of the two words is a prefix from PREFIXES plus the other"""
+    for x, y in ((a, b), (b, a)):
+        if len(x) > len(y) and x.endswith(y) and x[:len(x) - len(y)] in PREFIXES:
+            return True
+    return False
+
+
+def syllable_onset(cons, word_start):
+    """the consonants that start the stressed syllable: a word-initial cluster entirely; inside a word, the longest
+    final run that can begin a syllable (the rest closes the syllable before)"""
+    if word_start or not cons:
+        return cons
+    for n in range(len(cons), 0, -1):
+        tail = tuple(cons[-n:])
+        if (n == 1 and tail[0] != "NG") or tail in CLUSTERS:
+            return list(tail)
+    return []
 
 
 def fetch(name):
@@ -81,8 +115,8 @@ def is_vowel(p):
 
 
 def key_from(phones, start):
-    """(key, onset): the rhyme key from the stressed vowel at `start` to the end, normalized, and the consonants
-    right before that vowel"""
+    """(key, onset): the rhyme key from the stressed vowel at `start` to the end, normalized, and the onset of the
+    stressed syllable (see syllable_onset)"""
     key = []
     for i in range(start, len(phones)):
         p = phones[i]
@@ -98,7 +132,7 @@ def key_from(phones, start):
     j = start
     while j > 0 and not is_vowel(phones[j - 1]):
         j -= 1
-    return " ".join(key), " ".join(phones[j:start])
+    return " ".join(key), " ".join(syllable_onset(phones[j:start], j == 0))
 
 
 def rhyme_parts(phones):
@@ -128,7 +162,7 @@ def families(fams, min_words, max_words, max_families):
         items.sort(key=lambda x: (x[1] in ALLOW, x), reverse=True)
         seen, words = set(), []
         for z, w, onset in items:
-            if onset in seen:
+            if onset in seen or any(prefixed(w, k) for _, k in words):
                 continue
             seen.add(onset)
             words.append((z, w))
