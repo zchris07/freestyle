@@ -85,14 +85,19 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   swell the bass, loosely, not band by band. The letters stay plain white through the prep bars and fill up when the
   drop is reached (on the session's beat clock; 0.9 s ease-out with an extra slosh, `NV_FILL`). Waves are big (amplitude
   10-30% of the cap height, plus the slosh), wide (peaks ~1.5x apart from the first version) and 30% slower than first
-  built; the whole surface drifts slowly rightward (`NV_DRIFT`, 26 px/s). The swell follows the kicks: the bass is
-  scaled to the song's own recent range (`NV.lo`/`NV.hi`), so each kick pushes the waves up and they settle between kicks.
+  built; the whole surface drifts slowly rightward (`NV_DRIFT`, 26 px/s). The swell follows the kicks and the level the
+  loudness, both scaled to the song's own recent range (`NV.lo`/`NV.hi`, `NV.elo`/`NV.ehi`) and followed quickly, so the
+  liquid reacts clearly to the audio: up on each kick and loud passage, settling between.
   Skipped when the name is cut off with an ellipsis; rebuilt on resize. The session's boxes pop in, staggered like
   the builder grid (`.bars-scroll.pop`).
 - Session visualizer (`#perf-viz`, `vizStart`/`vizFrame`/`vizStop`): a canvas behind everything in the session, driven
-  by an AnalyserNode on `playerBus()` (range -80..-12 dB so loud masters don't pin it). Mirrored soft green bars rise
-  from the bottom edge, the bass on both outer edges (framing the grid) and the highs toward the middle, plus a bloom
-  behind the grid that swells with the bass. Dim on purpose; off with prefers-reduced-motion.
+  by an AnalyserNode on `playerBus()` (-80..-12 dB so loud masters don't pin it). Mirrored bars rise from the bottom edge,
+  the bass on both outer edges (framing the grid) and the highs toward the middle, each one flat colour (no gradient, no
+  echo rectangle above it), plus a bloom behind the grid that swells with the bass. Dim on purpose; off with
+  prefers-reduced-motion. (A six-scene "go crazy" version was built and reverted on 2026-11-08.)
+- Effect colour: every session effect (bars, bloom, the name's liquid; its back wave a darker shade) takes the colour of
+  the rhyme group coming up next (`PERF_NEXT[beat]`, filled in `build32Bars` from each rhyme box's `--gc`) and glides
+  to the next group's colour over ~0.4 s (`VIZ.rgb`).
 - Session controls: PAUSE / RESUME next to STOP (Space toggles it). Pause suspends the AudioContext, so the beat,
   the clicks and the beat clock stop together. Both "2 syllable" toggles say only "2 syllable" and show their state
   by colour (main: green when on; builder: filled in the active rhyme's colour when on).

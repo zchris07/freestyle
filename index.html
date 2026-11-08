@@ -3084,6 +3084,8 @@ document.getElementById("prev-btn").addEventListener("click",togglePreview);
 
 /* ================= PERFORMANCE ================= */
 const PREP_BARS=2,TOTAL_BARS=32;
+// PERF_NEXT[beat]: the colour of the next rhyme box at or after that beat (what the effects are tinted with)
+let PERF_NEXT=[];
 function build32Bars(){
   const scroll=document.getElementById("bars-scroll");scroll.innerHTML="";
   const groups=activeGroups(),m=cellMap(groups),ng=groups.length;
@@ -3106,6 +3108,14 @@ function build32Bars(){
     }
     block.appendChild(row);scroll.appendChild(block);
   }
+  // walk back from the end: each beat gets the colour of the nearest rhyme box at or after it
+  const total=(PREP_BARS+TOTAL_BARS)*4;PERF_NEXT=new Array(total+1).fill(null);let next=null;
+  for(let b=total-1;b>=0;b--){
+    const c=document.getElementById("pc-"+Math.floor(b/4)+"-"+(b%4));
+    if(c&&c.classList.contains("rhyme-cell")) next=c.style.getPropertyValue("--gc").trim()||next;
+    PERF_NEXT[b]=next;
+  }
+  PERF_NEXT[total]=PERF_NEXT[total-1];
 }
 async function startPerf(){
   const it=selItem();if(!it) return;
@@ -3126,7 +3136,7 @@ async function startPerf(){
   ps.classList.add("open");ps.setAttribute("aria-hidden","false");
   document.getElementById("root").classList.add("sessioning");document.body.classList.add("lock");
   G.running=true;G.curGlobalBeat=-1;
-  NV.dropAt=null;NV.lo=NV.hi=null;vizStart();buildNameViz();
+  NV.dropAt=null;NV.lo=NV.hi=NV.elo=NV.ehi=null;vizStart();buildNameViz();
   const click=it.builtin||document.getElementById("click-toggle").checked;
   try{await startPlayer(it,{click,onBeat:handleBeat});}
   catch(e){document.getElementById("p-beat-name").textContent="Could not play this file";}
@@ -3146,6 +3156,7 @@ function retireBeat(){
 // of soft green bars rises from the bottom edge, mirrored: the bass on both outer edges (where it frames the grid),
 // the highs toward the middle. A bloom behind the grid swells with the bass. Kept dim so the words stay readable.
 const VIZ={an:null,data:null,lv:null,bass:0,raf:0};
+const hexRgb=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
 function vizStart(){
   if(matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   const b=playerBus();
@@ -3155,7 +3166,7 @@ function vizStart(){
     b.connect(VIZ.an);
     VIZ.data=new Uint8Array(VIZ.an.frequencyBinCount);
   }
-  VIZ.lv=null;VIZ.bass=0;cancelAnimationFrame(VIZ.raf);VIZ.raf=requestAnimationFrame(vizFrame);
+  VIZ.lv=null;VIZ.bass=0;VIZ.rgb=null;VIZ.last=0;cancelAnimationFrame(VIZ.raf);VIZ.raf=requestAnimationFrame(vizFrame);
 }
 // The beat name's own visualizer: green liquid filling the white letters from the bottom. The word is copied into an SVG
 // laid exactly over it (measured like the intro's written words, so the letters match the page's text to the pixel; the
@@ -3187,15 +3198,18 @@ function buildNameViz(){
 }
 function vizName(tS){
   if(!NV.svg||!NV.svg.isConnected) return;
-  // loudness, smoothed slowly in both directions: the liquid breathes with the music rather than twitching on it
+  // loudness, scaled to this song's own recent range (slow floor and ceiling) and followed quickly, so the level
+  // rises and falls clearly with the music
   const D=VIZ.data;let sum=0;for(let i=0;i<D.length*0.6;i++) sum+=D[i];const e=sum/(D.length*0.6*255);
-  NV.lvl+=(e-NV.lvl)*(e>NV.lvl?0.14:0.06);   // follows the music's loudness within a few beats
+  NV.elo=Math.min(e,(NV.elo??e)+0.0015);NV.ehi=Math.max(e,(NV.ehi??e)-0.0015);
+  const eN=NV.ehi-NV.elo>0.03?(e-NV.elo)/(NV.ehi-NV.elo):0.5;
+  NV.lvl+=(eN-NV.lvl)*(eN>NV.lvl?0.35:0.15);
   // the swell follows the kicks: bass scaled to this song's own recent range (slow floor and ceiling), so every kick
   // pushes the waves across the full amplitude range and they settle back between kicks
   let bass=0;for(let i=0;i<6;i++) bass+=D[i];bass/=6*255;
   NV.lo=Math.min(bass,(NV.lo??bass)+0.002);NV.hi=Math.max(bass,(NV.hi??bass)-0.002);
   const kick=NV.hi-NV.lo>0.04?(bass-NV.lo)/(NV.hi-NV.lo):0.5;
-  NV.swell+=(kick-NV.swell)*(kick>NV.swell?0.4:0.12);
+  NV.swell+=(kick-NV.swell)*(kick>NV.swell?0.7:0.2);
   // empty through the prep bars; at the drop it fills up (with a slosh), on the session's own beat clock
   const beatF=AC&&P.spb?(AC.currentTime-P.t0)/P.spb:-1;
   if(beatF>=PREP_BARS*4&&NV.dropAt==null) NV.dropAt=tS;
@@ -3214,6 +3228,8 @@ function vizName(tS){
   };
   NV.back.setAttribute("d",path(2.1,0.8,NV.cap*0.07));   // a darker wave behind, a little higher and slower
   NV.front.setAttribute("d",path(0,1,0));
+  const c=VIZ.rgb;NV.front.setAttribute("fill","rgb("+c.map(Math.round).join(",")+")");
+  NV.back.setAttribute("fill","rgb("+c.map(v=>Math.round(v*0.68)).join(",")+")");
 }
 const NV_FILL=0.9,NV_DRIFT=26;   // seconds to fill at the drop; drift to the right in px per second
 function vizStop(){cancelAnimationFrame(VIZ.raf);VIZ.raf=0;
@@ -3232,17 +3248,22 @@ function vizFrame(){
     const v=m/255;VIZ.lv[k]=v>VIZ.lv[k]?v:VIZ.lv[k]*0.9+v*0.1;
   }
   let bass=0;for(let i=0;i<6;i++) bass+=D[i];bass/=6*255;VIZ.bass=Math.max(bass,VIZ.bass*0.92);
+  // every effect takes the colour of the rhyme group coming up next, gliding to the next group's colour (~0.4 s)
+  const now=performance.now(),dt=Math.min(0.1,(now-(VIZ.last||now))/1000);VIZ.last=now;
+  const beat=AC&&P.spb?Math.floor((AC.currentTime-P.t0)/P.spb):0,tgt=hexRgb(PERF_NEXT[Math.max(0,Math.min(PERF_NEXT.length-1,beat))]||"#1ed760");
+  if(!VIZ.rgb) VIZ.rgb=tgt.slice();
+  const k=1-Math.exp(-dt/0.4);for(let i=0;i<3;i++) VIZ.rgb[i]+=(tgt[i]-VIZ.rgb[i])*k;
+  const col=a=>"rgba("+VIZ.rgb.map(Math.round).join(",")+","+a.toFixed(3)+")";
   // bloom behind the grid, swelling with the bass
   const bl=g.createRadialGradient(w/2,h*0.62,0,w/2,h*0.62,Math.max(w,h)*0.7);
-  bl.addColorStop(0,"rgba(30,215,96,"+(0.04+0.16*VIZ.bass*VIZ.bass).toFixed(3)+")");bl.addColorStop(1,"rgba(30,215,96,0)");
+  bl.addColorStop(0,col(0.04+0.16*VIZ.bass*VIZ.bass));bl.addColorStop(1,col(0));
   g.fillStyle=bl;g.fillRect(0,0,w,h);
-  // the bars along the bottom, and their faint mirror
+  // the bars along the bottom: one flat colour each, rounded tops
   const bw=w/N,gap=Math.max(2,bw*0.22),maxH=h*0.42;
+  g.fillStyle=col(0.3);
   for(let c=0;c<N;c++){
     const v=VIZ.lv[Math.min(c,N-1-c)],bh=Math.max(2,v*v*maxH),x=c*bw+gap/2,wd=bw-gap;   // band = distance from the edge
-    const gr=g.createLinearGradient(0,h-bh,0,h);gr.addColorStop(0,"rgba(30,215,96,"+(0.1+0.22*v).toFixed(3)+")");gr.addColorStop(1,"rgba(30,215,96,.02)");
-    g.fillStyle=gr;g.beginPath();g.roundRect?g.roundRect(x,h-bh,wd,bh,[Math.min(6,wd/2),Math.min(6,wd/2),0,0]):g.rect(x,h-bh,wd,bh);g.fill();
-    g.fillStyle="rgba(30,215,96,"+(0.04*v).toFixed(3)+")";g.fillRect(x,h-bh-6-bh*0.25,wd,bh*0.25);   // a soft echo above
+    g.beginPath();g.roundRect?g.roundRect(x,h-bh,wd,bh,[Math.min(6,wd/2),Math.min(6,wd/2),0,0]):g.rect(x,h-bh,wd,bh);g.fill();
   }
   vizName(performance.now()/1000);
   VIZ.raf=requestAnimationFrame(vizFrame);
