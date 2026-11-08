@@ -89,16 +89,13 @@ CLUSTERS = set(tuple(c.split()) for c in (
     "S P,S T,S K,S M,S N,S L,S W,S F,S P L,S P R,S T R,S K R,S K W,S K L,P Y,B Y,F Y,K Y,M Y,V Y,HH Y").split(","))
 
 
-# a word that is one of these plus another word of its family is the same rhyme with a prefix on it (another/other,
-# enable/able, disorder/order, mistaken/taken, whatever/ever): only the more common of the two is kept
-PREFIXES = """a an ab ad be co com con de dis em en ex il im in ir mis non ob out over per pre pro re self sub super
-trans un under up down mid hard salt what wher where which whom who any some every""".split()
-
-
+# A word that is another word of its family with a whole extra syllable in front is the same rhyme with a prefix on
+# it (antarctic/arctic, another/other, enable/able, disorder/order, whatever/ever): only the more common of the two is
+# kept. The front part has to hold a vowel; consonants alone make a real rhyme (brother/other, thunder/under).
 def prefixed(a, b):
-    """True if one of the two words is a prefix from PREFIXES plus the other"""
+    """True if one of the two words is the other with an extra syllable (letters including a vowel) in front"""
     for x, y in ((a, b), (b, a)):
-        if len(x) > len(y) and x.endswith(y) and x[:len(x) - len(y)] in PREFIXES:
+        if len(x) > len(y) >= 2 and x.endswith(y) and any(ch in "aeiouy" for ch in x[:len(x) - len(y)]):
             return True
     return False
 
@@ -169,7 +166,7 @@ def rhyme_parts1(phones):
     return key_from(phones, vi[0])
 
 
-def families(fams, min_words, max_words, max_families):
+def families(fams, min_words, max_words, max_families, prefix_rule=False):
     """one word per onset (the most common; an ALLOW word always wins its onset), families with >= min_words,
     best-known first; ALLOW words are always kept"""
     out = []
@@ -177,7 +174,7 @@ def families(fams, min_words, max_words, max_families):
         items.sort(key=lambda x: (x[1] in ALLOW, x), reverse=True)
         seen, words = set(), []
         for z, w, onset in items:
-            if onset in seen or any(prefixed(w, k) for _, k in words):
+            if onset in seen or (prefix_rule and any(prefixed(w, k) for _, k in words)):
                 continue
             seen.add(onset)
             words.append((z, w))
@@ -228,7 +225,8 @@ def main():
         if parts1 and (allow or (z >= MIN_ZIPF1 and word not in STOP and word not in EXTRA_BLOCK1)):
             fams1[parts1[0]].append((z, word, parts1[1]))
 
-    out = families(fams, MIN_WORDS, MAX_WORDS, MAX_FAMILIES)
+    out = families(fams, MIN_WORDS, MAX_WORDS, MAX_FAMILIES, prefix_rule=True)   # 2-syllable only: in one syllable,
+    # spelling vowels are silent (heart/art), so the extra-syllable test would misfire
     out1 = families(fams1, MIN_WORDS1, MAX_WORDS1, MAX_FAMILIES1)
     html_path = os.path.join(ROOT, "index.html")
     html = open(html_path, encoding="utf-8").read()

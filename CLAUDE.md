@@ -230,11 +230,12 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   in favour of addiction). The onset is the stressed syllable's own (`syllable_onset`: a word-initial cluster whole,
   inside a word the longest final run that can start an English syllable, `CLUSTERS`), so circle/encircle,
   courage/encourage, inherent/adherent and patient/impatient count as identical (2026-11-08, Chris asked), while
-  play/lay or train/rain stay apart. A word that is a common prefix (`PREFIXES`: an, en, dis, mis, in, ex, what,
-  hard...) plus another word of its family is dropped too (another/other, enable/able, disorder/order,
-  mistaken/taken). Families left with one word disappear (circle, courage, patient have no pure rhyme now).
-- Regenerate with `pip install wordfreq` then `python tools/build_rhymes.py`. Currently 543 families,
-  1595 words, 13 KB.
+  play/lay or train/rain stay apart. In the 2-syllable bank, a word that is another word of its family with a whole
+  extra syllable in front (the extra letters hold a vowel: `prefixed`) is dropped too: antarctic/arctic, another/other,
+  enable/able, disorder/order, recorder/order, surrender/render, arrival/rival. Consonants alone in front make a real
+  rhyme and stay (brother/other, thunder/under). Not used for 1-syllable words, where spelling vowels are silent (heart/art). Families left with one word disappear (circle, courage, patient have no pure rhyme now).
+- Regenerate with `pip install wordfreq` then `python tools/build_rhymes.py`. Currently 542 families,
+  1588 words, 13 KB.
 
 ## Drop detection (long intros)
 - Every song gets exactly 8 prep beats (PREP_BARS=2) right before the drop: playback starts at drop - 2 bars, bar 1
