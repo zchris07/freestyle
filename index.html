@@ -3223,9 +3223,9 @@ function vizName(tS){
   let sum=0;for(let i=0;i<L*0.6;i++) sum+=D[i];const e=sum/(L*0.6*255);NV.lvl+=(e-NV.lvl)*0.01;
   // a kick drops a ripple into the liquid at a random spot; it runs outward both ways and fades
   if(lowB>0.75&&!NV.kickOn&&NV.dropAt!=null){NV.kickOn=true;NV.rip.push({x:Math.random()*NV.w,t:tS,a:0.5+0.5*lowB});if(NV.rip.length>8) NV.rip.shift();
-    NV.jv-=NV.cap*(1.1+0.8*lowB);}   // and gives the whole liquid a little hop
+    NV.jv-=NV.cap*(1.55+1.1*lowB);}   // and gives the whole liquid a little hop
   {const dt=Math.min(0.05,Math.max(0,tS-(NV.jt||tS)));NV.jt=tS;   // spring back down, with a little bounce
-    NV.jv+=(-60*NV.jy-9*NV.jv)*dt;NV.jy+=NV.jv*dt;NV.jy=Math.max(-NV.cap*0.22,Math.min(NV.cap*0.1,NV.jy));}
+    NV.jv+=(-60*NV.jy-9*NV.jv)*dt;NV.jy+=NV.jv*dt;NV.jy=Math.max(-NV.cap*0.3,Math.min(NV.cap*0.12,NV.jy));}
   if(lowB<0.45) NV.kickOn=false;
   // empty through the prep bars; at the drop it fills up (with a slosh), on the session's own beat clock
   const beatF=AC&&P.spb?(AC.currentTime-P.t0)/P.spb:-1;
