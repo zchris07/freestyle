@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Freestyle Rhyme Trainer</title>
-<!-- tab icon: four waveform bars, one per beat, the 4th orange (a rhyme on beat 4); made by tools/make_icons.py.
-     Inline SVG first (works in the Claude artifact too), PNG/ICO fallbacks and the iOS home-screen icon as files -->
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23121212'/><rect x='6.5' y='19.0' width='9' height='26' rx='4.5' fill='%231ed760'/><rect x='20.5' y='11.0' width='9' height='42' rx='4.5' fill='%231ed760'/><rect x='34.5' y='17.0' width='9' height='30' rx='4.5' fill='%231ed760'/><rect x='48.5' y='6.0' width='9' height='52' rx='4.5' fill='%23ffa42b'/></svg>">
+<!-- tab icon: "wtf" in the wordmark's green Fraunces on the dark background; made by tools/make_icons.py.
+     Inline PNG first (works in the Claude artifact too), file fallbacks and the iOS home-screen icon -->
+<link rel="icon" type="image/png" sizes="64x64" href="data:image/png;base64,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">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -256,7 +256,7 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 #perf-screen.open{clip-path:circle(150vmax at var(--ox,50%) var(--oy,100%));visibility:visible;transition:clip-path .65s var(--ease);}
 #perf-screen.intro .rise{animation:rise .55s var(--ease) backwards;animation-delay:calc(.2s + var(--d,0) * 60ms);}
 .perf-hdr{padding:14px var(--inset) 4px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
-.pname{font-size:39px;line-height:1.15;font-weight:700;letter-spacing:-.01em;color:var(--text);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variation-settings:"opsz" 144;}
+.pname{font-size:58px;line-height:1.15;font-weight:700;letter-spacing:-.01em;color:var(--text);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variation-settings:"opsz" 144;}
 /* session boxes pop in, staggered, like the builder's grid */
 #perf-screen .bars-scroll.pop .pcell{animation:pop .45s var(--ease) backwards;animation-delay:calc(.32s + var(--i,0) * 18ms);}
 .stop-btn{background:transparent;border:1px solid var(--outline);border-radius:500px;padding:6px 14px;font-size:12px;color:var(--text);cursor:pointer;letter-spacing:.06em;white-space:nowrap;font-weight:700;transition:border-color .15s,transform .15s;}
@@ -268,6 +268,11 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 #perf-screen.paused .bars-scroll{opacity:.45;}
 /* the beat's visualizer fills the session's background, under everything else */
 #perf-viz{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;}
+/* the beat name carries its own visualizer: an SVG copy of the word exactly over the real (now invisible) text, white,
+   with green liquid filling the letters from the bottom */
+.pname{position:relative;}
+.pname.nv{color:transparent;}
+.pname>svg.nviz{position:absolute;left:0;top:0;overflow:hidden;pointer-events:none;}
 #perf-screen>:not(#perf-viz){position:relative;z-index:1;}
 .bars-scroll{overflow-y:auto;flex:1;min-height:0;padding:12px var(--inset) 20px;}
 .bar-block{margin-bottom:10px;}
@@ -346,7 +351,7 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
   :root{--top-h:50px;}
   .topbar{padding:0 16px;}
   .brand{font-size:21px;}
-  .pname{font-size:32px;}
+  .pname{font-size:48px;}
   .col-hint{padding:8px 15px;font-size:12px;gap:9px;}
   .col-hint .ar{font-size:15px;}
 }
@@ -365,7 +370,7 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
   .lib{max-height:340px;}
   #perf-screen{--inset:max(24px,calc((100% - 1040px) / 2));}
   .perf-hdr{padding:18px var(--inset) 8px;}
-  .pname{font-size:51px;}
+  .pname{font-size:76px;}
   .bar-row-perf{gap:10px;}
   .pcell{height:88px;}
   .pcell .pword{font-size:19px;}
@@ -3121,7 +3126,7 @@ async function startPerf(){
   ps.classList.add("open");ps.setAttribute("aria-hidden","false");
   document.getElementById("root").classList.add("sessioning");document.body.classList.add("lock");
   G.running=true;G.curGlobalBeat=-1;
-  vizStart();
+  vizStart();buildNameViz();
   const click=it.builtin||document.getElementById("click-toggle").checked;
   try{await startPlayer(it,{click,onBeat:handleBeat});}
   catch(e){document.getElementById("p-beat-name").textContent="Could not play this file";}
@@ -3152,7 +3157,52 @@ function vizStart(){
   }
   VIZ.lv=null;VIZ.bass=0;cancelAnimationFrame(VIZ.raf);VIZ.raf=requestAnimationFrame(vizFrame);
 }
-function vizStop(){cancelAnimationFrame(VIZ.raf);VIZ.raf=0;const cv=document.getElementById("perf-viz");cv.getContext("2d").clearRect(0,0,cv.width,cv.height);}
+// The beat name's own visualizer: green liquid filling the white letters from the bottom. The word is copied into an SVG
+// laid exactly over it (measured like the intro's written words, so the letters match the page's text to the pixel; the
+// real text turns transparent and keeps the layout). Clipped to the letters, two layers of liquid (a darker one behind)
+// fill from below the lowest point of the text up to a rolling surface: a few travelling sine waves, the same average
+// height across the whole word. Its level and swell follow the music loosely (a slow-moving loudness), not band by band.
+const NV={svg:null,back:null,front:null,w:0,h:0,base:0,cap:0,lvl:0,swell:0};
+function buildNameViz(){
+  const el=document.getElementById("p-beat-name");
+  el.querySelector("svg.nviz")?.remove();el.classList.remove("nv");NV.svg=null;
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  if(el.scrollWidth>el.clientWidth+1) return;   // cut off with an ellipsis: leave the plain text
+  const box=el.getBoundingClientRect();if(!box.width) return;
+  const probe=document.createElement("span");probe.style.cssText="display:inline-block;width:0;height:0;vertical-align:baseline";
+  el.append(probe);const base=probe.getBoundingClientRect().top-box.top;probe.remove();
+  const size=parseFloat(getComputedStyle(el).fontSize),id="nvclip"+Date.now().toString(36),NS=SVGNS;
+  const svg=document.createElementNS(NS,"svg");svg.setAttribute("class","nviz");svg.setAttribute("aria-hidden","true");
+  svg.setAttribute("width",box.width);svg.setAttribute("height",box.height);
+  const defs=document.createElementNS(NS,"defs"),cp=document.createElementNS(NS,"clipPath");cp.id=id;
+  const tx=document.createElementNS(NS,"text");tx.setAttribute("x",0);tx.setAttribute("y",base);tx.textContent=el.textContent;
+  cp.append(tx);defs.append(cp);svg.append(defs);
+  const grp=document.createElementNS(NS,"g");grp.setAttribute("clip-path","url(#"+id+")");
+  const bg=document.createElementNS(NS,"rect");bg.setAttribute("width",box.width);bg.setAttribute("height",box.height);bg.setAttribute("fill","#ffffff");
+  const back=document.createElementNS(NS,"path");back.setAttribute("fill","#169c46");
+  const front=document.createElementNS(NS,"path");front.setAttribute("fill","#1ed760");
+  grp.append(bg,back,front);svg.append(grp);el.append(svg);el.classList.add("nv");
+  Object.assign(NV,{svg,back,front,w:box.width,h:box.height,base,cap:size*0.7});
+}
+function vizName(tS){
+  if(!NV.svg||!NV.svg.isConnected) return;
+  // loudness, smoothed slowly in both directions: the liquid breathes with the music rather than twitching on it
+  const D=VIZ.data;let sum=0;for(let i=0;i<D.length*0.6;i++) sum+=D[i];const e=sum/(D.length*0.6*255);
+  NV.lvl+=(e-NV.lvl)*(e>NV.lvl?0.06:0.025);
+  let bass=0;for(let i=0;i<6;i++) bass+=D[i];bass/=6*255;NV.swell+=(bass-NV.swell)*0.12;
+  const level=NV.base-NV.cap*(0.3+0.55*NV.lvl);   // the surface's average height: the same everywhere along the word
+  const A=NV.cap*(0.05+0.11*NV.swell),bottom=NV.h+2;
+  const surf=(x,ph,sp)=>level+A*(0.55*Math.sin(x*0.045+tS*1.9*sp+ph)+0.3*Math.sin(x*0.11-tS*2.7*sp+ph*1.7)+0.15*Math.sin(x*0.23+tS*4.1*sp-ph));
+  const path=(ph,sp,lift)=>{
+    let d="M0 "+bottom+" L0 "+(surf(0,ph,sp)-lift).toFixed(1);
+    for(let x=6;x<NV.w+6;x+=6) d+=" L"+Math.min(x,NV.w).toFixed(1)+" "+(surf(x,ph,sp)-lift).toFixed(1);
+    return d+" L"+NV.w.toFixed(1)+" "+bottom+" Z";
+  };
+  NV.back.setAttribute("d",path(2.1,0.8,NV.cap*0.06));   // a darker wave behind, a little higher and slower
+  NV.front.setAttribute("d",path(0,1,0));
+}
+function vizStop(){cancelAnimationFrame(VIZ.raf);VIZ.raf=0;
+  {const el=document.getElementById("p-beat-name");el.querySelector("svg.nviz")?.remove();el.classList.remove("nv");NV.svg=null;}const cv=document.getElementById("perf-viz");cv.getContext("2d").clearRect(0,0,cv.width,cv.height);}
 function vizFrame(){
   const cv=document.getElementById("perf-viz"),dpr=Math.min(2,window.devicePixelRatio||1),w=cv.clientWidth,h=cv.clientHeight;
   if(!w||!h){VIZ.raf=requestAnimationFrame(vizFrame);return;}
@@ -3179,6 +3229,7 @@ function vizFrame(){
     g.fillStyle=gr;g.beginPath();g.roundRect?g.roundRect(x,h-bh,wd,bh,[Math.min(6,wd/2),Math.min(6,wd/2),0,0]):g.rect(x,h-bh,wd,bh);g.fill();
     g.fillStyle="rgba(30,215,96,"+(0.04*v).toFixed(3)+")";g.fillRect(x,h-bh-6-bh*0.25,wd,bh*0.25);   // a soft echo above
   }
+  vizName(performance.now()/1000);
   VIZ.raf=requestAnimationFrame(vizFrame);
 }
 // End of the 32 bars: when the last beat is over, its box goes dark, the clock and clicks stop, the beat fades to
@@ -3428,7 +3479,8 @@ renderLib();
 loadLib().then(runIntro,runIntro);
 let plainT=0;
 window.addEventListener("resize",()=>{clearTimeout(plainT);plainT=setTimeout(()=>{if(!INTRO) plainWords(document);},150);});   // words reflow: real text takes over
-window.addEventListener("resize",()=>{placeHint();const it=selItem();if(it&&!it.builtin&&!document.getElementById("detail").hidden)drawGrid(it);});
+window.addEventListener("resize",()=>{placeHint();const it=selItem();if(it&&!it.builtin&&!document.getElementById("detail").hidden)drawGrid(it);
+  if(document.getElementById("perf-screen").classList.contains("open")&&VIZ.raf) buildNameViz();});   // re-measure the name's copy
 </script>
 </body>
 </html>

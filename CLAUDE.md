@@ -74,7 +74,13 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   The guide has its own static logo (`#g-home`, a copy of the page logo's inked letters made in `openGuide`, same spot,
   no animation). It closes around whatever closed it (`closeGuide(e)`, `guideOrigin(el)` snaps the centre): the X, Got
   it, or the logo (home); Esc closes into the wtf? button.
-- Session title: the beat name is large (39px, 51px wide, 32px phone; made 50% larger on 2026-11-08). The session's boxes pop in, staggered like
+- Session title: the beat name is large (58px, 76px wide, 48px phone; made 50% larger twice on 2026-11-08).
+- The beat name has its own visualizer (`buildNameViz`/`vizName`): an SVG copy of the word laid exactly over the real
+  text (measured like the intro's written words; the real text turns transparent and keeps its layout, so nothing moves
+  or changes shape). Clipped to the letters it stays white, with green liquid filling it from below the lowest point of
+  the text (so there is never white below green) up to a rolling surface: a few travelling sine waves, the same average
+  height along the whole word, and a darker, slower wave behind. The level follows a slowly smoothed loudness and the
+  swell the bass, loosely, not band by band. Skipped when the name is cut off with an ellipsis; rebuilt on resize. The session's boxes pop in, staggered like
   the builder grid (`.bars-scroll.pop`).
 - Session visualizer (`#perf-viz`, `vizStart`/`vizFrame`/`vizStop`): a canvas behind everything in the session, driven
   by an AnalyserNode on `playerBus()` (range -80..-12 dB so loud masters don't pin it). Mirrored soft green bars rise
@@ -321,10 +327,10 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   and calling `analyzeBuffer(buf)` from the console (globals are top-level in `index.html`).
 - Artifact constraints: external stylesheets/fetches are blocked by CSP, so keep everything inline
   and use text glyphs for icons. The page must work at phone width.
-- Tab icon: four mirrored waveform bars, one per beat, beats 1-3 green and beat 4 orange (a rhyme landing on beat 4), on
-  `#121212` with rounded corners. `tools/make_icons.py` (Pillow) writes favicon.svg, favicon-32.png, favicon.ico and
-  apple-touch-icon.png (180, full-bleed); the SVG is also inlined in index.html as a data URI (single quotes inside, so
-  it works in the Claude artifact too). Re-paste it into the `<link rel="icon">` after changing the design.
+- Tab icon: "wtf" in the wordmark's green (#1ed760) Fraunces 900, on #121212 with rounded corners. `tools/icon.html` is
+  rendered at 512px by headless Chrome in `tools/make_icons.py`, which writes favicon-32.png, favicon.ico,
+  apple-touch-icon.png (180, full-bleed) and prints a 64px PNG data URI for the inline `<link rel="icon">` in index.html
+  (inline so it works in the Claude artifact too). Paste the new URI there after changing the design.
 - Link preview: `og-image.png` (1200x630) is rendered from `tools/og-image.html` with headless Chrome (the command is in
   that file). It shows only the freestyle.wtf wordmark and a rhyme grid, no tagline. `og:title` is "freestyle.wtf".
 - Commits end with: `Co-Authored-By: Claude <noreply@anthropic.com>`.

@@ -1,0 +1,14 @@
+<!doctype html>
+<!-- The tab icon: "wtf" in the wordmark's green and font, on the page's dark background. Rendered at 512px by
+     tools/make_icons.py with headless Chrome, then scaled down to the icon sizes. -->
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&display=block">
+<style>
+html,body{margin:0;width:512px;height:512px;background:transparent;overflow:hidden;}
+.tile{width:512px;height:512px;border-radius:var(--r,112px);background:#121212;display:flex;align-items:center;justify-content:center;}
+.w{font-family:"Fraunces",Georgia,serif;font-weight:900;font-variation-settings:"opsz" 144;font-size:296px;letter-spacing:-.045em;
+  color:#1ed760;line-height:1;transform:translateY(-18px);}
+</style></head>
+<body><div class="tile"><div class="w">wtf</div></div>
+<script>const r=new URLSearchParams(location.search).get("r");if(r!==null)document.querySelector(".tile").style.setProperty("--r",r+"px");</script>
+</body></html>
