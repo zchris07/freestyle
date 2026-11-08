@@ -1251,15 +1251,22 @@ function paintGrid(){
   const X=t=>t*pps-sx;   // song time -> x in view
   g.fillStyle="#4d4d4d";
   for(let x=0;x<w;x++){const v=GV.peaks[Math.floor(sx)+x];if(v==null) break;const hh=v*h*0.9;g.fillRect(x,(h-hh)/2,1,hh);}
-  // while the preview plays, a brighter patch of the waveform moves along with it (about a beat wide, soft edges)
+  // Preview playhead: a flat, full-height band of light one beat wide, with a trail one bar long that fades out
+  // behind it. The waveform under them brightens too, and each coloured bar line flares up as the band crosses it.
   const pos=previewing&&P.song&&P.song.it===it?songPos():null;
+  const HEAD=GV_BAR/4,TRAIL=GV_BAR,FLARE=0.7;   // band width (px), trail length (px), how long a bar line glows (s)
   if(pos!=null){
-    const px=X(pos),core=GV_BAR/8,soft=GV_BAR/8;
-    for(let x=Math.max(0,Math.floor(px-core-soft));x<Math.min(w,Math.ceil(px+core+soft));x++){
+    const px=X(pos),hx=px-HEAD;   // the band ends at the playback position
+    const lit=x=>x>=hx?1:Math.pow(Math.max(0,1-(hx-x)/TRAIL),1.6);   // 1 in the band, fading out along the trail
+    for(let x=Math.max(0,Math.floor(hx-TRAIL));x<Math.min(w,Math.ceil(px));x++){   // waveform brightens
       const v=GV.peaks[Math.floor(sx)+x];if(v==null) break;
-      const d=Math.abs(x+0.5-px),a=d<=core?1:Math.max(0,1-(d-core)/soft);if(a<=0) continue;
-      const hh=v*h*0.9;g.fillStyle="rgba(235,235,235,"+a.toFixed(3)+")";g.fillRect(x,(h-hh)/2,1,hh);
+      const a=lit(x+0.5);if(a<=0.01) continue;
+      const hh=v*h*0.9;g.fillStyle="rgba(240,240,240,"+(a*0.9).toFixed(3)+")";g.fillRect(x,(h-hh)/2,1,hh);
     }
+    const tr=g.createLinearGradient(hx-TRAIL,0,hx,0);   // the trail: a wash of light fading out to the left
+    tr.addColorStop(0,"rgba(255,255,255,0)");tr.addColorStop(1,"rgba(255,255,255,.16)");
+    g.fillStyle=tr;g.fillRect(hx-TRAIL,0,TRAIL,h);
+    g.fillStyle="rgba(255,255,255,.2)";g.fillRect(hx,0,HEAD,h);   // the band: flat, even light
   }
   const spb=60/it.bpm,bar=4*spb,drop=dropInfo(it).t;
   // prep bars shaded; bar lines only (green, the drop orange), no beat lines and no labels
@@ -1267,9 +1274,15 @@ function paintGrid(){
   const t0=sx/pps-bar,t1=(sx+w)/pps;
   for(let k=Math.ceil((t0-it.fd)/bar);it.fd+k*bar<t1;k++){
     const t=it.fd+k*bar;if(t<0) continue;
-    g.fillStyle=Math.round((t-drop)/bar)===0?"#ffa42b":"#1ed760";
-    g.fillRect(Math.round(X(t)),0,3,h);
+    const isDrop=Math.round((t-drop)/bar)===0,x=Math.round(X(t));
+    const since=pos==null?-1:pos-t,f=since>=0&&since<FLARE?1-since/FLARE:0;   // just crossed by the playhead: flare
+    if(f>0){
+      g.save();g.shadowColor=isDrop?"#ffa42b":"#1ed760";g.shadowBlur=14*f;
+      g.fillStyle=isDrop?"rgb(255,"+Math.round(164+80*f)+","+Math.round(43+190*f)+")":"rgb("+Math.round(30+200*f)+",255,"+Math.round(96+150*f)+")";
+      const wd=3+3*f;g.fillRect(x+1.5-wd/2,0,wd,h);g.restore();
+    }else{g.fillStyle=isDrop?"#ffa42b":"#1ed760";g.fillRect(x,0,3,h);}
   }
+  if(pos!=null){g.fillStyle="rgba(255,255,255,.85)";g.fillRect(X(pos)-2,0,2,h);}   // the band's leading edge
 }
 // During a preview the waveform repaints every frame and keeps the moving patch in view (centred once it passes the middle),
 // unless the strip was scrolled by hand in the last 2 s.
