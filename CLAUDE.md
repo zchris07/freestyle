@@ -94,7 +94,7 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   (`audHover`; default beats start loading on hover, quietly). It works during Preview too, which is ducked to 12%
   through `playerBus()`. The row's background becomes a live mirrored silhouette of the sound (`.lwave` canvas, an
   AnalyserNode's frequency bands with a travelling ripple). The silhouette first draws its own quiet floor (amplitude
-  0.04, a ~1.4px line) from the row's left edge to its right edge from 0.25 s to 0.5 s (ease in-out), then the beat
+  0.04, a ~1.4px line) from the row's left edge to its right edge from 0.15 s to 0.5 s (ease in-out), then the beat
   swells it into the waveform. No glow, no separate brighter line. While drawing, the line is evenly green (.30) so
   it reads to the right edge; from the beat's start the right end eases to the original fade (.30 -> .12) in 0.4 s,
   after which it is pixel-identical to the original waveform (Chris asked for that original look to stay). Clicking the

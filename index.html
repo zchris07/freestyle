@@ -2778,12 +2778,12 @@ function audHover(row){
   if(!it||it.status!=="ready") return;
   const id=it.id;AUD.id=id;AUD.row=row;
   ensureBuf(it,true).catch(()=>{});   // start loading now
-  // at 0.25 s the silhouette starts drawing its base line left to right; it is complete at 0.5 s, when the beat starts
+  // at 0.15 s the silhouette starts drawing its base line left to right; it is complete at 0.5 s, when the beat starts
   AUD.lineTimer=setTimeout(()=>{
     if(AUD.id!==id||!AUD.row) return;
     const cv=document.createElement("canvas");cv.className="lwave on";cv.setAttribute("aria-hidden","true");AUD.row.prepend(cv);AUD.cv=cv;
     AUD.lineStart=performance.now();AUD.beatAt=0;AUD.raf=requestAnimationFrame(drawAudWave);
-  },250);
+  },150);
   AUD.timer=setTimeout(async()=>{
     let buf;try{buf=await ensureBuf(it,true);}catch(e){return;}
     if(AUD.id!==id||!AUD.row||!AUD.row.isConnected) return;   // left meanwhile
@@ -2812,8 +2812,8 @@ function drawAudWave(now){
     const a=AUD.data[i]/255,flow=0.78+0.22*Math.sin(k*0.45-now*0.005);                          // a travelling ripple
     amp.push(Math.max(FLOOR,a*flow));
   }
-  // the line is drawn on from the left edge to the right edge over 0.25 s (ease in-out); nothing glows
-  const p=Math.min(1,(now-AUD.lineStart)/250),reveal=p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2;
+  // the line is drawn on from the left edge to the right edge over 0.35 s (ease in-out); nothing glows
+  const p=Math.min(1,(now-AUD.lineStart)/350),reveal=p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2;
   // while it draws, the line is evenly bright so it reads all the way to the right edge; once the beat starts the
   // right end eases back to the waveform's usual fade (.30 -> .12) over 0.4 s
   const q=AUD.beatAt?Math.min(1,(now-AUD.beatAt)/400):0,right=.30-.18*q*q*(3-2*q);
