@@ -329,6 +329,10 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   and calling `analyzeBuffer(buf)` from the console (globals are top-level in `index.html`).
 - Artifact constraints: external stylesheets/fetches are blocked by CSP, so keep everything inline
   and use text glyphs for icons. The page must work at phone width.
+- Tab icon: four mirrored waveform bars, one per beat, beats 1-3 green and beat 4 orange (a rhyme landing on beat 4), on
+  `#121212` with rounded corners. `tools/make_icons.py` (Pillow) writes favicon.svg, favicon-32.png, favicon.ico and
+  apple-touch-icon.png (180, full-bleed); the SVG is also inlined in index.html as a data URI (single quotes inside, so
+  it works in the Claude artifact too). Re-paste it into the `<link rel="icon">` after changing the design.
 - Link preview: `og-image.png` (1200x630) is rendered from `tools/og-image.html` with headless Chrome (the command is in
   that file). It shows only the freestyle.wtf wordmark and a rhyme grid, no tagline. `og:title` is "freestyle.wtf".
 - Commits end with: `Co-Authored-By: Claude <noreply@anthropic.com>`.
