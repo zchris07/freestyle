@@ -89,8 +89,10 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   (8 beats before the drop, or the top if the drop comes sooner), without selecting it
   (`audHover`; default beats start loading on hover, quietly). It works during Preview too, which is ducked to 12%
   through `playerBus()`. The row's background becomes a live mirrored silhouette of the sound (`.lwave` canvas, an
-  AnalyserNode's frequency bands with a travelling ripple). The silhouette first draws a ~2px base line left to
-  right from 0.25 s to 0.5 s, so it is complete when the beat starts and then moves with the audio. Clicking the
+  AnalyserNode's frequency bands with a travelling ripple). The silhouette first sweeps a bright ~3px glowing line
+  from the row's left edge to its right edge from 0.25 s to 0.5 s (ease in-out, led by a glowing head that bursts at the
+  right edge just as the beat starts), then moves with the audio. The green's brightness and tint (toward mint)
+  follow the smoothed loudness (`AUD.lvl`) plus the landing flash. Clicking the
   beat being heard selects it and keeps it playing. It survives list re-renders (`audReattach`) and stops
   on leaving the row or on a click elsewhere in the list. On phones a long press is the hover: hold a row 0.5 s to
   play it, lift (or scroll) to stop; a press of 500 ms+ doesn't select on release (`AUD.noClick`), a quick tap does. Rows
