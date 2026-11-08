@@ -268,9 +268,11 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   hand from Chris's ear (~16 s). The intro is only slightly quieter than the rest, so the detector can't see it.
   From a streaming site, no tags; possibly ATCQ's "Electric Relaxation" (unconfirmed).
   Added 2026-11-08 from Chris's files (commercial instrumentals, all by title; no source tags, 7 are ffmpeg
-  conversions of streaming audio, Shabba an FL Studio 9 export tagged 2013 / 120 BPM). Trap: Day 'N' Nite 138
-  (Beat This! said 70.3 -> 140.6, but 138 fits the onsets ~4x better, so the built-in grid is used), drop bar 25
-  (43.16 s, from Chris's 43 s); Versace 132.01, drop bar 5 (7.28 s, auto, Chris 7 s); Shabba 120, drop bar 9 (16.03 s,
+  conversions of streaming audio, Shabba an FL Studio 9 export tagged 2013 / 120 BPM). Trap: Day 'N' Nite 138.01,
+  first downbeat 0.791 s, drop bar 25 (42.527 s, the bar line nearest Chris's 43 s). Re-timed 2026-11-08 after Chris heard
+  the clicks off: the old built-in grid (138, fd 1.418) had the right tempo but sat ~196 ms late, on the off-beats (its
+  onset comb locked onto the 808/hats). Beat This!'s raw beats (half time, ~69) fit 138.008 with R=0.99 and put every
+  downbeat on one phase; on that grid the kick is on 1 and a strong snare/clap on 3. No energy step marks the drop. Versace 132.01, drop bar 5 (7.28 s, auto, Chris 7 s); Shabba 120, drop bar 9 (16.03 s,
   auto); 6 7 168 (Beat This! said 84; checkFeel read boom bap), drop bar 5 (5.75 s, auto); Paris 140, drop bar 21
   (34.37 s, from Chris's 34 s; the detector found 6.9 s); No Hands 131.5 (Beat This! said 65.75), drop bar 10
   (16.65 s, auto). Boom bap: Flashing Lights 90.49, drop bar 9 (21.35 s, from 21 s); Stronger 104.04, drop bar 11
