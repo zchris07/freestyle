@@ -29,7 +29,10 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   Under the library only TEMPO (+ DOWNBEAT for uploads) and CHECK (Preview, "Play metronome during session") remain:
   no click-only tempos, no feel / drop / grid-by rows. Button labels: "Preview", "START SESSION". The session screen shows only the beat name and STOP on top, then
   the bar grid with no bar/prep labels, no beat numbers in the cells and no status texts (no PREPARE / SPIT IT!).
-  The lit outline is the beat indicator; STOP turns into BACK after bar 32.
+  The lit outline is the beat indicator; STOP turns into BACK after bar 32. When the last beat is over
+  (`endSession`), the final box goes dark (no indicator left on it), the clock and clicks stop, the beat fades to
+  silence over 2 s (`SESSION_FADE`, a linear ramp on `playerBus()`), and the session then closes to the main page
+  into the BACK button. `stopPerf` cancels a pending close and resets the bus gain.
 - Wants to upload many trap and boom bap beats and have the metronome indicator structured correctly.
 - Motion: on every load the page is carved out, not grown. Containers and buttons (`CARVE_SEL`) get a rounded
   outline drawn on as an SVG stroke, then their fill and real border fade in, and the drawn line fades away. Small

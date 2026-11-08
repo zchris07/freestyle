@@ -3051,23 +3051,35 @@ async function startPerf(){
   try{await startPlayer(it,{click,onBeat:handleBeat});}
   catch(e){document.getElementById("p-beat-name").textContent="Could not play this file";}
 }
+// the lit box becomes a played one: indicator off, a hidden rhyme's word hidden again
+function retireBeat(){
+  if(G.curGlobalBeat<0) return;
+  const prev=document.getElementById("pc-"+Math.floor(G.curGlobalBeat/4)+"-"+(G.curGlobalBeat%4));
+  if(prev){
+    prev.classList.remove("current-rhyme","current-beat");prev.classList.add("played");
+    const pw=prev.querySelector(".pword");
+    if(pw&&pw.dataset.word) pw.textContent=pw.dataset.shouldshow==="1"?pw.dataset.word:"";
+  }
+  G.curGlobalBeat=-1;
+}
+// End of the 32 bars: when the last beat is over, its box goes dark, the clock and clicks stop, the beat fades to
+// silence over SESSION_FADE seconds, and then the session closes back to the main page (into the BACK button).
+const SESSION_FADE=2;
+let SESSION_END=0;
+function endSession(){
+  retireBeat();
+  if(P.timer){clearInterval(P.timer);P.timer=null;}P.cb=null;G.running=false;
+  const b=playerBus(),t=b.context.currentTime;
+  b.gain.cancelScheduledValues(t);b.gain.setValueAtTime(b.gain.value,t);b.gain.linearRampToValueAtTime(0.0001,t+SESSION_FADE);
+  document.getElementById("stop-btn").innerHTML="&#8592; BACK";
+  document.getElementById("pause-btn").disabled=true;
+  clearTimeout(SESSION_END);SESSION_END=setTimeout(()=>{SESSION_END=0;stopPerf();},SESSION_FADE*1000);
+}
 function handleBeat(globalBeat){
   const totalCells=(PREP_BARS+TOTAL_BARS)*4;
-  if(globalBeat>=totalCells){
-    stopPlayer();
-    document.getElementById("stop-btn").innerHTML="&#8592; BACK";   // 32 bars done
-    document.getElementById("pause-btn").disabled=true;
-    return;
-  }
+  if(globalBeat>=totalCells){endSession();return;}
   const bar=Math.floor(globalBeat/4),beat=globalBeat%4;
-  if(G.curGlobalBeat>=0){
-    const prev=document.getElementById("pc-"+Math.floor(G.curGlobalBeat/4)+"-"+(G.curGlobalBeat%4));
-    if(prev){
-      prev.classList.remove("current-rhyme","current-beat");prev.classList.add("played");
-      const pw=prev.querySelector(".pword");
-      if(pw&&pw.dataset.word) pw.textContent=pw.dataset.shouldshow==="1"?pw.dataset.word:"";
-    }
-  }
+  retireBeat();
   G.curGlobalBeat=globalBeat;
   const cell=document.getElementById("pc-"+bar+"-"+beat);
   if(cell){
@@ -3098,8 +3110,10 @@ function sessionOrigin(el){
   void ps.offsetWidth;ps.style.transition="";
 }
 function stopPerf(intoEl){
+  clearTimeout(SESSION_END);SESSION_END=0;
   if(PAUSED) setPaused(false);
   stopPlayer();G.running=false;
+  {const b=playerBus(),t=b.context.currentTime;b.gain.cancelScheduledValues(t);b.gain.setValueAtTime(1,t);}   // undo the end fade
   // the session bubble collapses into the STOP button (or the logo, when that was clicked)
   const ps=document.getElementById("perf-screen");
   sessionOrigin(intoEl instanceof Element?intoEl:document.getElementById("stop-btn"));
