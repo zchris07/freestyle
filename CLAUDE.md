@@ -70,8 +70,10 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
 - Session controls: PAUSE / RESUME next to STOP (Space toggles it). Pause suspends the AudioContext, so the beat,
   the clicks and the beat clock stop together. Both "2 syllable" toggles say only "2 syllable" and show their state
   by colour (main: green when on; builder: filled in the active rhyme's colour when on).
-- Dragging (presets): the rhyme column is its own layer (`.rhyme-col`) above a full grid of empty boxes, so the
-  boxes it leaves stay visible. While held it glides through strong magnetic detents (clings to each column, exponent
+- Dragging (every preset, incl. the extras under "more"): the rhymes are their own layer (`.rhyme-col`) above a full
+  grid of empty boxes, so the boxes they leave stay visible. The layer spans the scheme's columns (`shapeOf`: [0] for
+  column schemes, [0,2] for two-beat ones, `--n` columns wide with the middle one empty; only rhyme boxes catch the
+  pointer). `G.rhymeCol` is the scheme's last rhyme column (default 3); `lastCol()`/`firstCol()` clamp it per scheme. While held it glides through strong magnetic detents (clings to each column, exponent
   3.4, then jumps across) and resists hard past the ends (x0.12). On release it drops straight into the nearest column
   with no settling motion; only a tap on the hint glides one step. No lean, wobble, vibration or overshoot (Chris asked).
   One state and one rAF loop per column, so a quick re-grab carries on (`setupDrag`). While held, the column it would
@@ -114,10 +116,11 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   place. The extras (A_A_, aAaA, aAbB, aBaB, aA_A, _AaA) open in their own row below (`#scheme-more`, only its height
   glides, `toggleMore`). There is no delay either way, and opening or folding can interrupt each other. Saved custom schemes sit in a row under that. For custom schemes the right cluster dims
   instead of hiding. Below 700px of panel width (a container query) the cluster stacks under the chips. Column schemes (AABB, AAAA, ABAB, AA_A, A_A_): one letter per bar, same letter = same rhyme, _ = none.
-  Only the first four are draggable; A_A_ sits on beat 4. Two-beat schemes (`SCHEMES[k]` is an array of 2 bars):
+  All presets are draggable (see "Dragging"); A_A_ starts on beat 4 like the others. Two-beat schemes (`SCHEMES[k]` is an array of 2 bars):
   per bar the beat-2 letter (lowercase) then the beat-4 letter (UPPERCASE); bars 3-4 repeat the shape with fresh
   rhymes. aAaA = beats 2+4 of both bars one rhyme; aAbB = a new rhyme each bar; aBaB = the 2s rhyme, the 4s rhyme;
-  aA_A = bar 2 has no beat-2 rhyme; _AaA = bar 1 has no beat-2 rhyme. Not draggable. "Show words" all/first/last
+  aA_A = bar 2 has no beat-2 rhyme; _AaA = bar 1 has no beat-2 rhyme. Draggable as a pair of columns two beats
+  apart: beats 2+4 (default) or 1+3. "Show words" all/first/last
   works per rhyme group for every preset. A single "2-syllable rhymes" button (`#syl-main`, `G.multi`, localStorage
   `fs-syl`) makes preset rhymes 2-syllable; custom schemes set it per rhyme in Build (`#syl-btn`). 4x4 grid, with a
   **Build**

@@ -132,8 +132,12 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 .gcell.target{background:rgba(30,215,96,.1);}   /* the column the dragged rhymes would land in: shaded, no outline */
 /* presets: the rhyme column is its own layer above a full grid of empty boxes, so the boxes it leaves stay visible */
 #grid-panel{position:relative;}
-.rhyme-col{position:absolute;top:0;left:calc((100% - 21px) / 4 * var(--col) + 7px * var(--col));width:calc((100% - 21px) / 4);
-  display:flex;flex-direction:column;gap:7px;z-index:2;cursor:grab;touch-action:none;will-change:transform;}
+/* it spans the scheme's columns: one for column schemes, three (beats x and x+2, the middle left empty) for two-beat
+   ones; only the rhyme boxes catch the pointer, so the empty boxes underneath still respond */
+.rhyme-col{position:absolute;top:0;left:calc((100% - 21px) / 4 * var(--col) + 7px * var(--col));
+  width:calc((100% - 21px) / 4 * var(--n,1) + 7px * (var(--n,1) - 1));
+  display:grid;grid-template-columns:repeat(var(--n,1),minmax(0,1fr));gap:7px;z-index:2;cursor:grab;touch-action:none;will-change:transform;pointer-events:none;}
+.rhyme-col .gcell.rc{pointer-events:auto;}
 .rhyme-col.dragging{cursor:grabbing;}
 .rhyme-col .gcell.rc{transition:box-shadow .25s,background .25s,transform .18s ease;}
 .rhyme-col.dragging .gcell.rc{background:#2c2c2c;box-shadow:0 14px 30px rgba(0,0,0,.55);}
@@ -1278,7 +1282,7 @@ function waveTiles(){
   const grid=document.getElementById("setup-grid");
   [...grid.children].forEach((el,i)=>tile(el,Math.floor(i/4),i%4));
   const col=document.querySelector("#grid-wrap .rhyme-col");
-  if(col) [...col.children].forEach((el,r)=>tile(el,r,G.rhymeCol));
+  if(col){const n=spanOf(G.scheme)+1,f=firstCol();[...col.children].forEach((el,i)=>tile(el,Math.floor(i/n),f+i%n));}
 }
 let LAST_GRID_BEAT=null;
 function lightGridBeat(i){
@@ -1288,7 +1292,8 @@ function lightGridBeat(i){
   if(i<PREP_BARS*4){if(i===0) waveTiles();return;}   // prep: one wave as the preview starts, no indicator
   const r=(Math.floor(i/4)-PREP_BARS)%4,c=i%4,grid=document.getElementById("setup-grid");
   // the draggable rhyme column counts as resting where it is (or, while held, in the column it hovers over)
-  const col=document.querySelector("#grid-wrap .rhyme-col"),at=DRAG_COL??G.rhymeCol,rc=col&&c===at?col.children[r]:null;
+  const col=document.querySelector("#grid-wrap .rhyme-col"),n=spanOf(G.scheme)+1,o=c-((DRAG_COL??lastCol())-(n-1));
+  const rc=col&&o>=0&&o<n?col.children[r*n+o]:null;
   if(rc&&!rc.classList.contains("slot")) rc.classList.add("now");
   else grid.children[r*4+c]?.classList.add("now");
 }
@@ -2351,7 +2356,13 @@ function gLetter(g){return String.fromCharCode(65+g);}
 const SCHEMES={AABB:"AABB",AAAA:"AAAA",ABAB:"ABAB",AA_A:"AA_A",A_A_:"A_A_",aAaA:["aA","aA"],aAbB:["aA","bB"],aBaB:["aB","aB"],aA_A:["aA","_A"],_AaA:["_A","aA"]};
 const MAIN_SCHEMES=["AABB","AAAA","ABAB","AA_A"];
 const isColumnScheme=k=>typeof SCHEMES[k]==="string";
-const canDrag=()=>G.kind==="preset"&&MAIN_SCHEMES.includes(G.scheme);
+const canDrag=()=>G.kind==="preset";   // every preset's rhymes can be dragged across the beats
+// the columns a preset's rhymes sit in, relative to its first one: [0] for column schemes, [0,2] for two-beat ones
+const shapeOf=k=>isColumnScheme(k)?[0]:[0,2];
+const spanOf=k=>Math.max(...shapeOf(k));
+// G.rhymeCol is the scheme's last rhyme column (beat 4 = 3 by default); its first column is that minus the span
+const lastCol=()=>Math.max(spanOf(G.scheme),Math.min(3,G.rhymeCol));
+const firstCol=()=>lastCol()-spanOf(G.scheme);
 let MORE_OPEN=false;
 let G={kind:"preset",scheme:"AABB",vis:"all",multi:false,rhymeCol:3,custom:null,running:false,curGlobalBeat:-1};
 try{G.multi=localStorage.getItem("fs-syl")==="2";}catch(e){}
@@ -2364,12 +2375,13 @@ function presetGroups(){
   const pat=SCHEMES[G.scheme],groups=new Map();
   const add=(key,r,c)=>{if(!groups.has(key)) groups.set(key,[]);groups.get(key).push({r,c});};
   if(isColumnScheme(G.scheme)){
-    const c=canDrag()?G.rhymeCol:3;
+    const c=lastCol();
     [...pat].forEach((ch,r)=>{if(ch!=="_") add(ch,r,c);});
   }else{
     for(let r=0;r<4;r++){
       const pair=pat[r%2],block=r<2?"":"'";   // bars 3-4: same shape, new rhymes
-      [...pair].forEach((ch,i)=>{if(ch!=="_") add(ch.toUpperCase()+block,r,i?3:1);});
+      const f=firstCol();   // beats 2 and 4 by default; dragged, beats 1 and 3
+      [...pair].forEach((ch,i)=>{if(ch!=="_") add(ch.toUpperCase()+block,r,f+(i?2:0));});
     }
   }
   // "Show words": all, or only the first / last box of each rhyme group (reading order)
@@ -2436,8 +2448,9 @@ function buildSetupGrid(){
   const hint=document.getElementById("col-hint");
   hint.hidden=!layer;hint.classList.remove("away");document.getElementById("grid-panel").classList.toggle("has-hint",layer);
   if(!layer){colDragStart=null;return;}
-  const col=box("rhyme-col");col.style.setProperty("--col",G.rhymeCol);
-  for(let r=0;r<4;r++){const info=m.get(r*4+G.rhymeCol);col.appendChild(info?rhymeCell(info):box("gcell slot"));}
+  const shape=shapeOf(G.scheme),n=spanOf(G.scheme)+1,f=firstCol();
+  const col=box("rhyme-col");col.style.setProperty("--col",f);col.style.setProperty("--n",n);
+  for(let r=0;r<4;r++)for(let o=0;o<n;o++){const info=shape.includes(o)?m.get(r*4+f+o):null;col.appendChild(info?rhymeCell(info):box("gcell slot"));}
   wrap.appendChild(col);
   placeHint();
   setupDrag(col);
@@ -2457,18 +2470,20 @@ function placeHint(){
 // it has settled carries on from where it is instead of starting a second, competing animation.
 function setupDrag(col){
   const hint=document.getElementById("col-hint"),grid=document.getElementById("setup-grid");
-  const st={base:G.rhymeCol,x:0,target:0,dragging:false,raf:0,x0:0,grab:0,last:0};
+  const span=spanOf(G.scheme),shape=shapeOf(G.scheme),maxF=3-span;   // the layer's first column runs 0..maxF
+  const st={base:firstCol(),x:0,target:0,dragging:false,raf:0,x0:0,grab:0,last:0};
   const pitch=()=>grid.children[1].offsetLeft-grid.children[0].offsetLeft;
   const detent=raw=>{
-    const p=pitch(),lo=-st.base*p,hi=(3-st.base)*p;
+    const p=pitch(),lo=-st.base*p,hi=(maxF-st.base)*p;
     if(raw<lo) return lo+(raw-lo)*0.12;   // strong resistance past the ends
     if(raw>hi) return hi+(raw-hi)*0.12;
     const n=Math.round(raw/p),d=raw-n*p,h=p/2;
     return n*p+Math.sign(d)*h*Math.pow(Math.abs(d)/h,3.4);   // a strong magnet: it clings to a column, then jumps across
   };
-  const nearest=()=>Math.max(0,Math.min(3,st.base+Math.round(st.x/pitch())));
-  // shade the column the rhymes would land in, the one they came from included
-  const light=t=>[...grid.children].forEach((g,i)=>g.classList.toggle("target",st.dragging&&i%4===t));
+  const nearest=()=>Math.max(0,Math.min(maxF,st.base+Math.round(st.x/pitch())));   // first column it would land in
+  // shade the columns the rhymes would land in, the ones they came from included
+  const light=t=>[...grid.children].forEach((g,i)=>g.classList.toggle("target",st.dragging&&t>=0&&shape.includes(i%4-t)));
+  const land=dest=>{st.base=dest;G.rhymeCol=dest+span;col.style.setProperty("--col",dest);};
   const frame=now=>{
     const dt=Math.min(50,now-(st.last||now)||16.7);st.last=now;
     const ease=1-Math.pow(1-(st.dragging?0.32:0.2),dt/16.7);   // exponential glide: smooth, never overshoots
@@ -2476,12 +2491,12 @@ function setupDrag(col){
     col.style.transform="translateX("+st.x.toFixed(2)+"px)";
     if(st.dragging){
       const n=nearest();
-      if(n!==DRAG_COL){DRAG_COL=n;light(n);relightGrid();}   // a running preview lights the rhymes where they hover
+      if(n+span!==DRAG_COL){DRAG_COL=n+span;light(n);relightGrid();}   // a running preview lights the rhymes where they hover
     }
     if(!st.dragging&&Math.abs(st.target-st.x)<0.35){   // settled: make the new column the layout position
       const dest=nearest();
-      st.raf=0;st.last=0;st.x=0;st.target=0;st.base=dest;G.rhymeCol=dest;
-      col.style.transform="";col.style.setProperty("--col",dest);
+      st.raf=0;st.last=0;st.x=0;st.target=0;land(dest);
+      col.style.transform="";
       placeHint();hint.classList.remove("away");
       return;
     }
@@ -2494,11 +2509,11 @@ function setupDrag(col){
     document.removeEventListener("pointermove",move);document.removeEventListener("pointerup",up);document.removeEventListener("pointercancel",up);
     st.dragging=false;col.classList.remove("dragging");light(-1);
     // a tap (no drag) on the hint's left or right half steps the column one beat that way, with a short glide
-    if(fromHint&&moved<5){const dest=Math.max(0,Math.min(3,st.base+hintSide));DRAG_COL=null;st.target=(dest-st.base)*pitch();run();return;}
+    if(fromHint&&moved<5){const dest=Math.max(0,Math.min(maxF,st.base+hintSide));DRAG_COL=null;st.target=(dest-st.base)*pitch();run();return;}
     // a drag drops straight into the nearest column: no settling motion
     const dest=nearest();
-    cancelAnimationFrame(st.raf);st.raf=0;st.last=0;st.x=0;st.target=0;st.base=dest;G.rhymeCol=dest;DRAG_COL=null;
-    col.style.transform="";col.style.setProperty("--col",dest);
+    cancelAnimationFrame(st.raf);st.raf=0;st.last=0;st.x=0;st.target=0;land(dest);DRAG_COL=null;
+    col.style.transform="";
     placeHint();hint.classList.remove("away");relightGrid();
   };
   const start=(e,onHint)=>{
@@ -2515,7 +2530,7 @@ function setupDrag(col){
   colDragStart=e=>start(e,true);   // the drag hint can grab the column too
 }
 let colDragStart=null;
-let DRAG_COL=null;   // while the rhymes are held: the column they would land in
+let DRAG_COL=null;   // while the rhymes are held: the last column they would land in (like G.rhymeCol)
 document.getElementById("col-hint").addEventListener("pointerdown",e=>{if(colDragStart) colDragStart(e);});
 
 document.getElementById("scheme-col").addEventListener("click",e=>{
