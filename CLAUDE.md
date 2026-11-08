@@ -80,8 +80,8 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   text (measured like the intro's written words; the real text turns transparent and keeps its layout, so nothing moves
   or changes shape). Clipped to the letters it stays white, with green liquid filling it from below the lowest point of
   the text (so there is never white below green) up to a rolling surface: a few travelling sine waves, the same average
-  height along the whole word, and a darker, slower wave behind. The average level sits 20% lower than first built (Chris asked), about a third of
-  the cap height above the baseline; it follows a slowly smoothed loudness and the
+  height along the whole word, and a darker, slower wave behind. The average level sits 28% lower than first built (Chris asked twice: -20%, then -10%),
+  roughly a third of the cap height above the baseline; it follows a slowly smoothed loudness and the
   swell the bass, loosely, not band by band. The letters stay plain white through the prep bars and fill up when the
   drop is reached (on the session's beat clock; 0.9 s ease-out with an extra slosh, `NV_FILL`). Waves are big (amplitude
   10-30% of the cap height, plus the slosh), wide (peaks ~1.5x apart from the first version) and 30% slower than first
