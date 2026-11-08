@@ -187,6 +187,7 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 .lhdr{font-size:10px;letter-spacing:.1em;color:var(--muted);margin:8px 2px 4px;}
 .lrow{position:relative;overflow:hidden;display:flex;align-items:center;gap:10px;border-radius:6px;padding:9px 10px;cursor:pointer;transition:background .15s;}
 .lrow>:not(.lwave){position:relative;z-index:1;}
+.lrow{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}   /* long press = hover on phones: no menus */
 /* hover audition: a live silhouette of the beat's sound behind the row */
 .lwave{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity .3s ease;}
 .lwave.on{opacity:1;}
@@ -2832,7 +2833,31 @@ libEl.addEventListener("pointerout",e=>{
   const row=e.target.closest(".lrow");
   if(row&&row===AUD.row&&!row.contains(e.relatedTarget)) audStop();
 });
+// Phones: a long press is the hover. Holding a row for 1 s plays it; lifting the finger (or starting to scroll) stops
+// it, and a press that long doesn't select the beat on release. A quick tap still selects.
+const LP={on:false,x:0,y:0,t:0};
+libEl.addEventListener("pointerdown",e=>{
+  if(e.pointerType!=="touch") return;
+  const row=e.target.closest(".lrow");if(!row||e.target.closest(".ldel")) return;
+  LP.on=true;LP.x=e.clientX;LP.y=e.clientY;LP.t=performance.now();
+  audHover(row);
+});
+function endLongPress(){
+  if(!LP.on) return;
+  LP.on=false;
+  if(performance.now()-LP.t>=600) AUD.noClick=true;   // it was a long press, not a tap
+  audStop();
+}
+libEl.addEventListener("pointerup",e=>{if(e.pointerType==="touch") endLongPress();});
+libEl.addEventListener("pointercancel",e=>{if(e.pointerType==="touch"){LP.t=performance.now();endLongPress();}});   // the list scrolled
+libEl.addEventListener("pointermove",e=>{
+  if(LP.on&&e.pointerType==="touch"&&Math.hypot(e.clientX-LP.x,e.clientY-LP.y)>10){LP.t=performance.now();endLongPress();}
+});
+libEl.addEventListener("contextmenu",e=>{if(LP.on||AUD.src) e.preventDefault();});
+// phones only unlock audio on a tap (not during a hold), so wake the audio engine on the first tap anywhere
+["pointerup","touchend","keydown"].forEach(t=>addEventListener(t,()=>{try{const ac=getCtx();if(ac.state==="suspended") ac.resume().catch(()=>{});}catch(err){}},{passive:true}));
 document.getElementById("lib").addEventListener("click",e=>{
+  if(AUD.noClick){AUD.noClick=false;e.preventDefault();return;}   // the end of a long press, not a tap
   audStop();   // picking or removing a beat ends the hover audition
   const del=e.target.closest("[data-del]");
   if(del){

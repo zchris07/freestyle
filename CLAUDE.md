@@ -83,8 +83,10 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   (`audHover`; default beats start loading on hover, quietly). It works during Preview too, which is ducked to 12%
   through `playerBus()`. The row's background becomes a live mirrored silhouette of the sound (`.lwave` canvas, an
   AnalyserNode's frequency bands with a travelling ripple). It survives list re-renders (`audReattach`) and stops
-  on leaving the row or on any click in the list. Like all web audio, it needs one click on the page first
-  (browser autoplay rule).
+  on leaving the row or on any click in the list. On phones a long press is the hover: hold a row 1 s to play it,
+  lift (or scroll) to stop; a press of 600 ms+ doesn't select on release (`AUD.noClick`), a quick tap does. Rows
+  suppress the long-press menu. Phones only unlock audio on a tap, so the first tap anywhere wakes the
+  AudioContext; until then a hover or long press stays silent.
 - Session beat indicator: the current box lights up its outline (border + glow) and is never filled, so a rhyme
   word stays readable (a plain beat in green, a rhyme in its group's color).
 
