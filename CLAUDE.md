@@ -201,7 +201,9 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   grid stays, and the drop snaps to its nearest bar line.
 - Stored as `dropT` (seconds) plus `dropManual`. The DROP row (+-1/+-4 bars, Auto) was removed from the UI on
   2026-11-06 at Chris's request; the code paths (`dropManual`, `regridDrop`) stay. The waveform shades P1/P2 and
-  marks "1 DROP".
+  marks "1 DROP". It shows the whole song at a fixed 64 px per bar for every beat (`GV_BAR`) in a sideways-scrolling
+  strip (`.gv`, scroll, shift-wheel or mouse drag); the canvas is pinned to the view (sticky) and `paintGrid` repaints
+  what is visible from peaks computed once per beat/tempo (`GV`). A newly picked beat opens a beat before its prep bars.
 - Tested on synthetic beats (boom bap 85-95, trap 140-150, intros of 0/1/4/8/16 bars, hats-only or 25% drums in the
   intro, breakdowns in songs that start full): drop within 2 ms. Drums at half volume in the intro read as "beat
   already in". Not yet tuned on real songs.
@@ -245,6 +247,9 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   (34.37 s, from Chris's 34 s; the detector found 6.9 s); No Hands 131.5 (Beat This! said 65.75), drop bar 10
   (16.65 s, auto). Boom bap: Flashing Lights 90.49, drop bar 9 (21.35 s, from 21 s); Stronger 104.04, drop bar 11
   (23.73 s, from 23 s). Hand drops = the bar line nearest Chris's time (their energy steps are too weak to detect).
+  Also trap: Swisher 156 (Beat This! 78), drop bar 3 (3.11 s, auto, Chris 3 s); All of a Sudden 140 (Beat This! 70),
+  drop bar 8 (13.41 s, auto, Chris 13.5 s); Virtual 150 (Beat This! 75.29 -> 150.58, but 150 fits ~3.5x better: built-in
+  grid), drop bar 64 (102.31 s, Chris's 1:42). No source tags on any of these three (ffmpeg conversions).
 - Drop detection only sees intros that are clearly quieter than the beat (below 65% of full energy). Drums-in
   intros like C.R.E.A.M., Electric and NYSOM need the drop set by hand in DEFAULTS.
   Ominous, Guitar, both J. Cole type beats, Memphis and Minor are Chris's own Suno tracks.
