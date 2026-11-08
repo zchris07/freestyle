@@ -3065,7 +3065,7 @@ document.getElementById("p-home").addEventListener("click",e=>stopPerf(e.current
 // top left; anything inside a container starts once that container's outline is under way.
 let INTRO=false,INTRO_PENDING=false;
 const SVGNS="http://www.w3.org/2000/svg";
-const CARVE_SEL=".panel,.gcell,.btn,.spill,.vpill,.tab,.play-btn,.lrow.sel,.col-hint,.wtf-btn";
+const CARVE_SEL=".panel,.gcell,.btn,.spill,.vpill,.tab,.play-btn,.lrow.sel,.col-hint";   // not wtf?: plain text, no outline
 const ASSEMBLE_SEL=".dot,.chk input,.col-hint .ar,.tab > svg:not(.carve-svg)";   // icons only: never a word's drawn copy or an outline
 const TEXT_SEL=".topbar .brand,.wtf-btn,.panel-title,.lbl,.spill,.vpill,.beat-lbl,.word-text,.col-hint,.btn,.tab,.lhdr,.lname,.lmeta,.lempty,.dlbl,.bpmv,.muted,.chk,.play-btn";
 function introDelay(el,y0){const r=el.getBoundingClientRect();return Math.min(1300,Math.round(40+(r.top-y0)*0.45+r.left*0.1));}

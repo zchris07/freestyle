@@ -62,7 +62,7 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   (`backdrop-filter`), and the dialog is drawn in like the intro (`drawIn`: outlines, fill, written text). Drop files or click to browse.
   Beat style Auto (default, reset each time) / Trap / Boom bap: Auto runs checkFeel, the others setFeel
   (`addFiles(files,feel)`).
-- wtf? button top right (plain green text, no outline; hover only darkens the green) opens `#guide`, a full-page guide that grows as a circle out of the button with its
+- wtf? button top right (plain green text, no outline, not even during the intro: it is not in `CARVE_SEL`, only written in; hover only darkens the green) opens `#guide`, a full-page guide that grows as a circle out of the button with its
   sections rising in: how to use every part of the site, plus "every other freestyle app out there right now is ass"
   under "Why tf does this exist?" (plain body text) and "Who tf made ts?" with "christopher" linking to
   https://github.com/zchris07. The sections are plain text on the background, no boxes. All text (title, lead,
