@@ -278,7 +278,9 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   (16.65 s, auto). Boom bap: Flashing Lights 90.49, drop bar 9 (21.35 s, from 21 s); Stronger 104.04, drop bar 11
   (23.73 s, from 23 s). Hand drops = the bar line nearest Chris's time (their energy steps are too weak to detect).
   Also trap: Swisher 156 (Beat This! 78), drop bar 3 (3.11 s, auto, Chris 3 s); All of a Sudden 140 (Beat This! 70),
-  drop bar 8 (13.41 s, auto, Chris 13.5 s); Virtual 150 (Beat This! 75.29 -> 150.58, but 150 fits ~3.5x better: built-in
+  first downbeat 0.128 s, drop bar 9 (13.84 s, nearest bar line to Chris's 13.5 s). Moved one beat later on 2026-11-08:
+  Chris heard the old "1" (fd 1.414) on the song's beat 4. trapDownbeat had put the 1 on the strongest kick, which is a
+  pickup on 4; Beat This!'s own downbeat (0.129 s) and Chris's ear agree on the new one. Virtual 150 (Beat This! 75.29 -> 150.58, but 150 fits ~3.5x better: built-in
   grid), drop bar 64 (102.31 s, Chris's 1:42). No source tags on any of these three (ffmpeg conversions).
 - Drop detection only sees intros that are clearly quieter than the beat (below 65% of full energy). Drums-in
   intros like C.R.E.A.M., Electric and NYSOM need the drop set by hand in DEFAULTS.
