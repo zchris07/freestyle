@@ -191,7 +191,7 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
 - To add one: copy the mp3 into beats/, run analyzeBuffer + runBT + checkFeel + detectDrop(it,true) on it in the
   browser (localhost), check the result, and add a row to DEFAULTS.
 - Current set (analyzed 2026-11-06 with Beat This!): Ominous 134.01 trap, drop bar 9 (14.44 s); J. Cole type 1 93.03
-  boom bap, drop bar 7 (18.05 s); J. Cole type 2 89.17 boom bap, drop bar 5 (10.92 s); Guitar 137.98 trap, drop bar 17
+  boom bap, drop bar 8 (20.63 s, moved one bar later by ear); J. Cole type 2 89.17 boom bap, drop bar 5 (10.92 s); Guitar 137.98 trap, drop bar 17
   (28.04 s); 93 103.09 boom bap, drop bar 9 (19.38 s); Still Tippin' 143.16 trap, no intro. Guitar and Still Tippin'
   were re-timed as trap by hand (Beat This! counted them at half speed): setFeel(it,"trap") doubled the tempo and put
   the snare on 3 (confirmed: snare strongest on beat 3).
