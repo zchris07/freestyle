@@ -89,7 +89,9 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   the fill jumping: the level follows only a slow loudness, while the bass, mids and highs (each scaled to the song's own
   recent range, `NV.rng`) drive the long swells, middle waves and fine ripple, and each kick drops a ripple that travels
   outward both ways from a random spot and fades (`NV.rip`). Kicks also make the whole liquid hop a little: a damped
-  spring (`NV.jy`/`NV.jv`, ~7 px up at 76px, made ~40% stronger on Chris's ask, settling with a slight bounce).
+  spring (`NV.jy`/`NV.jv`, ~7 px up at 76px, made ~40% stronger on Chris's ask, settling with a slight bounce). Snares and claps
+  give a smaller hop (~60% of a kick's): the "snap" band (~1.3-4.4 kHz) near the top of its recent range, at most one
+  per 0.2 s so hi-hats don't trigger it (on Flashing Lights 8 of 10 land on beats 2 and 4).
   Skipped when the name is cut off with an ellipsis; rebuilt on resize. The session's boxes pop in, staggered like
   the builder grid (`.bars-scroll.pop`).
 - Session visualizer (`#perf-viz`, `vizStart`/`vizFrame`/`vizStop`): a canvas behind everything in the session, driven
