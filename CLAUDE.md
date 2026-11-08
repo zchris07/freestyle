@@ -69,18 +69,22 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   the clicks and the beat clock stop together. Both "2 syllable" toggles say only "2 syllable" and show their state
   by colour (main: green when on; builder: filled in the active rhyme's colour when on).
 - Dragging (presets): the rhyme column is its own layer (`.rhyme-col`) above a full grid of empty boxes, so the
-  boxes it leaves stay visible. While held it glides through magnetic detents (holds near each column, then slides
-  across), resists past the ends, and eases into the nearest column on release. No lean, wobble, vibration or
-  overshoot (Chris asked). One state and one rAF loop per column, so a quick re-grab carries on (`setupDrag`). The target column's boxes light up in dashed green. The drag hint is a "← DRAG →" capsule below
+  boxes it leaves stay visible. While held it glides through strong magnetic detents (clings to each column, exponent
+  3.4, then jumps across) and resists hard past the ends (x0.12). On release it drops straight into the nearest column
+  with no settling motion; only a tap on the hint glides one step. No lean, wobble, vibration or overshoot (Chris asked).
+  One state and one rAF loop per column, so a quick re-grab carries on (`setupDrag`). While held, the column it would
+  land in, the one it came from included, is shaded green (`.gcell.target`, background only, no outline). The drag hint is a "← DRAG →" capsule below
   the rhyme scheme panel, under the column (`placeHint`; kept inside the panel, with its pointer tip shifted over
   the column). It can be dragged to move the column, and a tap on its left or right half steps the column one beat.
   It fades out on grab and back in after landing.
+- Tiles (`.gcell`, `.bcell`, `.pcell`) lift 3px with a soft shadow under the cursor (`@media (hover:hover)` only).
 - No text cursor or text selection anywhere (`body{cursor:default;user-select:none}`), except real text inputs.
 - Preview beat indicator: during the 8 prep beats no box is lit. Instead, once as the preview starts, a wave lifts
   the tiles (flat, no tilt: each comes straight out toward the viewer with a deeper shadow; Web Animations) diagonally from one corner to the opposite one (crossing in ~0.8
   of a beat, each tile's lift ~1.35 beats, max 780 ms; `waveTiles`). Each Preview click moves the starting corner clockwise (TL, TR, BR, BL; `WAVE_CORNER`). From the
   drop, the current beat's box lights its outline (`lightGridBeat`), starting top left and looping round the 4 bars. The draggable
-  rhyme column's box lights in its colour, and the indicator follows the column if it is dragged mid-preview.
+  rhyme column's box lights in its colour. While the column is held mid-preview, the indicator treats it as resting in
+  the column it hovers over (`DRAG_COL`, `relightGrid`) and lights the rhyme box there instead of the empty box.
 - Hover audition: hovering a library row for 0.5 s plays that beat from where a session's first prep bar starts
   (8 beats before the drop, or the top if the drop comes sooner), without selecting it
   (`audHover`; default beats start loading on hover, quietly). It works during Preview too, which is ducked to 12%
