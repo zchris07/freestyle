@@ -80,7 +80,10 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   or changes shape). Clipped to the letters it stays white, with green liquid filling it from below the lowest point of
   the text (so there is never white below green) up to a rolling surface: a few travelling sine waves, the same average
   height along the whole word, and a darker, slower wave behind. The level follows a slowly smoothed loudness and the
-  swell the bass, loosely, not band by band. Skipped when the name is cut off with an ellipsis; rebuilt on resize. The session's boxes pop in, staggered like
+  swell the bass, loosely, not band by band. The letters stay plain white through the prep bars and fill up when the
+  drop is reached (on the session's beat clock; 0.9 s ease-out with an extra slosh, `NV_FILL`). Waves are big (amplitude
+  10-30% of the cap height, plus the slosh) and quick, and the whole surface drifts slowly rightward (`NV_DRIFT`, 26 px/s).
+  Skipped when the name is cut off with an ellipsis; rebuilt on resize. The session's boxes pop in, staggered like
   the builder grid (`.bars-scroll.pop`).
 - Session visualizer (`#perf-viz`, `vizStart`/`vizFrame`/`vizStop`): a canvas behind everything in the session, driven
   by an AnalyserNode on `playerBus()` (range -80..-12 dB so loud masters don't pin it). Mirrored soft green bars rise

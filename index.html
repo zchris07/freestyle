@@ -3126,7 +3126,7 @@ async function startPerf(){
   ps.classList.add("open");ps.setAttribute("aria-hidden","false");
   document.getElementById("root").classList.add("sessioning");document.body.classList.add("lock");
   G.running=true;G.curGlobalBeat=-1;
-  vizStart();buildNameViz();
+  NV.dropAt=null;vizStart();buildNameViz();
   const click=it.builtin||document.getElementById("click-toggle").checked;
   try{await startPlayer(it,{click,onBeat:handleBeat});}
   catch(e){document.getElementById("p-beat-name").textContent="Could not play this file";}
@@ -3162,7 +3162,8 @@ function vizStart(){
 // real text turns transparent and keeps the layout). Clipped to the letters, two layers of liquid (a darker one behind)
 // fill from below the lowest point of the text up to a rolling surface: a few travelling sine waves, the same average
 // height across the whole word. Its level and swell follow the music loosely (a slow-moving loudness), not band by band.
-const NV={svg:null,back:null,front:null,w:0,h:0,base:0,cap:0,lvl:0,swell:0};
+// The letters stay plain white through the prep bars and fill up at the drop; the surface drifts slowly rightward.
+const NV={svg:null,back:null,front:null,w:0,h:0,base:0,cap:0,lvl:0,swell:0,dropAt:null};
 function buildNameViz(){
   const el=document.getElementById("p-beat-name");
   el.querySelector("svg.nviz")?.remove();el.classList.remove("nv");NV.svg=null;
@@ -3190,17 +3191,25 @@ function vizName(tS){
   const D=VIZ.data;let sum=0;for(let i=0;i<D.length*0.6;i++) sum+=D[i];const e=sum/(D.length*0.6*255);
   NV.lvl+=(e-NV.lvl)*(e>NV.lvl?0.06:0.025);
   let bass=0;for(let i=0;i<6;i++) bass+=D[i];bass/=6*255;NV.swell+=(bass-NV.swell)*0.12;
-  const level=NV.base-NV.cap*(0.3+0.55*NV.lvl);   // the surface's average height: the same everywhere along the word
-  const A=NV.cap*(0.05+0.11*NV.swell),bottom=NV.h+2;
-  const surf=(x,ph,sp)=>level+A*(0.55*Math.sin(x*0.045+tS*1.9*sp+ph)+0.3*Math.sin(x*0.11-tS*2.7*sp+ph*1.7)+0.15*Math.sin(x*0.23+tS*4.1*sp-ph));
+  // empty through the prep bars; at the drop it fills up (with a slosh), on the session's own beat clock
+  const beatF=AC&&P.spb?(AC.currentTime-P.t0)/P.spb:-1;
+  if(beatF>=PREP_BARS*4&&NV.dropAt==null) NV.dropAt=tS;
+  const since=NV.dropAt==null?-1:tS-NV.dropAt,fill=since<0?0:1-Math.pow(1-Math.min(1,since/NV_FILL),3);
+  const slosh=since<0?0:Math.max(0,1-since/(NV_FILL*2.5));   // extra swell while it pours in
+  const full=NV.base-NV.cap*(0.3+0.55*NV.lvl),A=NV.cap*(0.1+0.2*NV.swell+0.18*slosh),empty=NV.h+A+4;
+  if(fill<=0){NV.back.setAttribute("d","");NV.front.setAttribute("d","");return;}
+  const level=empty+(full-empty)*fill;   // the surface's average height: the same everywhere along the word
+  const bottom=NV.h+2,drift=tS*NV_DRIFT;   // the whole surface drifts slowly to the right
+  const surf=(x,ph,sp)=>{const u=x-drift;return level+A*(0.5*Math.sin(u*0.04+tS*2.9*sp+ph)+0.32*Math.sin(u*0.095-tS*4.1*sp+ph*1.7)+0.18*Math.sin(u*0.21+tS*6.2*sp-ph));};
   const path=(ph,sp,lift)=>{
     let d="M0 "+bottom+" L0 "+(surf(0,ph,sp)-lift).toFixed(1);
-    for(let x=6;x<NV.w+6;x+=6) d+=" L"+Math.min(x,NV.w).toFixed(1)+" "+(surf(x,ph,sp)-lift).toFixed(1);
+    for(let x=5;x<NV.w+5;x+=5) d+=" L"+Math.min(x,NV.w).toFixed(1)+" "+(surf(x,ph,sp)-lift).toFixed(1);
     return d+" L"+NV.w.toFixed(1)+" "+bottom+" Z";
   };
-  NV.back.setAttribute("d",path(2.1,0.8,NV.cap*0.06));   // a darker wave behind, a little higher and slower
+  NV.back.setAttribute("d",path(2.1,0.8,NV.cap*0.07));   // a darker wave behind, a little higher and slower
   NV.front.setAttribute("d",path(0,1,0));
 }
+const NV_FILL=0.9,NV_DRIFT=26;   // seconds to fill at the drop; drift to the right in px per second
 function vizStop(){cancelAnimationFrame(VIZ.raf);VIZ.raf=0;
   {const el=document.getElementById("p-beat-name");el.querySelector("svg.nviz")?.remove();el.classList.remove("nv");NV.svg=null;}const cv=document.getElementById("perf-viz");cv.getContext("2d").clearRect(0,0,cv.width,cv.height);}
 function vizFrame(){
