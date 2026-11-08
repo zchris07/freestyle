@@ -146,7 +146,9 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   A group draws from families with enough words for it (up to 8 for 1-syllable, 6 for 2-syllable). So every
   session deals different rhymes in a different order, and the setup grid shows the last session's words.
 - **Rhyme builder** (`#build-screen`): a full-page overlay that opens with a clip-path circle growing out of the Build
-  button. It starts with an empty Rhyme A. Clicking an empty box adds it to the active rhyme (shown); clicking a shown
+  button. Like the guide, it has its own static logo (`#b-home`, a copy of the page logo made in
+  `openBuilder`) and closes around whatever closed it (`closeBuilder(into)`, `setOrigin` snaps the centre): the back
+  arrow, Confirm, or the logo (home); Esc closes into the Build button. It starts with an empty Rhyme A. Clicking an empty box adds it to the active rhyme (shown); clicking a shown
   word hides it; clicking a hidden one removes it. "+ Create new rhyme" starts the next group, and chips switch or
   delete groups. The "2 syllable" toggle switches only the active rhyme group to `BANK2` words. No instruction text. Confirm applies the scheme;
   Save rhyme scheme stores or updates it by name.

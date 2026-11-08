@@ -529,6 +529,7 @@ body.preintro .root{opacity:0;}
 </div>
 
 <div class="build" id="build-screen" aria-hidden="true">
+  <header class="topbar"><button class="brand brand-btn" id="b-home" aria-label="Back to the home page">freestyle<span class="tld">.wtf</span></button></header>
   <div class="build-in">
     <div class="bhead rise" style="--d:0">
       <button class="back" id="build-back" title="Back (Esc)" aria-label="Back">&#8592;</button>
@@ -2589,9 +2590,12 @@ document.getElementById("vis-pills").addEventListener("click",e=>{
 // Click an empty box to add it to the active rhyme (shown), click a shown word to hide it, click a hidden one to remove it.
 const B={groups:[{cells:[]}],active:0,id:null};
 const buildEl=document.getElementById("build-screen");
+// the bubble's centre is snapped onto an element (transitions off), so it never slides there from where it last was
 function setOrigin(el){
   const r=el.getBoundingClientRect();
+  buildEl.style.transition="none";
   buildEl.style.setProperty("--ox",(r.left+r.width/2)+"px");buildEl.style.setProperty("--oy",(r.top+r.height/2)+"px");
+  void buildEl.offsetWidth;buildEl.style.transition="";
 }
 function openBuilder(){
   if(previewing){previewing=false;stopPlayer();resetDots();}
@@ -2599,6 +2603,8 @@ function openBuilder(){
   B.groups=src?src.groups:[{cells:[]}];B.id=src?src.id:null;B.active=B.groups.length-1;
   document.getElementById("scheme-name").value=src&&src.id?src.name:"";
   renderBuilder();
+  // the builder's logo is a copy of the page's (drawn letters included) in the same spot, so it stays put as the bubble grows
+  document.getElementById("b-home").innerHTML=document.querySelector("#root > .topbar .brand").innerHTML;
   setOrigin(document.getElementById("build-btn"));
   buildEl.scrollTop=0;
   buildEl.classList.remove("intro");void buildEl.offsetWidth;buildEl.classList.add("intro");
@@ -2606,8 +2612,9 @@ function openBuilder(){
   buildEl.classList.add("open");buildEl.setAttribute("aria-hidden","false");
   document.getElementById("root").classList.add("building");document.body.classList.add("lock");
 }
-function closeBuilder(){
-  setOrigin(document.getElementById("build-btn"));
+// it closes around whatever closed it: the back arrow, Confirm, or the logo (home); Esc closes into the Build button
+function closeBuilder(into){
+  setOrigin(into instanceof Element?into:into&&into.currentTarget instanceof Element?into.currentTarget:document.getElementById("build-btn"));
   buildEl.classList.remove("open");buildEl.setAttribute("aria-hidden","true");
   document.getElementById("root").classList.remove("building");document.body.classList.remove("lock");
 }
@@ -2655,6 +2662,7 @@ function toast(msg){
 
 document.getElementById("build-btn").addEventListener("click",openBuilder);
 document.getElementById("build-back").addEventListener("click",closeBuilder);
+document.getElementById("b-home").addEventListener("click",closeBuilder);   // logo: home, collapsing into the logo
 document.addEventListener("keydown",e=>{
   if(e.key!=="Escape") return;
   if(buildEl.classList.contains("open")) closeBuilder();
@@ -2707,7 +2715,7 @@ document.getElementById("confirm-btn").addEventListener("click",()=>{
   const same=saved&&JSON.stringify(saved.groups)===JSON.stringify(gs);
   const name=document.getElementById("scheme-name").value.trim();
   G.kind="custom";G.custom=same?clone(saved):{id:null,name:name||"Custom",groups:gs};
-  renderSetup();closeBuilder();
+  renderSetup();closeBuilder(document.getElementById("confirm-btn"));
 });
 document.getElementById("save-scheme-btn").addEventListener("click",()=>{
   const gs=builtGroups();if(!gs.length) return;
