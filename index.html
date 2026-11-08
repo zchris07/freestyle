@@ -2782,7 +2782,7 @@ function audHover(row){
   AUD.lineTimer=setTimeout(()=>{
     if(AUD.id!==id||!AUD.row) return;
     const cv=document.createElement("canvas");cv.className="lwave on";cv.setAttribute("aria-hidden","true");AUD.row.prepend(cv);AUD.cv=cv;
-    AUD.lineStart=performance.now();AUD.lvl=0;AUD.raf=requestAnimationFrame(drawAudWave);
+    AUD.lineStart=performance.now();AUD.beatAt=0;AUD.raf=requestAnimationFrame(drawAudWave);
   },250);
   AUD.timer=setTimeout(async()=>{
     let buf;try{buf=await ensureBuf(it,true);}catch(e){return;}
@@ -2803,25 +2803,21 @@ function drawAudWave(now){
   const dpr=devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight;
   if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);}
   const g=cv.getContext("2d");g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
-  const N=44,mid=h/2,amp=[],base=1.5/mid;   // base: a ~3px line
-  if(an) an.getByteFrequencyData(AUD.data);
-  let sum=0;
+  // the base line is the waveform's own quiet floor (amplitude 0.04), so when the beat starts it simply swells into it
+  const N=44,mid=h/2,amp=[],FLOOR=0.04;
+  if(an){an.getByteFrequencyData(AUD.data);if(!AUD.beatAt) AUD.beatAt=now;}
   for(let k=0;k<N;k++){
-    if(!an){amp.push(base);continue;}   // before the beat starts: just the base line
+    if(!an){amp.push(FLOOR);continue;}   // before the beat starts: just the base line
     const i=Math.min(AUD.data.length-1,Math.floor(Math.pow(k/N,1.5)*AUD.data.length*0.75));   // low end gets more room
     const a=AUD.data[i]/255,flow=0.78+0.22*Math.sin(k*0.45-now*0.005);                          // a travelling ripple
-    sum+=a;amp.push(Math.max(base,a*flow));
+    amp.push(Math.max(FLOOR,a*flow));
   }
-  // loudness, smoothed: the green brightens and warms toward mint as the beat gets louder
-  AUD.lvl=(AUD.lvl||0)*0.82+(an?sum/N:0)*0.18;
-  // the line sweeps on from the left edge to the right edge over 0.25 s (ease in-out), led by a glowing head,
-  // and flashes as it lands on the right edge, right when the beat starts
-  const D=250,t=now-AUD.lineStart,p=Math.min(1,t/D),reveal=p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2;
-  const flash=t<D?0.35*p:Math.exp(-(t-D)/320);
-  const B=Math.min(1.9,0.75+1.5*AUD.lvl+0.9*flash);   // overall brightness
-  const m=Math.min(1,AUD.lvl*1.2+flash*0.8),rgb=[30+90*m,215+40*m,96+70*m].map(Math.round).join(","),col=a=>"rgba("+rgb+","+Math.min(1,a).toFixed(3)+")";
-  const X=w*reveal;
-  g.save();g.beginPath();g.rect(0,0,Math.max(0,X),h);g.clip();
+  // the line is drawn on from the left edge to the right edge over 0.25 s (ease in-out); nothing glows
+  const p=Math.min(1,(now-AUD.lineStart)/250),reveal=p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2;
+  // while it draws, the line is evenly bright so it reads all the way to the right edge; once the beat starts the
+  // right end eases back to the waveform's usual fade (.30 -> .12) over 0.4 s
+  const q=AUD.beatAt?Math.min(1,(now-AUD.beatAt)/400):0,right=.30-.18*q*q*(3-2*q);
+  g.save();g.beginPath();g.rect(0,0,w*reveal,h);g.clip();
   const xs=k=>(k/(N-1))*w;
   const edge=(sign)=>{   // smooth curve through the band heights, above (sign -1) or below (+1) the centre line
     g.lineTo(xs(0),mid+sign*amp[0]*mid*0.95);
@@ -2829,22 +2825,12 @@ function drawAudWave(now){
     g.lineTo(xs(N-1),mid+sign*amp[N-1]*mid*0.95);
   };
   g.beginPath();g.moveTo(0,mid);edge(-1);g.lineTo(w,mid);
-  for(let k=N-1;k>=0;k--) g.lineTo(xs(k),mid+amp[k]*mid*0.95);   // back along the bottom, mirrored
+  // back along the bottom, mirrored
+  for(let k=N-1;k>=0;k--) g.lineTo(xs(k),mid+amp[k]*mid*0.95);
   g.closePath();
-  const grad=g.createLinearGradient(0,0,w,0);grad.addColorStop(0,col(.30*B));grad.addColorStop(1,col(.22*B));   // even enough to read to the right edge
+  const grad=g.createLinearGradient(0,0,w,0);grad.addColorStop(0,"rgba(30,215,96,.30)");grad.addColorStop(1,"rgba(30,215,96,"+right.toFixed(3)+")");
   g.fillStyle=grad;g.fill();
-  // the bright centre line, with a glow
-  g.shadowColor=col(.9);g.shadowBlur=6+10*flash;
-  g.fillStyle=col(.55+.35*flash+.2*AUD.lvl);g.fillRect(0,mid-1.5,w,3);
   g.restore();
-  // the glowing head while it travels, then a burst at the right edge that fades with the flash
-  const hx=Math.min(w,X),hr=Math.max(14,h*0.9)*(t<D?1:1+0.6*(1-flash));
-  const ha=t<D?0.9:0.9*flash;
-  if(ha>0.01){
-    const rg=g.createRadialGradient(hx,mid,0,hx,mid,hr);
-    rg.addColorStop(0,"rgba(235,255,240,"+ha.toFixed(3)+")");rg.addColorStop(0.18,col(ha*0.85));rg.addColorStop(1,col(0));
-    g.fillStyle=rg;g.fillRect(hx-hr,mid-hr,hr*2,hr*2);
-  }
   AUD.raf=requestAnimationFrame(drawAudWave);
 }
 const libEl=document.getElementById("lib");
