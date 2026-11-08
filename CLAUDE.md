@@ -16,8 +16,9 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   Pill-shaped buttons (radius 500px). Warning `#ffa42b`, error `#f3727f`, toast blue `#539df5`.
 - Font: Fraunces (Google Fonts, same as the "football explained." page), Georgia fallback, for ALL text incl. buttons, numbers and the grid canvas. No icon fonts.
 - Rhyme groups are colored, in order: green `#1ed760`, orange `#ffa42b`, blue `#539df5`, pink `#f3727f`, lavender
-  `#b49bc8`, white. A rhyme cell has a 2px outline and word text in its group's color. On the setup grid a hidden
-  word ("First only" / "Last only") keeps a dashed outline and shows no text; in the builder it is faded and struck.
+  `#b49bc8`, white. A rhyme cell has a 2px outline and word text in its group's color. A hidden ("improvised")
+  rhyme box has a fainter, thinner outline in its group's colour (1px at 50%) and shows no word on the setup grid
+  and in sessions (in the builder its word is faded and struck).
 - No panel numbering.
 - Layout: the top bar with the "freestyle.wtf" wordmark top-left (".wtf" in green, no caption) has no colour of its
   own: it sits on the page background (`#121212`). At 1000px and wider, setup is two columns (rhyme scheme | beat
@@ -73,6 +74,9 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   the column). It can be dragged to move the column, and a tap on its left or right half steps the column one beat.
   It fades out on grab and back in after landing.
 - No text cursor or text selection anywhere (`body{cursor:default;user-select:none}`), except real text inputs.
+- Preview beat indicator: while Preview plays, the rhyme grid's box for the current beat lights its outline
+  (`lightGridBeat`), the drop on bar 1 and the 8 prep beats on bars 3-4, looping round the 4 bars. The draggable
+  rhyme column's box lights in its colour, and the indicator follows the column if it is dragged mid-preview.
 - Session beat indicator: the current box lights up its outline (border + glow) and is never filled, so a rhyme
   word stays readable (a plain beat in green, a rhyme in its group's color).
 

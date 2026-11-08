@@ -117,7 +117,12 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 .bar-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;}
 .gcell{height:62px;border-radius:8px;background:var(--elev);border:1px solid var(--border-soft);display:flex;align-items:center;justify-content:center;position:relative;}
 .gcell.rc{background:var(--high);border:2px solid var(--gc);}
-.gcell.rc.hid{border-style:dashed;}
+/* improvised (hidden) rhymes: a fainter, thinner outline in the rhyme group's colour */
+.gcell.rc.hid{border:1px solid color-mix(in srgb,var(--gc) 50%,transparent);}
+/* preview beat indicator: the box's outline lights up */
+.gcell{transition:border-color .1s,box-shadow .12s;}
+.gcell.now{border:2px solid var(--green);box-shadow:0 0 0 3px rgba(30,215,96,.22),0 0 16px rgba(30,215,96,.3);}
+.gcell.rc.now{border:3px solid var(--gc);box-shadow:0 0 0 3px color-mix(in srgb,var(--gc) 28%,transparent),0 0 20px color-mix(in srgb,var(--gc) 45%,transparent);}
 .gcell.target{border:2px dashed var(--green);background:rgba(30,215,96,.06);}
 /* presets: the rhyme column is its own layer above a full grid of empty boxes, so the boxes it leaves stay visible */
 #grid-panel{position:relative;}
@@ -230,6 +235,7 @@ canvas.gv{width:100%;height:78px;background:var(--bg);border:1px solid var(--bor
 .pcell .pword{font-size:13px;font-weight:700;color:transparent;text-align:center;padding:0 4px;line-height:1.2;}
 .pcell.prep-cell{background:var(--surface);}
 .pcell.rhyme-cell.upcoming{background:var(--high);border:2px solid var(--gc);}
+.pcell.rhyme-cell.hid.upcoming{border:1px solid color-mix(in srgb,var(--gc) 50%,transparent);}   /* improvised rhyme */
 .pcell.rhyme-cell.upcoming .pword{color:var(--gc);opacity:.5;}
 /* the beat indicator lights the box's outline (border + glow) and never fills it, so a rhyme word stays readable */
 .pcell{transition:background .1s,border-color .1s,box-shadow .12s;}
@@ -264,7 +270,7 @@ canvas.gv{width:100%;height:78px;background:var(--bg);border:1px solid var(--bor
 .bcell:hover{background:var(--high);}
 .bcell:not(.on):hover::after{content:"+";font-size:24px;line-height:1;color:var(--ac);}
 .bcell.on{background:var(--high);border:2px solid var(--gc);}
-.bcell.hid{border-style:dashed;}
+.bcell.hid{border:1px solid color-mix(in srgb,var(--gc) 50%,transparent);}
 .bcell .bw{font-size:16px;font-weight:700;color:var(--gc);text-align:center;padding:0 4px;}
 .bcell.hid .bw{opacity:.35;text-decoration:line-through;}
 .bcell .btag{position:absolute;top:5px;left:7px;font-size:10px;font-weight:700;color:var(--gc);letter-spacing:.04em;}
@@ -1239,8 +1245,19 @@ function stopPlayer(){
   if(P.src){try{P.src.stop();}catch(e){}try{P.src.disconnect();}catch(e){}P.src=null;}
   P.cb=null;
 }
+// Preview: light the rhyme grid's box for the current beat (outline glow, like a session). Bar 1 of the grid is the
+// drop; the 8 prep beats before it fall on bars 3-4, so the indicator just loops round the 4 bars.
+function lightGridBeat(i){
+  document.querySelectorAll("#grid-wrap .gcell.now").forEach(c=>c.classList.remove("now"));
+  if(i==null) return;
+  const r=(((Math.floor(i/4)-PREP_BARS)%4)+4)%4,c=i%4,grid=document.getElementById("setup-grid");
+  grid.children[r*4+c]?.classList.add("now");
+  const col=document.querySelector("#grid-wrap .rhyme-col");   // the draggable rhyme column sits over its beat
+  if(col&&G.rhymeCol===c) col.children[r]?.classList.add("now");
+}
 function resetDots(){
   document.querySelectorAll("#dots .dot").forEach(d=>d.className="dot");
+  lightGridBeat(null);
   const b=document.getElementById("prev-btn");if(b)b.innerHTML="&#9654; Preview";
 }
 let previewing=false;
@@ -1252,6 +1269,7 @@ async function togglePreview(){
   await startPlayer(it,{click:true,onBeat:(i)=>{
     const dots=document.querySelectorAll("#dots .dot");
     dots.forEach((d,n)=>d.className="dot"+(n===i%4?(n===0?" on one":" on"):""));
+    lightGridBeat(i);
   }});
 }
 
@@ -2773,6 +2791,7 @@ function build32Bars(){
         const w=wordFor(info,Math.floor(realBar/4),ng);
         wd.textContent=info.show?w:"";wd.dataset.word=w;wd.dataset.shouldshow=info.show?"1":"0";
         cell.classList.add("rhyme-cell");cell.style.setProperty("--gc",gColor(info.g));
+        if(!info.show) cell.classList.add("hid");
       }
       cell.appendChild(wd);row.appendChild(cell);
     }
