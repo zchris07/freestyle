@@ -74,8 +74,12 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   The guide has its own static logo (`#g-home`, a copy of the page logo's inked letters made in `openGuide`, same spot,
   no animation). It closes around whatever closed it (`closeGuide(e)`, `guideOrigin(el)` snaps the centre): the X, Got
   it, or the logo (home); Esc closes into the wtf? button.
-- Session title: the beat name is large (26px, 34px wide, 21px phone). The session's boxes pop in, staggered like
+- Session title: the beat name is large (39px, 51px wide, 32px phone; made 50% larger on 2026-11-08). The session's boxes pop in, staggered like
   the builder grid (`.bars-scroll.pop`).
+- Session visualizer (`#perf-viz`, `vizStart`/`vizFrame`/`vizStop`): a canvas behind everything in the session, driven
+  by an AnalyserNode on `playerBus()` (range -80..-12 dB so loud masters don't pin it). Mirrored soft green bars rise
+  from the bottom edge, the bass on both outer edges (framing the grid) and the highs toward the middle, plus a bloom
+  behind the grid that swells with the bass. Dim on purpose; off with prefers-reduced-motion.
 - Session controls: PAUSE / RESUME next to STOP (Space toggles it). Pause suspends the AudioContext, so the beat,
   the clicks and the beat clock stop together. Both "2 syllable" toggles say only "2 syllable" and show their state
   by colour (main: green when on; builder: filled in the active rhyme's colour when on).
@@ -211,8 +215,8 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   step wins if it is nearly as sharp (fills and risers). anchor=false after hand edits, Auto and old saved beats: the
   grid stays, and the drop snaps to its nearest bar line.
 - Stored as `dropT` (seconds) plus `dropManual`. The DROP row (+-1/+-4 bars, Auto) was removed from the UI on
-  2026-11-06 at Chris's request; the code paths (`dropManual`, `regridDrop`) stay. The waveform shades P1/P2, draws
-  bar lines only (green; the drop's line orange), with no beat lines and no labels. During Preview the place is shown only
+  2026-11-06 at Chris's request; the code paths (`dropManual`, `regridDrop`) stay. The waveform has no prep shading
+  (removed 2026-11-08) and draws bar lines only (green; the drop's line orange), with no beat lines and no labels. During Preview the place is shown only
   by the waveform itself lighting up (no white bar or wash, Chris asked): a beat-wide stretch ending at the playback
   position is brightest, with a two-bar trail fading out behind it; each bar line flares (brighter, wider,
   glowing in its own colour) for 0.7 s after the band crosses it (`songPos()` maps the audio clock to song time
@@ -221,7 +225,7 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   strip (`.gv`, scroll, shift-wheel or mouse drag); the canvas is pinned to the view (sticky) and `paintGrid` repaints
   what is visible from peaks computed once per beat/tempo (`GV`). A newly picked beat opens a beat before its prep bars. Picking a beat draws its waveform in like the
   page intro (`gvAnimate`, ~1.1 s, not during the intro itself, which wipes the strip on): columns grow out of the
-  centre line from left to right, the bar lines are drawn on from the top just behind them, then the prep shading fades in.
+  centre line from left to right, and the bar lines are drawn on from the top just behind them.
 - Tested on synthetic beats (boom bap 85-95, trap 140-150, intros of 0/1/4/8/16 bars, hats-only or 25% drums in the
   intro, breakdowns in songs that start full): drop within 2 ms. Drums at half volume in the intro read as "beat
   already in". Not yet tuned on real songs.

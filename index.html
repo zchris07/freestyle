@@ -251,7 +251,7 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 #perf-screen.open{clip-path:circle(150vmax at var(--ox,50%) var(--oy,100%));visibility:visible;transition:clip-path .65s var(--ease);}
 #perf-screen.intro .rise{animation:rise .55s var(--ease) backwards;animation-delay:calc(.2s + var(--d,0) * 60ms);}
 .perf-hdr{padding:14px var(--inset) 4px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
-.pname{font-size:26px;line-height:1.15;font-weight:700;letter-spacing:-.01em;color:var(--text);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variation-settings:"opsz" 144;}
+.pname{font-size:39px;line-height:1.15;font-weight:700;letter-spacing:-.01em;color:var(--text);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variation-settings:"opsz" 144;}
 /* session boxes pop in, staggered, like the builder's grid */
 #perf-screen .bars-scroll.pop .pcell{animation:pop .45s var(--ease) backwards;animation-delay:calc(.32s + var(--i,0) * 18ms);}
 .stop-btn{background:transparent;border:1px solid var(--outline);border-radius:500px;padding:6px 14px;font-size:12px;color:var(--text);cursor:pointer;letter-spacing:.06em;white-space:nowrap;font-weight:700;transition:border-color .15s,transform .15s;}
@@ -261,6 +261,9 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 #pause-btn.on{border-color:var(--green);color:var(--green);}
 #perf-screen .bars-scroll{transition:opacity .25s;}
 #perf-screen.paused .bars-scroll{opacity:.45;}
+/* the beat's visualizer fills the session's background, under everything else */
+#perf-viz{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;}
+#perf-screen>:not(#perf-viz){position:relative;z-index:1;}
 .bars-scroll{overflow-y:auto;flex:1;min-height:0;padding:12px var(--inset) 20px;}
 .bar-block{margin-bottom:10px;}
 .bar-row-perf{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;}
@@ -338,7 +341,7 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
   :root{--top-h:50px;}
   .topbar{padding:0 16px;}
   .brand{font-size:21px;}
-  .pname{font-size:21px;}
+  .pname{font-size:32px;}
   .col-hint{padding:8px 15px;font-size:12px;gap:9px;}
   .col-hint .ar{font-size:15px;}
 }
@@ -357,7 +360,7 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
   .lib{max-height:340px;}
   #perf-screen{--inset:max(24px,calc((100% - 1040px) / 2));}
   .perf-hdr{padding:18px var(--inset) 8px;}
-  .pname{font-size:34px;}
+  .pname{font-size:51px;}
   .bar-row-perf{gap:10px;}
   .pcell{height:88px;}
   .pcell .pword{font-size:19px;}
@@ -485,6 +488,7 @@ body.preintro .root{opacity:0;}
 </div>
 
 <div id="perf-screen" aria-hidden="true">
+  <canvas id="perf-viz" aria-hidden="true"></canvas>
   <header class="topbar"><button class="brand brand-btn" id="p-home" aria-label="Back to the home page">freestyle<span class="tld">.wtf</span></button></header>
   <div class="perf-hdr rise" style="--d:1">
     <div class="pname" id="p-beat-name">--</div>
@@ -1269,9 +1273,7 @@ function paintGrid(){
     }
   }
   const spb=60/it.bpm,bar=4*spb,drop=dropInfo(it).t;
-  // prep bars shaded (fading in last when drawing in); bar lines only (green, the drop orange), no beat lines, no labels
-  g.fillStyle="rgba(255,164,43,"+(0.08*(an==null?1:ease((an-GV_SWEEP-300)/400))).toFixed(3)+")";
-  g.fillRect(X(Math.max(0,drop-PREP_BARS*bar)),0,PREP_BARS*bar*pps,h);
+  // bar lines only (green, the drop orange): no prep shading, no beat lines, no labels
   const t0=sx/pps-bar,t1=(sx+w)/pps;
   for(let k=Math.ceil((t0-it.fd)/bar);it.fd+k*bar<t1;k++){
     const t=it.fd+k*bar;if(t<0) continue;
@@ -1291,7 +1293,7 @@ function paintGrid(){
 // unless the strip was scrolled by hand in the last 2 s.
 let GV_USER=0,GV_LOOP=0;
 // Picking a beat draws its waveform in like the page intro: columns grow out of the centre line from left to right,
-// the bar lines are drawn on from the top just behind them, then the prep shading fades in. About 1.1 s.
+// the bar lines are drawn on from the top just behind them. About 1.1 s.
 const GV_SWEEP=450;
 function gvAnimate(){
   if(matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -3114,6 +3116,7 @@ async function startPerf(){
   ps.classList.add("open");ps.setAttribute("aria-hidden","false");
   document.getElementById("root").classList.add("sessioning");document.body.classList.add("lock");
   G.running=true;G.curGlobalBeat=-1;
+  vizStart();
   const click=it.builtin||document.getElementById("click-toggle").checked;
   try{await startPlayer(it,{click,onBeat:handleBeat});}
   catch(e){document.getElementById("p-beat-name").textContent="Could not play this file";}
@@ -3128,6 +3131,50 @@ function retireBeat(){
     if(pw&&pw.dataset.word) pw.textContent=pw.dataset.shouldshow==="1"?pw.dataset.word:"";
   }
   G.curGlobalBeat=-1;
+}
+// Session visualizer: an analyser on the player's bus (the beat and the clicks) drives the session background. A row
+// of soft green bars rises from the bottom edge, mirrored: the bass on both outer edges (where it frames the grid),
+// the highs toward the middle. A bloom behind the grid swells with the bass. Kept dim so the words stay readable.
+const VIZ={an:null,data:null,lv:null,bass:0,raf:0};
+function vizStart(){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const b=playerBus();
+  if(!VIZ.an||VIZ.an.context!==b.context){
+    VIZ.an=b.context.createAnalyser();VIZ.an.fftSize=1024;VIZ.an.smoothingTimeConstant=0.8;
+    VIZ.an.minDecibels=-80;VIZ.an.maxDecibels=-12;   // a wider range than the default, so loud masters don't pin the bars
+    b.connect(VIZ.an);
+    VIZ.data=new Uint8Array(VIZ.an.frequencyBinCount);
+  }
+  VIZ.lv=null;VIZ.bass=0;cancelAnimationFrame(VIZ.raf);VIZ.raf=requestAnimationFrame(vizFrame);
+}
+function vizStop(){cancelAnimationFrame(VIZ.raf);VIZ.raf=0;const cv=document.getElementById("perf-viz");cv.getContext("2d").clearRect(0,0,cv.width,cv.height);}
+function vizFrame(){
+  const cv=document.getElementById("perf-viz"),dpr=Math.min(2,window.devicePixelRatio||1),w=cv.clientWidth,h=cv.clientHeight;
+  if(!w||!h){VIZ.raf=requestAnimationFrame(vizFrame);return;}
+  if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);}
+  const g=cv.getContext("2d");g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
+  VIZ.an.getByteFrequencyData(VIZ.data);
+  const N=2*Math.max(12,Math.min(36,Math.round(w/44))),half=N/2,D=VIZ.data,L=D.length;
+  if(!VIZ.lv||VIZ.lv.length!==half) VIZ.lv=new Float32Array(half);
+  for(let k=0;k<half;k++){   // log-spaced bands, rising fast and falling slowly
+    const i0=Math.floor(Math.pow(k/half,1.7)*L*0.6),i1=Math.max(i0+1,Math.floor(Math.pow((k+1)/half,1.7)*L*0.6));
+    let m=0;for(let i=i0;i<i1;i++) m=Math.max(m,D[i]);
+    const v=m/255;VIZ.lv[k]=v>VIZ.lv[k]?v:VIZ.lv[k]*0.9+v*0.1;
+  }
+  let bass=0;for(let i=0;i<6;i++) bass+=D[i];bass/=6*255;VIZ.bass=Math.max(bass,VIZ.bass*0.92);
+  // bloom behind the grid, swelling with the bass
+  const bl=g.createRadialGradient(w/2,h*0.62,0,w/2,h*0.62,Math.max(w,h)*0.7);
+  bl.addColorStop(0,"rgba(30,215,96,"+(0.04+0.16*VIZ.bass*VIZ.bass).toFixed(3)+")");bl.addColorStop(1,"rgba(30,215,96,0)");
+  g.fillStyle=bl;g.fillRect(0,0,w,h);
+  // the bars along the bottom, and their faint mirror
+  const bw=w/N,gap=Math.max(2,bw*0.22),maxH=h*0.42;
+  for(let c=0;c<N;c++){
+    const v=VIZ.lv[Math.min(c,N-1-c)],bh=Math.max(2,v*v*maxH),x=c*bw+gap/2,wd=bw-gap;   // band = distance from the edge
+    const gr=g.createLinearGradient(0,h-bh,0,h);gr.addColorStop(0,"rgba(30,215,96,"+(0.1+0.22*v).toFixed(3)+")");gr.addColorStop(1,"rgba(30,215,96,.02)");
+    g.fillStyle=gr;g.beginPath();g.roundRect?g.roundRect(x,h-bh,wd,bh,[Math.min(6,wd/2),Math.min(6,wd/2),0,0]):g.rect(x,h-bh,wd,bh);g.fill();
+    g.fillStyle="rgba(30,215,96,"+(0.04*v).toFixed(3)+")";g.fillRect(x,h-bh-6-bh*0.25,wd,bh*0.25);   // a soft echo above
+  }
+  VIZ.raf=requestAnimationFrame(vizFrame);
 }
 // End of the 32 bars: when the last beat is over, its box goes dark, the clock and clicks stop, the beat fades to
 // silence over SESSION_FADE seconds, and then the session closes back to the main page (into the BACK button).
@@ -3178,6 +3225,7 @@ function sessionOrigin(el){
 }
 function stopPerf(intoEl){
   clearTimeout(SESSION_END);SESSION_END=0;
+  setTimeout(()=>{if(!document.getElementById("perf-screen").classList.contains("open")) vizStop();},700);   // after the bubble closes
   if(PAUSED) setPaused(false);
   stopPlayer();G.running=false;
   {const b=playerBus(),t=b.context.currentTime;b.gain.cancelScheduledValues(t);b.gain.setValueAtTime(1,t);}   // undo the end fade
