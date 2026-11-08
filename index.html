@@ -52,16 +52,21 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 .guide.open{clip-path:circle(150vmax at var(--ox,100%) var(--oy,0));visibility:visible;transition:clip-path .65s var(--ease);}
 .guide.intro .rise{animation:rise .55s var(--ease) backwards;animation-delay:calc(.22s + var(--d,0) * 70ms);}
 .guide-in{max-width:720px;margin:0 auto;padding:22px 16px 48px;}
-.ghead{display:flex;align-items:center;gap:14px;margin-bottom:18px;}
-.glead{font-size:17px;line-height:1.5;color:var(--meta);margin-bottom:22px;}
-/* guide sections: plain blocks of text on the page background, no boxes or badges */
-.gsec{margin-bottom:26px;}
-.gsec h3{font-size:20px;margin-bottom:8px;}
+/* guide: all text in one column; the close button and the section numbers sit in a gutter to its left, the same
+   size and the same distance from the text */
+.guide-in{--gut:36px;--gap:14px;}
+.ghead{display:grid;grid-template-columns:var(--gut) minmax(0,1fr);column-gap:var(--gap);align-items:center;margin-bottom:18px;}
+.glead{font-size:17px;line-height:1.5;color:var(--meta);margin:0 0 22px calc(var(--gut) + var(--gap));}
+/* guide sections: plain text on the page background, numbered in the gutter */
+.gsec{display:grid;grid-template-columns:var(--gut) minmax(0,1fr);column-gap:var(--gap);align-items:start;margin-bottom:26px;}
+.gsec h3{font-size:20px;line-height:36px;margin-bottom:2px;}
 .gsec p{font-size:14px;line-height:1.55;color:var(--meta);margin-bottom:6px;}
 .gsec p b{color:var(--text);}
-.gnum{display:none;}
-.gsec.why p{font-size:17px;color:var(--text);font-weight:700;}
-#guide-done{margin-top:10px;}
+.gsec p a{color:var(--green);font-weight:700;text-decoration:none;}
+.gsec p a:hover{color:var(--green-hover);text-decoration:underline;}
+.gnum{width:36px;height:36px;border-radius:50%;background:var(--green);color:var(--on-accent);font-weight:700;font-size:16px;
+  display:flex;align-items:center;justify-content:center;}
+#guide-done{margin:10px 0 0 calc(var(--gut) + var(--gap));}
 .brand:hover .tld{color:var(--green-hover);}
 .main{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
 #setup-screen{width:100%;max-width:840px;margin:0 auto;padding-bottom:6px;}
@@ -514,9 +519,11 @@ body.preintro .root{opacity:0;}
       <p>Trap or boom bap, from the library, or upload your own with the upload chip. Every beat is read for its tempo, its "one" and its drop, and you always get 8 beats of lead-in right before the drop. <b>Preview</b> lets you check the grid; turn on <b>Play metronome during session</b> if you want a click on top.</p></div></div>
     <div class="gsec rise" style="--d:5"><div class="gnum">4</div><div><h3>Start session</h3>
       <p>Two prep bars, then 32 bars. The lit box is the beat; rhyme words light up as you reach them. Every session deals new words. <b>Space</b> pauses, <b>Esc</b> stops.</p></div></div>
-    <div class="gsec why rise" style="--d:6"><div class="gnum">?</div><div><h3>why tf does this exist?</h3>
+    <div class="gsec why rise" style="--d:6"><div class="gnum">?</div><div><h3>Why tf does this exist?</h3>
       <p>Because every other freestyle app out there right now is ass.</p></div></div>
-    <button class="btn go big rise" style="--d:7" id="guide-done">Got it</button>
+    <div class="gsec who rise" style="--d:7"><div class="gnum">?</div><div><h3>Who tf made ts?</h3>
+      <p><a href="https://github.com/zchris07" target="_blank" rel="noopener">christopher</a></p></div></div>
+    <button class="btn go big rise" style="--d:8" id="guide-done">Got it</button>
   </div>
 </div>
 

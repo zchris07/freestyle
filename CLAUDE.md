@@ -64,7 +64,10 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   (`addFiles(files,feel)`).
 - wtf? button top right (plain green text, no outline; hover only darkens the green) opens `#guide`, a full-page guide that grows as a circle out of the button with its
   sections rising in: how to use every part of the site, plus "every other freestyle app out there right now is ass"
-  under "why tf does this exist?". The sections are plain text on the background, with no boxes or number badges.
+  under "Why tf does this exist?" (plain body text) and "Who tf made ts?" with "christopher" linking to
+  https://github.com/zchris07. The sections are plain text on the background, no boxes. All text (title, lead,
+  headings, paragraphs, Got it) shares one left edge; the X close button and the section numbers (green 36px
+  circles: 1-4, "?" for the why and who sections) sit in a 36px gutter 14px to its left (`--gut`, `--gap`).
 - Session title: the beat name is large (26px, 34px wide, 21px phone). The session's boxes pop in, staggered like
   the builder grid (`.bars-scroll.pop`).
 - Session controls: PAUSE / RESUME next to STOP (Space toggles it). Pause suspends the AudioContext, so the beat,
