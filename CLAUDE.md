@@ -74,17 +74,19 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   the column). It can be dragged to move the column, and a tap on its left or right half steps the column one beat.
   It fades out on grab and back in after landing.
 - No text cursor or text selection anywhere (`body{cursor:default;user-select:none}`), except real text inputs.
-- Preview beat indicator: during the 8 prep beats no box is lit. Instead, on each prep beat a wave lifts the tiles
-  (tilt + rise + shadow, Web Animations) diagonally from one corner to the opposite one in about half a beat
-  (`waveTiles`). Each Preview click moves the starting corner clockwise (TL, TR, BR, BL; `WAVE_CORNER`). From the
+- Preview beat indicator: during the 8 prep beats no box is lit. Instead, once as the preview starts, a wave lifts
+  the tiles (tilt + rise + shadow, Web Animations) diagonally from one corner to the opposite one (crossing in ~0.8
+  of a beat, each tile's lift ~1.35 beats, max 780 ms; `waveTiles`). Each Preview click moves the starting corner clockwise (TL, TR, BR, BL; `WAVE_CORNER`). From the
   drop, the current beat's box lights its outline (`lightGridBeat`), starting top left and looping round the 4 bars. The draggable
   rhyme column's box lights in its colour, and the indicator follows the column if it is dragged mid-preview.
-- Hover audition: hovering a library row for 1 s plays that beat from its very start without selecting it
+- Hover audition: hovering a library row for 0.5 s plays that beat from its very start without selecting it
   (`audHover`; default beats start loading on hover, quietly). It works during Preview too, which is ducked to 12%
   through `playerBus()`. The row's background becomes a live mirrored silhouette of the sound (`.lwave` canvas, an
-  AnalyserNode's frequency bands with a travelling ripple). It survives list re-renders (`audReattach`) and stops
-  on leaving the row or on any click in the list. On phones a long press is the hover: hold a row 1 s to play it,
-  lift (or scroll) to stop; a press of 600 ms+ doesn't select on release (`AUD.noClick`), a quick tap does. Rows
+  AnalyserNode's frequency bands with a travelling ripple). The silhouette first draws a ~2px base line left to
+  right from 0.25 s to 0.5 s, so it is complete when the beat starts and then moves with the audio. Clicking the
+  beat being heard selects it and keeps it playing. It survives list re-renders (`audReattach`) and stops
+  on leaving the row or on a click elsewhere in the list. On phones a long press is the hover: hold a row 0.5 s to
+  play it, lift (or scroll) to stop; a press of 500 ms+ doesn't select on release (`AUD.noClick`), a quick tap does. Rows
   suppress the long-press menu. Phones only unlock audio on a tap, so the first tap anywhere wakes the
   AudioContext; until then a hover or long press stays silent.
 - Session beat indicator: the current box lights up its outline (border + glow) and is never filled, so a rhyme

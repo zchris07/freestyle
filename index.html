@@ -189,7 +189,7 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 .lrow>:not(.lwave){position:relative;z-index:1;}
 .lrow{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}   /* long press = hover on phones: no menus */
 /* hover audition: a live silhouette of the beat's sound behind the row */
-.lwave{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity .3s ease;}
+.lwave{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity .15s ease;}
 .lwave.on{opacity:1;}
 .lrow:hover{background:var(--high);}
 .lrow.sel{background:var(--high);}
@@ -1255,19 +1255,19 @@ function stopPlayer(){
   if(P.src){try{P.src.stop();}catch(e){}try{P.src.disconnect();}catch(e){}P.src=null;}
   P.cb=null;
 }
-// Preview: during the 8 prep beats a wave lifts the tiles from one corner to the opposite one, once per beat; from the
+// Preview: as it starts, one wave lifts the tiles from one corner to the opposite one (prep beats light nothing); from the
 // drop the current beat's box lights its outline (like a session), starting top left and looping round the 4 bars.
 // Each Preview click moves the wave's starting corner one step clockwise: top left, top right, bottom right, bottom left.
 let WAVE_CORNER=-1;
 function waveTiles(){
   if(matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  const corner=WAVE_CORNER,beatMs=P.spb*1000,step=beatMs*0.55/6;   // the wave crosses the grid in about half a beat
+  const corner=WAVE_CORNER,beatMs=P.spb*1000,step=beatMs*0.825/6;   // the wave crosses the grid in about 0.8 of a beat
   const dx=corner===0||corner===3?1:-1,dy=corner<2?1:-1;         // direction of travel
   const lift="perspective(520px) rotateX("+(-dy*14)+"deg) rotateY("+(dx*14)+"deg) translateY(-7px) scale(1.05)";
   const tile=(el,r,c)=>{
     const d=(dy>0?r:3-r)+(dx>0?c:3-c);                           // steps from the starting corner
     el.animate([{transform:"none"},{transform:lift,boxShadow:"0 14px 24px rgba(0,0,0,.5)",offset:.42},{transform:"none"}],
-      {duration:Math.min(520,beatMs*0.9),delay:d*step,easing:"cubic-bezier(.3,.7,.35,1)"});
+      {duration:Math.min(780,beatMs*1.35),delay:d*step,easing:"cubic-bezier(.3,.7,.35,1)"});
   };
   const grid=document.getElementById("setup-grid");
   [...grid.children].forEach((el,i)=>tile(el,Math.floor(i/4),i%4));
@@ -1277,7 +1277,7 @@ function waveTiles(){
 function lightGridBeat(i){
   document.querySelectorAll("#grid-wrap .gcell.now").forEach(c=>c.classList.remove("now"));
   if(i==null) return;
-  if(i<PREP_BARS*4){waveTiles();return;}   // prep: the wave, no indicator
+  if(i<PREP_BARS*4){if(i===0) waveTiles();return;}   // prep: one wave as the preview starts, no indicator
   const r=(Math.floor(i/4)-PREP_BARS)%4,c=i%4,grid=document.getElementById("setup-grid");
   grid.children[r*4+c]?.classList.add("now");
   const col=document.querySelector("#grid-wrap .rhyme-col");   // the draggable rhyme column sits over its beat
@@ -2753,10 +2753,10 @@ document.getElementById("lib-tabs").addEventListener("click",e=>{
   renderLib();
 });
 /* ================= HOVER AUDITION ================= */
-// Hovering a beat for 1 s plays it from the very start without selecting it (also during Preview, which is ducked
+// Hovering a beat for 0.5 s plays it from the very start without selecting it (also during Preview, which is ducked
 // meanwhile). The row's background becomes a live, mirrored silhouette of the sound, drawn from an analyser on it.
 // Leaving the row fades it out. Default beats start loading as soon as they are hovered.
-const AUD={id:null,row:null,timer:0,src:null,gain:null,an:null,raf:0,cv:null,data:null};
+const AUD={id:null,row:null,timer:0,lineTimer:0,lineStart:0,src:null,gain:null,an:null,raf:0,cv:null,data:null};
 // the library list is rebuilt now and then (a beat finished loading, a tab switch): keep the audition on the new row
 function audReattach(){
   if(!AUD.id) return;
@@ -2765,7 +2765,7 @@ function audReattach(){
   AUD.row=row;if(AUD.cv) row.prepend(AUD.cv);
 }
 function audStop(){
-  clearTimeout(AUD.timer);AUD.timer=0;
+  clearTimeout(AUD.timer);AUD.timer=0;clearTimeout(AUD.lineTimer);AUD.lineTimer=0;
   if(AUD.src){
     const t=AUD.gain.context.currentTime,s=AUD.src;
     AUD.gain.gain.cancelScheduledValues(t);AUD.gain.gain.setTargetAtTime(0,t,0.04);
@@ -2774,7 +2774,7 @@ function audStop(){
   }
   cancelAnimationFrame(AUD.raf);AUD.raf=0;
   if(AUD.cv){const cv=AUD.cv;cv.classList.remove("on");setTimeout(()=>cv.remove(),320);AUD.cv=null;}
-  AUD.row=null;AUD.id=null;
+  AUD.row=null;AUD.id=null;AUD.an=null;
 }
 function audHover(row){
   if(AUD.id===row.dataset.id){AUD.row=row;return;}
@@ -2783,6 +2783,12 @@ function audHover(row){
   if(!it||it.status!=="ready") return;
   const id=it.id;AUD.id=id;AUD.row=row;
   ensureBuf(it,true).catch(()=>{});   // start loading now
+  // at 0.25 s the silhouette starts drawing its base line left to right; it is complete at 0.5 s, when the beat starts
+  AUD.lineTimer=setTimeout(()=>{
+    if(AUD.id!==id||!AUD.row) return;
+    const cv=document.createElement("canvas");cv.className="lwave on";cv.setAttribute("aria-hidden","true");AUD.row.prepend(cv);AUD.cv=cv;
+    AUD.lineStart=performance.now();AUD.raf=requestAnimationFrame(drawAudWave);
+  },250);
   AUD.timer=setTimeout(async()=>{
     let buf;try{buf=await ensureBuf(it,true);}catch(e){return;}
     if(AUD.id!==id||!AUD.row||!AUD.row.isConnected) return;   // left meanwhile
@@ -2793,23 +2799,24 @@ function audHover(row){
     src.connect(g);g.connect(an);an.connect(ac.destination);src.start(0,0);
     src.onended=()=>{if(AUD.src===src) audStop();};
     AUD.src=src;AUD.gain=g;AUD.an=an;AUD.data=new Uint8Array(an.frequencyBinCount);duckPlayer(true);
-    const cv=document.createElement("canvas");cv.className="lwave";cv.setAttribute("aria-hidden","true");AUD.row.prepend(cv);AUD.cv=cv;
-    requestAnimationFrame(()=>cv.classList.add("on"));
-    AUD.raf=requestAnimationFrame(drawAudWave);
-  },1000);
+  },500);
 }
 function drawAudWave(now){
-  const cv=AUD.cv,an=AUD.an;if(!cv||!an) return;
+  const cv=AUD.cv,an=AUD.an;if(!cv) return;
   const dpr=devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight;
   if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);}
   const g=cv.getContext("2d");g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
-  an.getByteFrequencyData(AUD.data);
-  const N=44,mid=h/2,amp=[];
+  const N=44,mid=h/2,amp=[],base=1.1/mid;   // base: a ~2px line
+  if(an) an.getByteFrequencyData(AUD.data);
   for(let k=0;k<N;k++){
+    if(!an){amp.push(base);continue;}   // before the beat starts: just the base line
     const i=Math.min(AUD.data.length-1,Math.floor(Math.pow(k/N,1.5)*AUD.data.length*0.75));   // low end gets more room
     const a=AUD.data[i]/255,flow=0.78+0.22*Math.sin(k*0.45-now*0.005);                          // a travelling ripple
-    amp.push(Math.max(0.04,a*flow));
+    amp.push(Math.max(base,a*flow));
   }
+  // the line is drawn on from left to right over 0.25 s
+  const reveal=Math.min(1,(now-AUD.lineStart)/250);
+  g.save();g.beginPath();g.rect(0,0,w*reveal,h);g.clip();
   const xs=k=>(k/(N-1))*w;
   const edge=(sign)=>{   // smooth curve through the band heights, above (sign -1) or below (+1) the centre line
     g.lineTo(xs(0),mid+sign*amp[0]*mid*0.95);
@@ -2822,6 +2829,7 @@ function drawAudWave(now){
   g.closePath();
   const grad=g.createLinearGradient(0,0,w,0);grad.addColorStop(0,"rgba(30,215,96,.30)");grad.addColorStop(1,"rgba(30,215,96,.12)");
   g.fillStyle=grad;g.fill();
+  g.restore();
   AUD.raf=requestAnimationFrame(drawAudWave);
 }
 const libEl=document.getElementById("lib");
@@ -2833,7 +2841,7 @@ libEl.addEventListener("pointerout",e=>{
   const row=e.target.closest(".lrow");
   if(row&&row===AUD.row&&!row.contains(e.relatedTarget)) audStop();
 });
-// Phones: a long press is the hover. Holding a row for 1 s plays it; lifting the finger (or starting to scroll) stops
+// Phones: a long press is the hover. Holding a row for 0.5 s plays it; lifting the finger (or starting to scroll) stops
 // it, and a press that long doesn't select the beat on release. A quick tap still selects.
 const LP={on:false,x:0,y:0,t:0};
 libEl.addEventListener("pointerdown",e=>{
@@ -2845,7 +2853,7 @@ libEl.addEventListener("pointerdown",e=>{
 function endLongPress(){
   if(!LP.on) return;
   LP.on=false;
-  if(performance.now()-LP.t>=600) AUD.noClick=true;   // it was a long press, not a tap
+  if(performance.now()-LP.t>=500) AUD.noClick=true;   // it was a long press, not a tap
   audStop();
 }
 libEl.addEventListener("pointerup",e=>{if(e.pointerType==="touch") endLongPress();});
@@ -2858,7 +2866,8 @@ libEl.addEventListener("contextmenu",e=>{if(LP.on||AUD.src) e.preventDefault();}
 ["pointerup","touchend","keydown"].forEach(t=>addEventListener(t,()=>{try{const ac=getCtx();if(ac.state==="suspended") ac.resume().catch(()=>{});}catch(err){}},{passive:true}));
 document.getElementById("lib").addEventListener("click",e=>{
   if(AUD.noClick){AUD.noClick=false;e.preventDefault();return;}   // the end of a long press, not a tap
-  audStop();   // picking or removing a beat ends the hover audition
+  const hit=e.target.closest(".lrow");
+  if(!(hit&&AUD.id&&hit.dataset.id===AUD.id&&!e.target.closest("[data-del]"))) audStop();   // selecting the beat being heard keeps it playing
   const del=e.target.closest("[data-del]");
   if(del){
     const id=del.dataset.del;
