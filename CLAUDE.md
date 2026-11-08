@@ -53,6 +53,8 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   1px `.paint-dot` in the page colour gives the browser an early paint, so a refresh doesn't keep showing the
   previous page. The session opens as a clip-path circle growing out of START SESSION and collapses into
   the STOP button, or into the freestyle.wtf logo when that is clicked during a session (it goes home).
+  The session's logo (`#p-home`) never animates: it has no rise-in, and `startPerf` copies the page logo's
+  inked letters into it, so it sits on the same pixels and the bubble's edge passes over it with no visible change.
   `sessionOrigin(el)` snaps the circle's centre onto the element with transitions off first, so it never slides
   across the screen from where it last closed.
 - Upload: no upload panel in the library. An upload chip (inline SVG icon) next to the Trap / Boom bap tabs opens
@@ -77,10 +79,12 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   the rhyme scheme panel, under the column (`placeHint`; kept inside the panel, with its pointer tip shifted over
   the column). It can be dragged to move the column, and a tap on its left or right half steps the column one beat.
   It fades out on grab and back in after landing.
-- Tiles (`.gcell`, `.bcell`, `.pcell`) lift 3px with a soft shadow under the cursor (`@media (hover:hover)` only).
+- Tiles (`.gcell`, `.bcell`, `.pcell`) lift under the cursor by growing to scale(1.05) with a deeper shadow, as if
+  brought closer to the viewer (`@media (hover:hover)` only). No sideways or upward movement.
 - No text cursor or text selection anywhere (`body{cursor:default;user-select:none}`), except real text inputs.
 - Preview beat indicator: during the 8 prep beats no box is lit. Instead, once as the preview starts, a wave lifts
-  the tiles (flat, no tilt: each comes straight out toward the viewer with a deeper shadow; Web Animations) diagonally from one corner to the opposite one (crossing in ~0.8
+  the tiles (flat, no tilt: each grows to scale(1.08) as if brought toward the viewer, with a deeper shadow, the same
+  kind of lift as the hover; Web Animations) diagonally from one corner to the opposite one (crossing in ~0.8
   of a beat, each tile's lift ~1.35 beats, max 780 ms; `waveTiles`). Each Preview click moves the starting corner clockwise (TL, TR, BR, BL; `WAVE_CORNER`). From the
   drop, the current beat's box lights its outline (`lightGridBeat`), starting top left and looping round the 4 bars. The draggable
   rhyme column's box lights in its colour. While the column is held mid-preview, the indicator treats it as resting in

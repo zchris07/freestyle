@@ -122,9 +122,10 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 .gcell.rc.hid{border:1px solid color-mix(in srgb,var(--gc) 50%,transparent);}
 /* preview beat indicator: the box's outline lights up */
 .gcell{transition:border-color .1s,box-shadow .12s,transform .18s ease,background .15s;}
-/* tiles lift a little under the cursor (mouse / pen only) */
+/* tiles lift under the cursor (mouse / pen only): they grow a little, as if brought closer to the viewer, with a
+   deeper shadow. The preview ripple lifts them the same way (waveTiles). */
 @media (hover:hover){
-  .gcell:hover,.bcell:hover,.pcell:hover{transform:translateY(-3px);box-shadow:0 8px 18px rgba(0,0,0,.35);}
+  .gcell:hover,.bcell:hover,.pcell:hover{transform:scale(1.05);box-shadow:0 10px 22px rgba(0,0,0,.45);}
 }
 .gcell.now{border:2px solid var(--green);box-shadow:0 0 0 3px rgba(30,215,96,.22),0 0 16px rgba(30,215,96,.3);}
 .gcell.rc.now{border:3px solid var(--gc);box-shadow:0 0 0 3px color-mix(in srgb,var(--gc) 28%,transparent),0 0 20px color-mix(in srgb,var(--gc) 45%,transparent);}
@@ -462,7 +463,7 @@ body.preintro .root{opacity:0;}
 </div>
 
 <div id="perf-screen" aria-hidden="true">
-  <header class="topbar rise" style="--d:0"><button class="brand brand-btn" id="p-home" aria-label="Back to the home page">freestyle<span class="tld">.wtf</span></button></header>
+  <header class="topbar"><button class="brand brand-btn" id="p-home" aria-label="Back to the home page">freestyle<span class="tld">.wtf</span></button></header>
   <div class="perf-hdr rise" style="--d:1">
     <div class="pname" id="p-beat-name">--</div>
     <div class="perf-actions">
@@ -1268,7 +1269,7 @@ function waveTiles(){
   if(matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   const corner=WAVE_CORNER,beatMs=P.spb*1000,step=beatMs*0.825/6;   // the wave crosses the grid in about 0.8 of a beat
   const dx=corner===0||corner===3?1:-1,dy=corner<2?1:-1;         // direction of travel
-  const lift="perspective(600px) translateZ(36px)";                // flat: the tile only comes straight out toward the viewer
+  const lift="scale(1.08)";                                       // like the hover lift: the tile grows toward the viewer
   const tile=(el,r,c)=>{
     const d=(dy>0?r:3-r)+(dx>0?c:3-c);                           // steps from the starting corner
     el.animate([{transform:"none"},{transform:lift,boxShadow:"0 16px 30px rgba(0,0,0,.55)",offset:.42},{transform:"none"}],
@@ -2963,6 +2964,8 @@ async function startPerf(){
   setPaused(false);document.getElementById("pause-btn").disabled=false;
   rerollWords();
   build32Bars();
+  // the session's logo is a copy of the page's (drawn letters included), so the bubble passes over it unchanged
+  document.getElementById("p-home").innerHTML=document.querySelector("#root > .topbar .brand").innerHTML;
   // the session opens like the rhyme builder: a circle growing out of the START SESSION button
   const ps=document.getElementById("perf-screen");
   sessionOrigin(document.getElementById("play-btn"));
