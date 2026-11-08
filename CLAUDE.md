@@ -301,6 +301,14 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   Chris heard the old "1" (fd 1.414) on the song's beat 4. trapDownbeat had put the 1 on the strongest kick, which is a
   pickup on 4; Beat This!'s own downbeat (0.129 s) and Chris's ear agree on the new one. Virtual 150 (Beat This! 75.29 -> 150.58, but 150 fits ~3.5x better: built-in
   grid), drop bar 64 (102.31 s, Chris's 1:42). No source tags on any of these three (ffmpeg conversions).
+  Also added 2026-11-08 (no source tags, ffmpeg conversions): Money Longer 136.02 trap (the built-in comb fit; Beat
+  This!'s raw beats drift between half and full time there, R 0.13), first downbeat 0.553 s from the snare on 3 (5.5 vs
+  3-4 on other beats; kick on 1), drop bar 17 (28.78 s, nearest Chris's 28.9 s). Big Pimpin' 138.16 trap (Beat This!'s
+  fit said 139.28, but its raw beats and the comb both give 138.16), first downbeat 0.298 s (Beat This!; the snare-on-3
+  check gives 0.291), no intro (Chris: drop at 0 s), so the prep is a click count-in. Shook Ones 93.98 boom bap
+  (Beat This! and the built-in agree; snare on 2 and 4), first downbeat 0.416 s, drop bar 5 (10.63 s, nearest 11 s).
+  When the beat phase is in doubt, check where the snare lands in the bar (on 3 for trap, 2 and 4 for boom bap):
+  Day 'N' Nite's built-in grid sat on the off-beats, and Beat This! can be off too when its raw beats wander.
 - Drop detection only sees intros that are clearly quieter than the beat (below 65% of full energy). Drums-in
   intros like C.R.E.A.M., Electric and NYSOM need the drop set by hand in DEFAULTS.
   Ominous, Guitar, both J. Cole type beats, Memphis and Minor are Chris's own Suno tracks.
