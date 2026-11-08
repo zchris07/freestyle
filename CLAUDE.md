@@ -79,7 +79,8 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   of a beat, each tile's lift ~1.35 beats, max 780 ms; `waveTiles`). Each Preview click moves the starting corner clockwise (TL, TR, BR, BL; `WAVE_CORNER`). From the
   drop, the current beat's box lights its outline (`lightGridBeat`), starting top left and looping round the 4 bars. The draggable
   rhyme column's box lights in its colour, and the indicator follows the column if it is dragged mid-preview.
-- Hover audition: hovering a library row for 0.5 s plays that beat from its very start without selecting it
+- Hover audition: hovering a library row for 0.5 s plays that beat from where a session's first prep bar starts
+  (8 beats before the drop, or the top if the drop comes sooner), without selecting it
   (`audHover`; default beats start loading on hover, quietly). It works during Preview too, which is ducked to 12%
   through `playerBus()`. The row's background becomes a live mirrored silhouette of the sound (`.lwave` canvas, an
   AnalyserNode's frequency bands with a travelling ripple). The silhouette first draws a ~2px base line left to

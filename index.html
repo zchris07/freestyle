@@ -2753,7 +2753,7 @@ document.getElementById("lib-tabs").addEventListener("click",e=>{
   renderLib();
 });
 /* ================= HOVER AUDITION ================= */
-// Hovering a beat for 0.5 s plays it from the very start without selecting it (also during Preview, which is ducked
+// Hovering a beat for 0.5 s plays it from where a session's first prep bar starts, without selecting it (also during Preview, which is ducked
 // meanwhile). The row's background becomes a live, mirrored silhouette of the sound, drawn from an analyser on it.
 // Leaving the row fades it out. Default beats start loading as soon as they are hovered.
 const AUD={id:null,row:null,timer:0,lineTimer:0,lineStart:0,src:null,gain:null,an:null,raf:0,cv:null,data:null};
@@ -2796,7 +2796,9 @@ function audHover(row){
     const src=ac.createBufferSource();src.buffer=buf;
     const g=ac.createGain();g.gain.value=0;g.gain.setTargetAtTime(0.9,ac.currentTime,0.05);
     const an=ac.createAnalyser();an.fftSize=256;an.smoothingTimeConstant=0.8;
-    src.connect(g);g.connect(an);an.connect(ac.destination);src.start(0,0);
+    // start where a session's first prep bar starts: 8 beats before the drop (or the top, if the drop comes sooner)
+    const from=Math.max(0,dropInfo(it).t-PREP_BARS*4*60/it.bpm);
+    src.connect(g);g.connect(an);an.connect(ac.destination);src.start(0,from);AUD.from=from;
     src.onended=()=>{if(AUD.src===src) audStop();};
     AUD.src=src;AUD.gain=g;AUD.an=an;AUD.data=new Uint8Array(an.frequencyBinCount);duckPlayer(true);
   },500);
