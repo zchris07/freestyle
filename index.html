@@ -137,7 +137,9 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 @media (hover:hover){
   .gcell:hover,.bcell:hover,.pcell:hover{transform:scale(1.05);box-shadow:0 10px 22px rgba(0,0,0,.45);}
 }
-.gcell.now{border:2px solid var(--green);box-shadow:0 0 0 3px rgba(30,215,96,.22),0 0 16px rgba(30,215,96,.3);}
+/* a plain lit box takes the colour of the next rhyme box from that beat on (--beatc, set by lightGridBeat) */
+.gcell.now{--bc:var(--beatc,var(--green));border:2px solid var(--bc);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--bc) 22%,transparent),0 0 16px color-mix(in srgb,var(--bc) 30%,transparent);}
 .gcell.rc.now{border:3px solid var(--gc);box-shadow:0 0 0 3px color-mix(in srgb,var(--gc) 28%,transparent),0 0 20px color-mix(in srgb,var(--gc) 45%,transparent);}
 .gcell.target{background:rgba(30,215,96,.1);}   /* the column the dragged rhymes would land in: shaded, no outline */
 /* presets: the rhyme column is its own layer above a full grid of empty boxes, so the boxes it leaves stay visible */
@@ -1445,6 +1447,12 @@ function lightGridBeat(i){
   const rc=col&&o>=0&&o<n?col.children[r*n+o]:null;
   if(rc&&!rc.classList.contains("slot")) rc.classList.add("now");
   else grid.children[r*4+c]?.classList.add("now");
+  // the colour of the next rhyme box from here on (reading order, round the 4 bars), as the rhymes sit right now
+  const cols=new Array(16).fill(null),f0=(DRAG_COL??lastCol())-(n-1);
+  [...grid.children].forEach((g,k)=>{if(g.classList.contains("rc")) cols[k]=g.style.getPropertyValue("--gc");});
+  if(col) [...col.children].forEach((g,k)=>{if(g.classList.contains("rc")) cols[Math.floor(k/n)*4+f0+k%n]=g.style.getPropertyValue("--gc");});
+  let nc=null;for(let k=0;k<16&&!nc;k++) nc=cols[(r*4+c+k)%16];
+  document.getElementById("grid-wrap").style.setProperty("--beatc",nc||"#1ed760");
 }
 // redraw the indicator for the current beat (after the rhymes move), without re-running the prep wave
 function relightGrid(){if(previewing&&LAST_GRID_BEAT!=null&&LAST_GRID_BEAT>=PREP_BARS*4) lightGridBeat(LAST_GRID_BEAT);}

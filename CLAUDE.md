@@ -124,7 +124,9 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   the tiles (flat, no tilt: each grows to scale(1.08) as if brought toward the viewer, with a deeper shadow, the same
   kind of lift as the hover; Web Animations) diagonally from one corner to the opposite one (crossing in ~0.8
   of a beat, each tile's lift ~1.35 beats, max 780 ms; `waveTiles`). Each Preview click moves the starting corner clockwise (TL, TR, BR, BL; `WAVE_CORNER`). From the
-  drop, the current beat's box lights its outline (`lightGridBeat`), starting top left and looping round the 4 bars. The draggable
+  drop, the current beat's box lights its outline (`lightGridBeat`), starting top left and looping round the 4 bars.
+  A plain box lights in the colour of the next rhyme box from that beat on (reading order, wrapping round; `--beatc`
+  on `#grid-wrap`), like the session's indicator; a rhyme box in its own group's colour. The draggable
   rhyme column's box lights in its colour. While the column is held mid-preview, the indicator treats it as resting in
   the column it hovers over (`DRAG_COL`, `relightGrid`) and lights the rhyme box there instead of the empty box.
 - Beat library list (`.lib`): a scrolling list (230px tall, 340px in the two-column layout) with a thin scrollbar; rows
