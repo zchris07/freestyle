@@ -193,7 +193,12 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 .btn.go:hover{background:var(--green-hover);border-color:var(--green-hover);}
 .btn.go:disabled{background:var(--green);border-color:var(--green);}
 .btn.big{padding:12px 30px;font-size:14px;letter-spacing:.08em;}
-.lib{margin-top:12px;max-height:230px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;padding-right:2px;}
+/* the library scrolls (mouse wheel, trackpad, touch); rows keep their full height and never get squeezed to fit */
+.lib{margin-top:12px;max-height:230px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;padding-right:4px;
+  overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--high-hover) transparent;}
+.lib::-webkit-scrollbar{width:6px;}
+.lib::-webkit-scrollbar-thumb{background:var(--high-hover);border-radius:3px;}
+.lib>*{flex-shrink:0;}
 .tabs{display:flex;gap:6px;}
 .tab{background:var(--high);border:none;border-radius:500px;padding:6px 14px;font-size:12px;font-weight:700;color:var(--text);cursor:pointer;transition:background .15s;}
 .tab:hover{background:var(--high-hover);}

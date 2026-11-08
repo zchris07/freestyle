@@ -100,6 +100,9 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   drop, the current beat's box lights its outline (`lightGridBeat`), starting top left and looping round the 4 bars. The draggable
   rhyme column's box lights in its colour. While the column is held mid-preview, the indicator treats it as resting in
   the column it hovers over (`DRAG_COL`, `relightGrid`) and lights the rhyme box there instead of the empty box.
+- Beat library list (`.lib`): a scrolling list (230px tall, 340px in the two-column layout) with a thin scrollbar; rows
+  keep their full height (~36px). `.lib>*{flex-shrink:0}` matters: `.lrow` has overflow:hidden (for the hover
+  waveform), which otherwise lets the flex column squash every row to fit instead of scrolling.
 - Hover audition: hovering a library row for 0.5 s plays that beat from where a session's first prep bar starts
   (8 beats before the drop, or the top if the drop comes sooner), without selecting it
   (`audHover`; default beats start loading on hover, quietly). It works during Preview too, which is ducked to 12%
