@@ -237,6 +237,14 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   Electric 98.03 boom bap (Beat This!, the built-in detector and checkFeel all agree), drop bar 7 (15.41 s), set by
   hand from Chris's ear (~16 s). The intro is only slightly quieter than the rest, so the detector can't see it.
   From a streaming site, no tags; possibly ATCQ's "Electric Relaxation" (unconfirmed).
+  Added 2026-11-08 from Chris's files (commercial instrumentals, all by title; no source tags, 7 are ffmpeg
+  conversions of streaming audio, Shabba an FL Studio 9 export tagged 2013 / 120 BPM). Trap: Day 'N' Nite 138
+  (Beat This! said 70.3 -> 140.6, but 138 fits the onsets ~4x better, so the built-in grid is used), drop bar 25
+  (43.16 s, from Chris's 43 s); Versace 132.01, drop bar 5 (7.28 s, auto, Chris 7 s); Shabba 120, drop bar 9 (16.03 s,
+  auto); 6 7 168 (Beat This! said 84; checkFeel read boom bap), drop bar 5 (5.75 s, auto); Paris 140, drop bar 21
+  (34.37 s, from Chris's 34 s; the detector found 6.9 s); No Hands 131.5 (Beat This! said 65.75), drop bar 10
+  (16.65 s, auto). Boom bap: Flashing Lights 90.49, drop bar 9 (21.35 s, from 21 s); Stronger 104.04, drop bar 11
+  (23.73 s, from 23 s). Hand drops = the bar line nearest Chris's time (their energy steps are too weak to detect).
 - Drop detection only sees intros that are clearly quieter than the beat (below 65% of full energy). Drums-in
   intros like C.R.E.A.M., Electric and NYSOM need the drop set by hand in DEFAULTS.
   Ominous, Guitar, both J. Cole type beats, Memphis and Minor are Chris's own Suno tracks.
