@@ -41,15 +41,28 @@ SOURCES = {
     "badwords.txt": "https://raw.githubusercontent.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words/master/en",
 }
 # 2-syllable bank
-MIN_ZIPF = 2.5      # ~1 use per 3 million words and up; families list their most common words first
+MIN_ZIPF = 3.25     # ~1.8 uses per million words and up (raised from 2.5 on 2026-11-08: no sarcoma, henna, larval...)
 MIN_WORDS = 2       # a pair is enough for AABB-style groups; the app prefers bigger families for bigger groups
 MAX_WORDS = 12      # words kept per family
 MAX_FAMILIES = 800
 # 1-syllable bank: more common words, bigger families
-MIN_ZIPF1, MIN_WORDS1, MAX_WORDS1, MAX_FAMILIES1 = 3.1, 4, 16, 400
+MIN_ZIPF1, MIN_WORDS1, MAX_WORDS1, MAX_FAMILIES1 = 3.1, 3, 16, 400
 # words that pass every filter but read as names or are crude or not useful in a trainer
 EXTRA_BLOCK = set("""harry terry jenny eddy jerry larry gary barry perry kerry sherry mary betty patty
 peeing pissing erection whiting dildo condom""".split())
+# too obscure, technical or bookish for a freestyle prompt, though common enough in text (2026-11-08, Chris asked:
+# "apostolic, sarcoma, henna, senna, larval, fauna, theta, claimant"): medical, scientific, legal, church and Latin
+# words, surnames and archaic ones
+EXTRA_BLOCK |= set("""fauna theta claimant apostolic sarcoma henna senna larval abbot adherence amino ante appellate
+appraisal aquatic arbor archival assay bowman chandler cleric coercion communion concerted cortex curator cutler deacon
+derrick dharma distal divergent dominion draper dyer eclectic enamel equator feral fetal fetus feudal focal fodder
+fungal gamma glacial harmonic hector hepatitis herring hydraulic lama lattice laurel levy libel liter lymphoma maxi
+mercer meta midi morrow mortar muster myrtle nasal natal neural newton oceanic papal para parasitic parry penal
+periodic plasma plural poly porous precursor primer prism pursuant quasi quota recital rector referral renal retrieval
+rotor sawyer sclerosis serum sigma sinus sporadic spatial sterile sturgeon subpoena surrey surveyor systemic tandem
+tanner tariff thatcher theorem tidal treatise treble tribunal tucker vaginal vector vicar viola vortex wally whaling
+wicket willy apostle ascension archaic chassis cedar communal connector corrosion directive erosion extortion flora
+floral genetics granite highland hoover kaiser manila marrow mosaic pharaoh pious prairie solace stature usher""".split())
 # function words: real rhymes, but useless as prompts
 STOP = set("""the and but for nor yet with from into onto upon than then that this these those there here where when
 what which who whom whose why how are was were been being have has had does did will would shall should can could
@@ -59,7 +72,9 @@ is am be it an a i oh ah uh um yeah yes""".split())
 # 1-syllable only: abbreviations, names and filler that the dictionary filters let through
 EXTRA_BLOCK1 = set("""ab alt aw bob cal cam co cos cox dis ed en er gal gay gov ha hon hp hr id inc jay jun ken lee ma mac
 mag mar max meg mi min mod non oi om op oz pa pm pol pr reg rem rep sec sim sis sol sup ta tam tat ted tom val wan wen
-ya ye yep yup nah ugh he re xi mg pee em""".split())
+ya ye yep yup nah ugh he re xi mg pee em
+aft basque brig burr cad cert croft dirk duff dyke fife firth fob git grange hast hind lea leach ling mead moi moot oft
+quid rook shire squire tome tong tort tram truss weir whence thine thrice fritz ca""".split())
 # always in (Chris's request): skip the dictionary, frequency and blocklist filters, and always keep their place in
 # their rhyme family (they win their onset slot, so "cum" stands in for "come" and "thot" for "thought").
 # A pronunciation is given for words cmudict lacks.
@@ -166,7 +181,8 @@ def families(fams, min_words, max_words, max_families):
                 continue
             seen.add(onset)
             words.append((z, w))
-        if len(words) >= min_words:
+        need = 2 if any(w in ALLOW for _, w in words) else min_words   # a family with a requested word stays
+        if len(words) >= need:
             words.sort(reverse=True)
             forced = [x for x in words[max_words:] if x[1] in ALLOW]
             words = words[:max_words - len(forced)] + forced if forced else words[:max_words]
@@ -203,9 +219,9 @@ def main():
         if not allow and (not re.fullmatch(r"[a-z]{2,9}", word) or word not in stems or word in bad or word in EXTRA_BLOCK):
             continue
         z = zipf_frequency(word, "en")
-        if z < MIN_ZIPF and not allow:
+        if z < min(MIN_ZIPF, MIN_ZIPF1) and not allow:
             continue
-        parts = rhyme_parts(phones) if len(word) >= 3 else None
+        parts = rhyme_parts(phones) if len(word) >= 3 and (z >= MIN_ZIPF or allow) else None   # 2-syllable floor
         if parts:
             fams[parts[0]].append((z, word, parts[1]))
         parts1 = rhyme_parts1(phones)
