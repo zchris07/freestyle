@@ -76,18 +76,10 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   it, or the logo (home); Esc closes into the wtf? button.
 - Session title: the beat name is large (39px, 51px wide, 32px phone; made 50% larger on 2026-11-08). The session's boxes pop in, staggered like
   the builder grid (`.bars-scroll.pop`).
-- Session visualizer (`#perf-viz`, `vizStart`/`vizFrame`/`vizStop`, "go crazy", Chris 2026-11-08): a canvas behind
-  everything in the session, driven by an AnalyserNode on `playerBus()` (-80..-12 dB) and locked to the beat clock
-  (`P.t0`/`P.spb`, so it stops when paused). Six scenes (`VIZ_SCENES`): mirrored bars with peak caps, a spinning radial
-  burst, beat rings with spinning polygons, oscilloscope ribbons, a particle storm, strobing columns and stripes. The prep
-  bars play the bars scene, then the scene changes at every 4-bar block in a shuffled order per session, crossfading
-  over one beat with a white flash. Every beat flashes (bar lines harder), kicks (bass jumps over its average) fire
-  particle bursts and shockwave rings, and each block's two colours walk through the rhyme palette. Additive drawing
-  ("lighter"), dpr capped at 1.5, under 1 ms a frame. Off with prefers-reduced-motion.
-- The beat name has its own visualizer (`buildNameViz`/`vizName`): an SVG copy of the word laid exactly over the real
-  text (measured like the intro's written words; the real text turns transparent and keeps the layout, so nothing moves
-  or changes shape). Clipped to the letters, the copy is white with a green mirrored wave inside, the same mapping and
-  ripple as the hover silhouette. Skipped when the name is cut off with an ellipsis; rebuilt on resize.
+- Session visualizer (`#perf-viz`, `vizStart`/`vizFrame`/`vizStop`): a canvas behind everything in the session, driven
+  by an AnalyserNode on `playerBus()` (range -80..-12 dB so loud masters don't pin it). Mirrored soft green bars rise
+  from the bottom edge, the bass on both outer edges (framing the grid) and the highs toward the middle, plus a bloom
+  behind the grid that swells with the bass. Dim on purpose; off with prefers-reduced-motion.
 - Session controls: PAUSE / RESUME next to STOP (Space toggles it). Pause suspends the AudioContext, so the beat,
   the clicks and the beat clock stop together. Both "2 syllable" toggles say only "2 syllable" and show their state
   by colour (main: green when on; builder: filled in the active rhyme's colour when on).

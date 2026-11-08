@@ -268,11 +268,6 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 #perf-screen.paused .bars-scroll{opacity:.45;}
 /* the beat's visualizer fills the session's background, under everything else */
 #perf-viz{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;}
-/* the beat name carries its own visualizer: an SVG copy of the word, exactly over the real (now invisible) text, white
-   with a green wave playing inside the letters only */
-.pname{position:relative;}
-.pname.nv{color:transparent;}
-.pname>svg.nviz{position:absolute;left:0;top:0;overflow:hidden;pointer-events:none;}
 #perf-screen>:not(#perf-viz){position:relative;z-index:1;}
 .bars-scroll{overflow-y:auto;flex:1;min-height:0;padding:12px var(--inset) 20px;}
 .bar-block{margin-bottom:10px;}
@@ -3126,7 +3121,7 @@ async function startPerf(){
   ps.classList.add("open");ps.setAttribute("aria-hidden","false");
   document.getElementById("root").classList.add("sessioning");document.body.classList.add("lock");
   G.running=true;G.curGlobalBeat=-1;
-  vizStart();buildNameViz();
+  vizStart();
   const click=it.builtin||document.getElementById("click-toggle").checked;
   try{await startPlayer(it,{click,onBeat:handleBeat});}
   catch(e){document.getElementById("p-beat-name").textContent="Could not play this file";}
@@ -3142,206 +3137,50 @@ function retireBeat(){
   }
   G.curGlobalBeat=-1;
 }
-// Session visualizer: an analyser on the player's bus (the beat and the clicks) drives the session background, locked
-// to the beat clock. It changes scene at every 4-bar block (where the rhymes move to fresh families), in a shuffled
-// order each session, crossfading over a beat: mirrored bars, a spinning radial burst, beat rings with spinning
-// polygons, oscilloscope ribbons, a particle storm, and strobing stripes. On top of every scene: each beat flashes (bar
-// lines harder), a white flash marks each scene change, kicks fire particle bursts and shockwave rings, and the colours
-// walk through the rhyme palette. The grid's boxes are opaque, so the words stay readable.
-const VIZ={an:null,data:null,wave:null,lv:null,peak:null,bass:0,bassAvg:0,lastKick:0,raf:0,parts:[],rings:[],order:[],t0:0};
-const VIZ_COLS=[[30,215,96],[255,164,43],[83,157,245],[243,114,127],[180,155,200]];
-const rgba=(c,a)=>"rgba("+c[0]+","+c[1]+","+c[2]+","+Math.max(0,Math.min(1,a)).toFixed(3)+")";
-const mixC=(a,b,t)=>[0,1,2].map(i=>Math.round(a[i]+(b[i]-a[i])*t));
+// Session visualizer: an analyser on the player's bus (the beat and the clicks) drives the session background. A row
+// of soft green bars rises from the bottom edge, mirrored: the bass on both outer edges (where it frames the grid),
+// the highs toward the middle. A bloom behind the grid swells with the bass. Kept dim so the words stay readable.
+const VIZ={an:null,data:null,lv:null,bass:0,raf:0};
 function vizStart(){
   if(matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   const b=playerBus();
   if(!VIZ.an||VIZ.an.context!==b.context){
-    VIZ.an=b.context.createAnalyser();VIZ.an.fftSize=1024;VIZ.an.smoothingTimeConstant=0.72;
-    VIZ.an.minDecibels=-80;VIZ.an.maxDecibels=-12;   // a wider range than the default, so loud masters don't pin it
+    VIZ.an=b.context.createAnalyser();VIZ.an.fftSize=1024;VIZ.an.smoothingTimeConstant=0.8;
+    VIZ.an.minDecibels=-80;VIZ.an.maxDecibels=-12;   // a wider range than the default, so loud masters don't pin the bars
     b.connect(VIZ.an);
-    VIZ.data=new Uint8Array(VIZ.an.frequencyBinCount);VIZ.wave=new Uint8Array(VIZ.an.fftSize);
+    VIZ.data=new Uint8Array(VIZ.an.frequencyBinCount);
   }
-  VIZ.lv=null;VIZ.peak=null;VIZ.bass=0;VIZ.bassAvg=0;VIZ.parts=[];VIZ.rings=[];VIZ.t0=performance.now();
-  VIZ.order=shuffled(VIZ_SCENES.length);   // a fresh scene order every session
-  cancelAnimationFrame(VIZ.raf);VIZ.raf=requestAnimationFrame(vizFrame);
+  VIZ.lv=null;VIZ.bass=0;cancelAnimationFrame(VIZ.raf);VIZ.raf=requestAnimationFrame(vizFrame);
 }
-function vizStop(){cancelAnimationFrame(VIZ.raf);VIZ.raf=0;VIZ.parts=[];VIZ.rings=[];
-  {const el=document.getElementById("p-beat-name");el.querySelector("svg.nviz")?.remove();el.classList.remove("nv");NV.svg=null;}const cv=document.getElementById("perf-viz");cv.getContext("2d").clearRect(0,0,cv.width,cv.height);}
-// which scene plays at a beat: the prep bars get the bars scene, then a new scene every 4 bars
-function vizSceneAt(beat){if(beat<PREP_BARS*4) return 0;const blk=Math.floor((beat-PREP_BARS*4)/16);return VIZ.order[blk%VIZ.order.length];}
-function vizFrame(now){
-  const cv=document.getElementById("perf-viz"),dpr=Math.min(1.5,window.devicePixelRatio||1),w=cv.clientWidth,h=cv.clientHeight;
+function vizStop(){cancelAnimationFrame(VIZ.raf);VIZ.raf=0;const cv=document.getElementById("perf-viz");cv.getContext("2d").clearRect(0,0,cv.width,cv.height);}
+function vizFrame(){
+  const cv=document.getElementById("perf-viz"),dpr=Math.min(2,window.devicePixelRatio||1),w=cv.clientWidth,h=cv.clientHeight;
   if(!w||!h){VIZ.raf=requestAnimationFrame(vizFrame);return;}
   if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);}
   const g=cv.getContext("2d");g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
-  VIZ.an.getByteFrequencyData(VIZ.data);VIZ.an.getByteTimeDomainData(VIZ.wave);
-  const D=VIZ.data,L=D.length,B=32;
-  if(!VIZ.lv){VIZ.lv=new Float32Array(B);VIZ.peak=new Float32Array(B);}
-  for(let k=0;k<B;k++){   // 32 log-spaced bands: fast attack, slow release, and falling peak caps
-    const i0=Math.floor(Math.pow(k/B,1.7)*L*0.6),i1=Math.max(i0+1,Math.floor(Math.pow((k+1)/B,1.7)*L*0.6));
+  VIZ.an.getByteFrequencyData(VIZ.data);
+  const N=2*Math.max(12,Math.min(36,Math.round(w/44))),half=N/2,D=VIZ.data,L=D.length;
+  if(!VIZ.lv||VIZ.lv.length!==half) VIZ.lv=new Float32Array(half);
+  for(let k=0;k<half;k++){   // log-spaced bands, rising fast and falling slowly
+    const i0=Math.floor(Math.pow(k/half,1.7)*L*0.6),i1=Math.max(i0+1,Math.floor(Math.pow((k+1)/half,1.7)*L*0.6));
     let m=0;for(let i=i0;i<i1;i++) m=Math.max(m,D[i]);
-    const v=m/255;VIZ.lv[k]=v>VIZ.lv[k]?v:VIZ.lv[k]*0.88+v*0.12;VIZ.peak[k]=Math.max(VIZ.lv[k],VIZ.peak[k]-0.012);
+    const v=m/255;VIZ.lv[k]=v>VIZ.lv[k]?v:VIZ.lv[k]*0.9+v*0.1;
   }
-  let bass=0;for(let i=0;i<6;i++) bass+=D[i];bass/=6*255;
-  const tS=now/1000;
-  if(bass-VIZ.bassAvg>0.1&&tS-VIZ.lastKick>0.14){VIZ.lastKick=tS;vizKick(w,h);}   // kick: the bass jumps above its average
-  VIZ.bassAvg=VIZ.bassAvg*0.9+bass*0.1;VIZ.bass=Math.max(bass,VIZ.bass*0.9);
-  // the beat clock (it reads the AudioContext, so it stops when paused)
-  const beatF=AC&&P.spb?(AC.currentTime-P.t0)/P.spb:(now-VIZ.t0)/500,beat=Math.floor(beatF),frac=beatF-beat;
-  const sc=vizSceneAt(Math.max(0,beat)),prev=vizSceneAt(Math.max(0,beat-1)),blk=Math.floor(Math.max(0,beat-PREP_BARS*4)/16);
-  const col=VIZ_COLS[(blk*2)%VIZ_COLS.length],col2=VIZ_COLS[(blk*2+1)%VIZ_COLS.length];
-  const S={w,h,t:tS,beatF,beat,frac,down:((beat%4)+4)%4===0,bass:VIZ.bass,lv:VIZ.lv,peak:VIZ.peak,wave:VIZ.wave,col,col2,pulse:Math.exp(-frac*5)};
-  g.globalCompositeOperation="lighter";
-  // bloom behind everything, swelling with the bass
-  const bl=g.createRadialGradient(w/2,h*0.55,0,w/2,h*0.55,Math.max(w,h)*0.75);
-  bl.addColorStop(0,rgba(col,0.05+0.22*S.bass*S.bass));bl.addColorStop(1,rgba(col,0));g.fillStyle=bl;g.fillRect(0,0,w,h);
-  // the scene, crossfading from the previous one over the first beat of a new block
-  const switching=sc!==prev&&beat>=0;
-  if(switching){g.globalAlpha=1-frac;VIZ_SCENES[prev](g,S);}
-  g.globalAlpha=switching?frac:1;VIZ_SCENES[sc](g,S);g.globalAlpha=1;
-  vizParticles(g,S);vizRings(g,S);
-  // beat flashes: every beat, bar lines harder, and a white flash on each scene change
-  if(beat>=0){
-    const fl=g.createRadialGradient(w/2,h/2,0,w/2,h/2,Math.max(w,h)*0.7);
-    fl.addColorStop(0,rgba(S.down?col2:col,(S.down?0.16:0.07)*S.pulse));fl.addColorStop(1,rgba(col,0));
-    g.fillStyle=fl;g.fillRect(0,0,w,h);
-    if(switching&&frac<0.35){g.fillStyle="rgba(255,255,255,"+(0.22*(1-frac/0.35)).toFixed(3)+")";g.fillRect(0,0,w,h);}
+  let bass=0;for(let i=0;i<6;i++) bass+=D[i];bass/=6*255;VIZ.bass=Math.max(bass,VIZ.bass*0.92);
+  // bloom behind the grid, swelling with the bass
+  const bl=g.createRadialGradient(w/2,h*0.62,0,w/2,h*0.62,Math.max(w,h)*0.7);
+  bl.addColorStop(0,"rgba(30,215,96,"+(0.04+0.16*VIZ.bass*VIZ.bass).toFixed(3)+")");bl.addColorStop(1,"rgba(30,215,96,0)");
+  g.fillStyle=bl;g.fillRect(0,0,w,h);
+  // the bars along the bottom, and their faint mirror
+  const bw=w/N,gap=Math.max(2,bw*0.22),maxH=h*0.42;
+  for(let c=0;c<N;c++){
+    const v=VIZ.lv[Math.min(c,N-1-c)],bh=Math.max(2,v*v*maxH),x=c*bw+gap/2,wd=bw-gap;   // band = distance from the edge
+    const gr=g.createLinearGradient(0,h-bh,0,h);gr.addColorStop(0,"rgba(30,215,96,"+(0.1+0.22*v).toFixed(3)+")");gr.addColorStop(1,"rgba(30,215,96,.02)");
+    g.fillStyle=gr;g.beginPath();g.roundRect?g.roundRect(x,h-bh,wd,bh,[Math.min(6,wd/2),Math.min(6,wd/2),0,0]):g.rect(x,h-bh,wd,bh);g.fill();
+    g.fillStyle="rgba(30,215,96,"+(0.04*v).toFixed(3)+")";g.fillRect(x,h-bh-6-bh*0.25,wd,bh*0.25);   // a soft echo above
   }
-  g.globalCompositeOperation="source-over";
-  vizName(tS);
   VIZ.raf=requestAnimationFrame(vizFrame);
 }
-// The beat name's own visualizer. The word is copied into an SVG laid exactly over it (measured like the intro's
-// written words, so the letters match the page's text to the pixel); inside that copy, clipped to the letters, the
-// text stays white and a green mirrored wave (like the hover preview's silhouette) moves with the beat.
-const NV={svg:null,path:null,w:0,cy:0,amp:0};
-function buildNameViz(){
-  const el=document.getElementById("p-beat-name");
-  el.querySelector("svg.nviz")?.remove();el.classList.remove("nv");NV.svg=null;
-  if(matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  if(el.scrollWidth>el.clientWidth+1) return;   // cut off with an ellipsis: leave the plain text
-  const box=el.getBoundingClientRect();if(!box.width) return;
-  const probe=document.createElement("span");probe.style.cssText="display:inline-block;width:0;height:0;vertical-align:baseline";
-  el.append(probe);const base=probe.getBoundingClientRect().top-box.top;probe.remove();
-  const size=parseFloat(getComputedStyle(el).fontSize),id="nvclip"+Date.now().toString(36);
-  const NS=SVGNS,svg=document.createElementNS(NS,"svg");svg.setAttribute("class","nviz");svg.setAttribute("aria-hidden","true");
-  svg.setAttribute("width",box.width);svg.setAttribute("height",box.height);
-  const defs=document.createElementNS(NS,"defs"),cp=document.createElementNS(NS,"clipPath");cp.id=id;
-  const tx=document.createElementNS(NS,"text");tx.setAttribute("x",0);tx.setAttribute("y",base);tx.textContent=el.textContent;
-  cp.append(tx);defs.append(cp);svg.append(defs);
-  const grp=document.createElementNS(NS,"g");grp.setAttribute("clip-path","url(#"+id+")");
-  const bg=document.createElementNS(NS,"rect");bg.setAttribute("width",box.width);bg.setAttribute("height",box.height);bg.setAttribute("fill","#ffffff");
-  const wave=document.createElementNS(NS,"path");wave.setAttribute("fill","#1ed760");
-  grp.append(bg,wave);svg.append(grp);el.append(svg);el.classList.add("nv");
-  NV.svg=svg;NV.path=wave;NV.w=Math.min(box.width,tx.getComputedTextLength()||box.width);
-  NV.cy=base-size*0.34;NV.amp=size*0.42;   // centred on the letters' body, reaching the cap height
-}
-function vizName(tS){
-  if(!NV.svg||!NV.svg.isConnected) return;
-  const D=VIZ.data,L=D.length,N=28,amp=[];
-  for(let k=0;k<N;k++){   // same mapping and ripple as the hover silhouette
-    const i=Math.min(L-1,Math.floor(Math.pow(k/N,1.5)*L*0.75)),a=D[i]/255,flow=0.78+0.22*Math.sin(k*0.45-tS*5);
-    amp.push(Math.max(0.04,a*flow));
-  }
-  const xs=k=>k/(N-1)*NV.w,y=(k,sg)=>NV.cy+sg*amp[k]*NV.amp;
-  let d="M0 "+NV.cy.toFixed(1);
-  for(const sg of [-1,1]){
-    const ks=sg<0?[...Array(N).keys()]:[...Array(N).keys()].reverse();
-    d+=" L"+xs(ks[0]).toFixed(1)+" "+y(ks[0],sg).toFixed(1);
-    for(let j=1;j<N;j++){const a=ks[j-1],b=ks[j],x0=xs(a),x1=xs(b);d+=" Q"+x0.toFixed(1)+" "+y(a,sg).toFixed(1)+" "+((x0+x1)/2).toFixed(1)+" "+((y(a,sg)+y(b,sg))/2).toFixed(1);}
-    d+=" L"+xs(ks[N-1]).toFixed(1)+" "+y(ks[N-1],sg).toFixed(1);
-    if(sg<0) d+=" L"+NV.w.toFixed(1)+" "+NV.cy.toFixed(1);
-  }
-  NV.path.setAttribute("d",d+" Z");
-}
-function vizKick(w,h){
-  const c=VIZ_COLS[Math.floor(Math.random()*VIZ_COLS.length)],n=Math.min(60,24+Math.round(VIZ.bass*40));
-  const ox=Math.random()<0.5?w/2:(Math.random()<0.5?w*0.12:w*0.88),oy=Math.random()<0.6?h*0.55:h*0.95;
-  for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,sp=3+Math.random()*9;VIZ.parts.push({x:ox,y:oy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,life:1,c,s:1.5+Math.random()*3});}
-  VIZ.rings.push({x:w/2,y:h*0.55,r:20,a:0.55,c,lw:3+VIZ.bass*8});
-  if(VIZ.parts.length>700) VIZ.parts.splice(0,VIZ.parts.length-700);
-}
-function vizParticles(g,S){
-  const ps=VIZ.parts;
-  for(let i=ps.length-1;i>=0;i--){
-    const p=ps[i];p.x+=p.vx;p.y+=p.vy;p.vy+=0.06;p.vx*=0.985;p.life-=0.014;
-    if(p.life<=0||p.y>S.h+20){ps.splice(i,1);continue;}
-    g.fillStyle=rgba(p.c,p.life*0.9);g.fillRect(p.x-p.s/2,p.y-p.s/2,p.s,p.s);
-  }
-}
-function vizRings(g,S){
-  const rs=VIZ.rings;
-  for(let i=rs.length-1;i>=0;i--){
-    const r=rs[i];r.r+=6+r.r*0.045;r.a*=0.95;
-    if(r.a<0.01||r.r>Math.max(S.w,S.h)){rs.splice(i,1);continue;}
-    g.strokeStyle=rgba(r.c,r.a);g.lineWidth=r.lw;g.beginPath();g.arc(r.x,r.y,r.r,0,Math.PI*2);g.stroke();
-  }
-}
-const VIZ_SCENES=[
-  // 0: mirrored bars, bass on both outer edges, with falling peak caps
-  (g,S)=>{
-    const {w,h}=S,N=64,half=N/2,bw=w/N,gap=Math.max(2,bw*0.22),maxH=h*0.5;
-    for(let c=0;c<N;c++){
-      const k=Math.min(31,Math.floor(Math.min(c,N-1-c)*32/half)),v=S.lv[k],pk=S.peak[k],bh=Math.max(2,v*v*maxH*(1+0.25*S.pulse)),x=c*bw+gap/2,wd=bw-gap;
-      const gr=g.createLinearGradient(0,h-bh,0,h);gr.addColorStop(0,rgba(mixC(S.col,S.col2,v),0.2+0.4*v));gr.addColorStop(1,rgba(S.col,0.03));
-      g.fillStyle=gr;g.fillRect(x,h-bh,wd,bh);
-      g.fillStyle=rgba(S.col2,0.5*pk);g.fillRect(x,h-pk*pk*maxH-6,wd,3);   // peak cap
-      g.fillStyle=rgba(S.col,0.06*v);g.fillRect(x,0,wd,bh*0.35);            // a faint echo from the top
-    }
-  },
-  // 1: radial burst: spectrum rays around the centre, spinning, the core pulsing with the bass
-  (g,S)=>{
-    const {w,h}=S,cx=w/2,cy=h*0.55,N=96,r0=Math.min(w,h)*(0.08+0.06*S.bass),R=Math.max(w,h)*0.55,rot=S.t*0.35+S.beatF*0.08;
-    g.lineCap="round";
-    for(let i=0;i<N;i++){
-      const k=Math.min(31,Math.floor((i<N/2?i:N-1-i)/(N/2)*32)),v=S.lv[k],a=rot+i/N*Math.PI*2,len=r0+v*v*R*(0.7+0.5*S.pulse);
-      g.strokeStyle=rgba(i%2?S.col:S.col2,0.18+0.5*v);g.lineWidth=2+4*v;
-      g.beginPath();g.moveTo(cx+Math.cos(a)*r0,cy+Math.sin(a)*r0);g.lineTo(cx+Math.cos(a)*len,cy+Math.sin(a)*len);g.stroke();
-    }
-    g.fillStyle=rgba(S.col2,0.15+0.35*S.bass);g.beginPath();g.arc(cx,cy,r0*(0.8+0.4*S.pulse),0,Math.PI*2);g.fill();
-  },
-  // 2: beat rings from the centre, and spinning polygons that breathe with the bass
-  (g,S)=>{
-    const {w,h}=S,cx=w/2,cy=h*0.55,M=Math.max(w,h);
-    for(let i=0;i<6;i++){   // rings ride the beat outward
-      const r=((S.beatF/2+i/6)%1)*M*0.8,a=(1-r/(M*0.8))*0.5;
-      g.strokeStyle=rgba(i%2?S.col:S.col2,a);g.lineWidth=2+10*S.bass*(1-r/(M*0.8));g.beginPath();g.arc(cx,cy,r,0,Math.PI*2);g.stroke();
-    }
-    for(let j=0;j<3;j++){
-      const sides=[3,4,6][j],rad=Math.min(w,h)*(0.18+0.1*j)*(1+0.35*S.bass+0.15*S.pulse),rot=S.t*(0.6-0.25*j)*(j%2?-1:1);
-      g.strokeStyle=rgba(j===1?S.col2:S.col,0.35+0.3*S.pulse);g.lineWidth=3;g.beginPath();
-      for(let i=0;i<=sides;i++){const a=rot+i/sides*Math.PI*2,x=cx+Math.cos(a)*rad,y=cy+Math.sin(a)*rad;i?g.lineTo(x,y):g.moveTo(x,y);}
-      g.stroke();
-    }
-  },
-  // 3: oscilloscope ribbons: the beat's waveform stretched across the screen in layered, shifting lines
-  (g,S)=>{
-    const {w,h}=S,W=S.wave,n=W.length,rows=5;
-    for(let r=0;r<rows;r++){
-      const y0=h*(0.15+0.7*r/(rows-1)),amp=h*(0.12+0.25*S.bass)*(1-Math.abs(r-2)*0.15),off=Math.floor((r*97+S.beatF*40)%n);
-      g.strokeStyle=rgba(r%2?S.col2:S.col,0.25+0.4*S.pulse);g.lineWidth=r===2?4:2;g.beginPath();
-      for(let x=0;x<=w;x+=4){const v=(W[(off+Math.floor(x/w*n))%n]-128)/128,y=y0+v*amp+Math.sin(x*0.01+S.t*2+r)*8*S.bass;x?g.lineTo(x,y):g.moveTo(x,y);}
-      g.stroke();
-    }
-  },
-  // 4: particle storm: sparks pour up from the bottom with the level, kicks blow them apart (see vizKick)
-  (g,S)=>{
-    const {w,h}=S,lvl=S.lv.reduce((a,b)=>a+b,0)/32,n=Math.round(lvl*14+S.pulse*8);
-    for(let i=0;i<n;i++){const c=Math.random()<0.5?S.col:S.col2;VIZ.parts.push({x:Math.random()*w,y:h+5,vx:(Math.random()-0.5)*3,vy:-(4+Math.random()*10*lvl),life:0.9,c,s:2+Math.random()*3});}
-    const gr=g.createLinearGradient(0,h*0.6,0,h);gr.addColorStop(0,rgba(S.col,0));gr.addColorStop(1,rgba(S.col,0.12+0.2*S.bass));
-    g.fillStyle=gr;g.fillRect(0,h*0.6,w,h*0.4);
-  },
-  // 5: strobe: full-height spectrum columns that flash on every beat, and diagonal stripes sweeping with the bar
-  (g,S)=>{
-    const {w,h}=S,N=32,bw=w/N;
-    for(let c=0;c<N;c++){
-      const v=S.lv[Math.min(31,Math.min(c,N-1-c)*2)],on=((c+S.beat)%2===0);
-      g.fillStyle=rgba(on?S.col:S.col2,(0.05+0.3*v*v)*(0.5+0.8*S.pulse));g.fillRect(c*bw+1,h*(1-v)*0.5,bw-2,h*v);
-    }
-    const sw=80,shift=(S.beatF%4)/4*sw*4;g.fillStyle=rgba(S.col2,0.06+0.1*S.pulse);
-    for(let x=-h-sw*4+shift;x<w+h;x+=sw*2){g.beginPath();g.moveTo(x,0);g.lineTo(x+sw,0);g.lineTo(x+sw+h,h);g.lineTo(x+h,h);g.fill();}
-  }
-];
 // End of the 32 bars: when the last beat is over, its box goes dark, the clock and clicks stop, the beat fades to
 // silence over SESSION_FADE seconds, and then the session closes back to the main page (into the BACK button).
 const SESSION_FADE=2;
@@ -3589,8 +3428,7 @@ renderLib();
 loadLib().then(runIntro,runIntro);
 let plainT=0;
 window.addEventListener("resize",()=>{clearTimeout(plainT);plainT=setTimeout(()=>{if(!INTRO) plainWords(document);},150);});   // words reflow: real text takes over
-window.addEventListener("resize",()=>{placeHint();const it=selItem();if(it&&!it.builtin&&!document.getElementById("detail").hidden)drawGrid(it);
-  if(document.getElementById("perf-screen").classList.contains("open")&&VIZ.raf) buildNameViz();});   // re-measure the name's copy
+window.addEventListener("resize",()=>{placeHint();const it=selItem();if(it&&!it.builtin&&!document.getElementById("detail").hidden)drawGrid(it);});
 </script>
 </body>
 </html>
