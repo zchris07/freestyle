@@ -1239,6 +1239,7 @@ async function drawGrid(it){
   }else GV.it=it;
   track.style.width=W+"px";
   if(fresh) wrap.scrollLeft=Math.max(0,(dropInfo(it).t-PREP_BARS*bar-60/it.bpm)*pps);
+  if(fresh&&!INTRO) gvAnimate();   // a newly picked beat draws itself in (the page intro has its own wipe)
   paintGrid();
 }
 function paintGrid(){
@@ -1249,8 +1250,11 @@ function paintGrid(){
   cv.style.width=w+"px";
   const g=cv.getContext("2d");g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
   const X=t=>t*pps-sx;   // song time -> x in view
+  // draw-in after a beat is picked (gvAnimate): 0..1 per element, staggered from the left like the page intro
+  const an=GV.anim?performance.now()-GV.anim:null,ease=t=>1-Math.pow(1-Math.max(0,Math.min(1,t)),3);
+  const grow=(x,delay,dur)=>an==null?1:ease((an-delay-x/w*GV_SWEEP)/dur);
   g.fillStyle="#4d4d4d";
-  for(let x=0;x<w;x++){const v=GV.peaks[Math.floor(sx)+x];if(v==null) break;const hh=v*h*0.9;g.fillRect(x,(h-hh)/2,1,hh);}
+  for(let x=0;x<w;x++){const v=GV.peaks[Math.floor(sx)+x];if(v==null) break;const hh=v*h*0.9*grow(x,0,360);if(hh>0) g.fillRect(x,(h-hh)/2,1,hh);}
   // Preview playhead: a flat, full-height band of light one beat wide, with a trail one bar long that fades out
   // behind it. The waveform under them brightens too, and each coloured bar line flares up as the band crosses it.
   const pos=previewing&&P.song&&P.song.it===it?songPos():null;
@@ -1269,8 +1273,9 @@ function paintGrid(){
     g.fillStyle="rgba(255,255,255,.2)";g.fillRect(hx,0,HEAD,h);   // the band: flat, even light
   }
   const spb=60/it.bpm,bar=4*spb,drop=dropInfo(it).t;
-  // prep bars shaded; bar lines only (green, the drop orange), no beat lines and no labels
-  g.fillStyle="rgba(255,164,43,.08)";g.fillRect(X(Math.max(0,drop-PREP_BARS*bar)),0,PREP_BARS*bar*pps,h);
+  // prep bars shaded (fading in last when drawing in); bar lines only (green, the drop orange), no beat lines, no labels
+  g.fillStyle="rgba(255,164,43,"+(0.08*(an==null?1:ease((an-GV_SWEEP-300)/400))).toFixed(3)+")";
+  g.fillRect(X(Math.max(0,drop-PREP_BARS*bar)),0,PREP_BARS*bar*pps,h);
   const t0=sx/pps-bar,t1=(sx+w)/pps;
   for(let k=Math.ceil((t0-it.fd)/bar);it.fd+k*bar<t1;k++){
     const t=it.fd+k*bar;if(t<0) continue;
@@ -1280,13 +1285,29 @@ function paintGrid(){
       g.save();g.shadowColor=isDrop?"#ffa42b":"#1ed760";g.shadowBlur=14*f;
       g.fillStyle=isDrop?"rgb(255,"+Math.round(164+80*f)+","+Math.round(43+190*f)+")":"rgb("+Math.round(30+200*f)+",255,"+Math.round(96+150*f)+")";
       const wd=3+3*f;g.fillRect(x+1.5-wd/2,0,wd,h);g.restore();
-    }else{g.fillStyle=isDrop?"#ffa42b":"#1ed760";g.fillRect(x,0,3,h);}
+    }else{
+      const e=grow(x,180,320);   // drawing in: each line is drawn on from the top, a little behind the waveform
+      if(e>0){g.fillStyle=isDrop?"#ffa42b":"#1ed760";g.fillRect(x,0,3,h*e);}
+    }
   }
   if(pos!=null){g.fillStyle="rgba(255,255,255,.85)";g.fillRect(X(pos)-2,0,2,h);}   // the band's leading edge
 }
 // During a preview the waveform repaints every frame and keeps the moving patch in view (centred once it passes the middle),
 // unless the strip was scrolled by hand in the last 2 s.
 let GV_USER=0,GV_LOOP=0;
+// Picking a beat draws its waveform in like the page intro: columns grow out of the centre line from left to right,
+// the bar lines are drawn on from the top just behind them, then the prep shading fades in. About 1.1 s.
+const GV_SWEEP=450;
+function gvAnimate(){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const t0=performance.now();GV.anim=t0;
+  const step=()=>{
+    if(GV.anim!==t0) return;
+    if(performance.now()-t0>GV_SWEEP+800){GV.anim=null;paintGrid();return;}
+    paintGrid();requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
 function gvFollow(){
   const wrap=document.getElementById("gv-wrap"),id=++GV_LOOP;   // one loop at a time, even after a quick stop/start
   const step=()=>{
