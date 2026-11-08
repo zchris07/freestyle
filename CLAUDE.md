@@ -75,7 +75,7 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   It fades out on grab and back in after landing.
 - No text cursor or text selection anywhere (`body{cursor:default;user-select:none}`), except real text inputs.
 - Preview beat indicator: during the 8 prep beats no box is lit. Instead, once as the preview starts, a wave lifts
-  the tiles (tilt + rise + shadow, Web Animations) diagonally from one corner to the opposite one (crossing in ~0.8
+  the tiles (flat, no tilt: each comes straight out toward the viewer with a deeper shadow; Web Animations) diagonally from one corner to the opposite one (crossing in ~0.8
   of a beat, each tile's lift ~1.35 beats, max 780 ms; `waveTiles`). Each Preview click moves the starting corner clockwise (TL, TR, BR, BL; `WAVE_CORNER`). From the
   drop, the current beat's box lights its outline (`lightGridBeat`), starting top left and looping round the 4 bars. The draggable
   rhyme column's box lights in its colour, and the indicator follows the column if it is dragged mid-preview.

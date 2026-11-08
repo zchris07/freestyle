@@ -1263,10 +1263,10 @@ function waveTiles(){
   if(matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   const corner=WAVE_CORNER,beatMs=P.spb*1000,step=beatMs*0.825/6;   // the wave crosses the grid in about 0.8 of a beat
   const dx=corner===0||corner===3?1:-1,dy=corner<2?1:-1;         // direction of travel
-  const lift="perspective(520px) rotateX("+(-dy*14)+"deg) rotateY("+(dx*14)+"deg) translateY(-7px) scale(1.05)";
+  const lift="perspective(600px) translateZ(36px)";                // flat: the tile only comes straight out toward the viewer
   const tile=(el,r,c)=>{
     const d=(dy>0?r:3-r)+(dx>0?c:3-c);                           // steps from the starting corner
-    el.animate([{transform:"none"},{transform:lift,boxShadow:"0 14px 24px rgba(0,0,0,.5)",offset:.42},{transform:"none"}],
+    el.animate([{transform:"none"},{transform:lift,boxShadow:"0 16px 30px rgba(0,0,0,.55)",offset:.42},{transform:"none"}],
       {duration:Math.min(780,beatMs*1.35),delay:d*step,easing:"cubic-bezier(.3,.7,.35,1)"});
   };
   const grid=document.getElementById("setup-grid");
