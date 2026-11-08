@@ -211,8 +211,11 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   step wins if it is nearly as sharp (fills and risers). anchor=false after hand edits, Auto and old saved beats: the
   grid stays, and the drop snaps to its nearest bar line.
 - Stored as `dropT` (seconds) plus `dropManual`. The DROP row (+-1/+-4 bars, Auto) was removed from the UI on
-  2026-11-06 at Chris's request; the code paths (`dropManual`, `regridDrop`) stay. The waveform shades P1/P2 and
-  marks "1 DROP". It shows the whole song at a fixed 64 px per bar for every beat (`GV_BAR`) in a sideways-scrolling
+  2026-11-06 at Chris's request; the code paths (`dropManual`, `regridDrop`) stay. The waveform shades P1/P2, draws
+  bar lines only (green; the drop's line orange), with no beat lines and no labels. During Preview a brighter patch of
+  the waveform (about a beat wide, soft edges) moves with the playback (`songPos()` maps the audio clock to song time
+  through `P.song`, loop included); `gvFollow` repaints every frame and scrolls so the patch stays centred, unless the
+  strip was scrolled by hand in the last 2 s (`GV_USER`). It shows the whole song at a fixed 64 px per bar for every beat (`GV_BAR`) in a sideways-scrolling
   strip (`.gv`, scroll, shift-wheel or mouse drag); the canvas is pinned to the view (sticky) and `paintGrid` repaints
   what is visible from peaks computed once per beat/tempo (`GV`). A newly picked beat opens a beat before its prep bars.
 - Tested on synthetic beats (boom bap 85-95, trap 140-150, intros of 0/1/4/8/16 bars, hats-only or 25% drums in the
