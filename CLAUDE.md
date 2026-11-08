@@ -84,7 +84,9 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   the cap height above the baseline; it follows a slowly smoothed loudness and the
   swell the bass, loosely, not band by band. The letters stay plain white through the prep bars and fill up when the
   drop is reached (on the session's beat clock; 0.9 s ease-out with an extra slosh, `NV_FILL`). Waves are big (amplitude
-  10-30% of the cap height, plus the slosh) and quick, and the whole surface drifts slowly rightward (`NV_DRIFT`, 26 px/s).
+  10-30% of the cap height, plus the slosh), wide (peaks ~1.5x apart from the first version) and 30% slower than first
+  built; the whole surface drifts slowly rightward (`NV_DRIFT`, 26 px/s). The swell follows the kicks: the bass is
+  scaled to the song's own recent range (`NV.lo`/`NV.hi`), so each kick pushes the waves up and they settle between kicks.
   Skipped when the name is cut off with an ellipsis; rebuilt on resize. The session's boxes pop in, staggered like
   the builder grid (`.bars-scroll.pop`).
 - Session visualizer (`#perf-viz`, `vizStart`/`vizFrame`/`vizStop`): a canvas behind everything in the session, driven
