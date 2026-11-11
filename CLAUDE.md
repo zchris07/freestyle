@@ -321,6 +321,9 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   fit said 139.28, but its raw beats and the comb both give 138.16), first downbeat 0.298 s (Beat This!; the snare-on-3
   check gives 0.291), no intro (Chris: drop at 0 s), so the prep is a click count-in. Shook Ones 93.98 boom bap
   (Beat This! and the built-in agree; snare on 2 and 4), first downbeat 0.416 s, drop bar 9 (20.846 s, nearest Chris's ~21 s; first set at bar 5, 10.63 s, from 11 s).
+  Pucci (added 2026-11-10, no source tags) 120.99 trap: Beat This! (R 0.99) and the built-in agree; first downbeat
+  0.235 s (Beat This!'s downbeats; snare-on-3 check 0.228; snare on 3 = 10 vs ~4). No drop given and none detected, so
+  it starts from the top with a count-in; it gets louder at bar 17 (31.98 s; bars 1-16 at ~70%).
   When the beat phase is in doubt, check where the snare lands in the bar (on 3 for trap, 2 and 4 for boom bap):
   Day 'N' Nite's built-in grid sat on the off-beats, and Beat This! can be off too when its raw beats wander.
 - Drop detection only sees intros that are clearly quieter than the beat (below 65% of full energy). Drums-in

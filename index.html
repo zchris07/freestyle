@@ -594,6 +594,25 @@ body.preintro .root{opacity:0;}
 const FFT_N=1024, DELTA=0.0;      // DELTA calibrated against synthetic tests
 const PRIOR_CENTER=120, PRIOR_SIGMA=0.6, ALPHA=0.5;
 let AC=null;
+// iPhones: web audio normally plays on the ringer channel, so the silent switch mutes the beat. Declaring the page as
+// media playback (Safari 16.4+) ignores the switch; older iOS needs a silent looping <audio> element started on the
+// first tap, which moves the page's audio onto the media channel too.
+const IOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+try{if(navigator.audioSession) navigator.audioSession.type="playback";}catch(e){}
+let MEDIA_KEEP=null;
+function mediaUnlock(){
+  if(!IOS||MEDIA_KEEP) return;
+  try{if(navigator.audioSession){navigator.audioSession.type="playback";if(navigator.audioSession.type==="playback"){MEDIA_KEEP=true;return;}}}catch(e){}
+  try{   // half a second of silence (8 kHz, 8-bit), looping
+    const n=4000,b=new ArrayBuffer(44+n),v=new DataView(b),w=(o,t)=>[...t].forEach((c,i)=>v.setUint8(o+i,c.charCodeAt(0)));
+    w(0,"RIFF");v.setUint32(4,36+n,true);w(8,"WAVEfmt ");v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+    v.setUint32(24,8000,true);v.setUint32(28,8000,true);v.setUint16(32,1,true);v.setUint16(34,8,true);w(36,"data");v.setUint32(40,n,true);
+    for(let i=0;i<n;i++) v.setUint8(44+i,128);
+    const a=new Audio(URL.createObjectURL(new Blob([b],{type:"audio/wav"})));
+    a.loop=true;a.setAttribute("playsinline","");a.setAttribute("x-webkit-airplay","deny");
+    a.play().then(()=>{MEDIA_KEEP=a;}).catch(()=>{});
+  }catch(e){}
+}
 function getCtx(){
   if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)();
   if(AC.state==="suspended") AC.resume();
@@ -1080,7 +1099,8 @@ const DEFAULTS=[
   {"id":"d-virtual","name":"Virtual","file":"beats/virtual.mp3","bpm":150,"fd":1.511,"dropT":102.311,"feel":"trap","engine":"builtin","duration":191.6},
   {"id":"d-money-longer","name":"Money Longer","file":"beats/money-longer.mp3","bpm":136.02,"fd":0.553,"dropT":28.784,"feel":"trap","engine":"builtin","duration":199.84},
   {"id":"d-big-pimpin","name":"Big Pimpin'","file":"beats/big-pimpin.mp3","bpm":138.16,"fd":0.298,"dropT":0.298,"feel":"trap","engine":"beat-this","duration":298.17},
-  {"id":"d-shook-ones","name":"Shook Ones","file":"beats/shook-ones.mp3","bpm":93.98,"fd":0.416,"dropT":20.846,"feel":"boombap","engine":"beat-this","duration":276.74}
+  {"id":"d-shook-ones","name":"Shook Ones","file":"beats/shook-ones.mp3","bpm":93.98,"fd":0.416,"dropT":20.846,"feel":"boombap","engine":"beat-this","duration":276.74},
+  {"id":"d-pucci","name":"Pucci","file":"beats/pucci.mp3","bpm":120.99,"fd":0.235,"dropT":0.235,"feel":"trap","engine":"beat-this","duration":142.97}
 ].map(d=>({...d,isDefault:true,status:"ready"}));
 function openDB(){
   return new Promise((res,rej)=>{
@@ -2734,6 +2754,7 @@ function audReattach(){
   AUD.row=row;if(AUD.cv) row.prepend(AUD.cv);
 }
 function audStop(){
+  AUD.tok=(AUD.tok||0)+1;   // any audition still waiting for its audio is now stale and will not start
   clearTimeout(AUD.timer);AUD.timer=0;clearTimeout(AUD.lineTimer);AUD.lineTimer=0;
   if(AUD.src){
     const t=AUD.gain.context.currentTime,s=AUD.src;
@@ -2750,17 +2771,20 @@ function audHover(row){
   audStop();
   const it=allItems().find(i=>i.id===row.dataset.id);
   if(!it||it.status!=="ready") return;
-  const id=it.id;AUD.id=id;AUD.row=row;
+  const id=it.id,tok=AUD.tok=(AUD.tok||0)+1;AUD.id=id;AUD.row=row;
   ensureBuf(it,true).catch(()=>{});   // start loading now
   // at 0.15 s the silhouette starts drawing its base line left to right; it is complete at 0.5 s, when the beat starts
   AUD.lineTimer=setTimeout(()=>{
-    if(AUD.id!==id||!AUD.row) return;
+    if(AUD.tok!==tok||AUD.id!==id||!AUD.row) return;
     const cv=document.createElement("canvas");cv.className="lwave on";cv.setAttribute("aria-hidden","true");AUD.row.prepend(cv);AUD.cv=cv;
     AUD.lineStart=performance.now();AUD.beatAt=0;AUD.raf=requestAnimationFrame(drawAudWave);
   },150);
   AUD.timer=setTimeout(async()=>{
     let buf;try{buf=await ensureBuf(it,true);}catch(e){return;}
-    if(AUD.id!==id||!AUD.row||!AUD.row.isConnected) return;   // left meanwhile
+    // left meanwhile, or left and came back (a newer audition of the same beat): only the current one may start, or
+    // a stale one would start a second copy nothing can stop (a slow first load, e.g. Day 'N' Nite)
+    if(AUD.tok!==tok||AUD.id!==id||!AUD.row||!AUD.row.isConnected) return;
+    if(AUD.src){try{AUD.src.stop();}catch(e){}AUD.src=null;}
     const ac=getCtx();if(ac.state==="suspended") ac.resume().catch(()=>{});
     const src=ac.createBufferSource();src.buffer=buf;
     const g=ac.createGain();g.gain.value=0;g.gain.setTargetAtTime(0.9,ac.currentTime,0.05);
@@ -2838,7 +2862,7 @@ libEl.addEventListener("pointermove",e=>{
 });
 libEl.addEventListener("contextmenu",e=>{if(LP.on||AUD.src) e.preventDefault();});
 // phones only unlock audio on a tap (not during a hold), so wake the audio engine on the first tap anywhere
-["pointerup","touchend","keydown"].forEach(t=>addEventListener(t,()=>{try{const ac=getCtx();if(ac.state==="suspended") ac.resume().catch(()=>{});}catch(err){}},{passive:true}));
+["pointerup","touchend","keydown"].forEach(t=>addEventListener(t,()=>{mediaUnlock();try{const ac=getCtx();if(ac.state==="suspended") ac.resume().catch(()=>{});}catch(err){}},{passive:true}));
 document.getElementById("lib").addEventListener("click",e=>{
   if(AUD.noClick){AUD.noClick=false;e.preventDefault();return;}   // the end of a long press, not a tap
   const hit=e.target.closest(".lrow");
@@ -3171,7 +3195,13 @@ const SVGNS="http://www.w3.org/2000/svg";
 const CARVE_SEL=".panel,.gcell,.btn,.spill,.vpill,.tab,.play-btn,.lrow.sel,.col-hint";   // not wtf?: plain text, no outline
 const ASSEMBLE_SEL=".dot,.chk input,.col-hint .ar,.tab > svg:not(.carve-svg)";   // icons only: never a word's drawn copy or an outline
 const TEXT_SEL=".topbar .brand,.wtf-btn,.panel-title,.lbl,.spill,.vpill,.beat-lbl,.word-text,.col-hint,.btn,.tab,.lhdr,.lname,.lmeta,.lempty,.dlbl,.bpmv,.muted,.chk,.play-btn";
-function introDelay(el,y0){const r=el.getBoundingClientRect();return Math.min(1300,Math.round(40+(r.top-y0)*0.45+r.left*0.1));}
+// The stagger runs top to bottom, but the whole page shares the time one screenful would take, so parts below the fold
+// are drawn along with the rest instead of arriving late (on a phone the library is far down the page).
+let INTRO_PAGE_H=0;
+function introDelay(el,y0){
+  const r=el.getBoundingClientRect(),h=Math.max(1,INTRO_PAGE_H||innerHeight),dy=Math.max(0,r.top-y0)*Math.min(1,innerHeight/h);
+  return Math.min(1300,Math.round(40+dy*0.45+r.left*0.1));
+}
 // draw a rounded-rect outline over el (its own border box) and return the overlay
 function carveOutline(el,d){
   const cs=getComputedStyle(el),w=el.offsetWidth,h=el.offsetHeight;if(!w||!h) return null;
@@ -3287,9 +3317,13 @@ async function runIntro(){
   INTRO=true;
   const scope=[document.querySelector("#root > .topbar"),document.getElementById("setup-screen")];
   const vis=el=>el.offsetParent!==null||getComputedStyle(el).position==="fixed";
-  const all=sel=>scope.flatMap(r=>[...r.querySelectorAll(sel)]).filter(vis);
+  // anything entirely below the screen when the page opens is simply there, finished: phones can hold off-screen
+  // animations until they are scrolled to, which made those parts appear late; the screen itself still draws in
+  const onScreen=el=>el.getBoundingClientRect().top<innerHeight;
+  const all=sel=>scope.flatMap(r=>[...r.querySelectorAll(sel)]).filter(el=>vis(el)&&onScreen(el));
   const carves=all(CARVE_SEL);
   const y0=Math.min(...scope.map(r=>r.getBoundingClientRect().top));
+  INTRO_PAGE_H=Math.max(...scope.map(r=>r.getBoundingClientRect().bottom))-y0;
   // each container starts no earlier than 180 ms after the container around it
   const delays=new Map();
   for(const el of carves){
