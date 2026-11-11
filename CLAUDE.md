@@ -39,7 +39,10 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   pieces (`ASSEMBLE_SEL`: beat dots, checkbox, drag arrows) fly in and lock into place, and the waveform wipes on.
   All text writes itself in with the football explainer's writing animation (`runIntro`, `carveOutline`, `writeWord`:
   an SVG copy of each word, each letter's outline stroked on then inked; words 1/60 s apart, letters 14 ms).
-  Everything is staggered from the top left, and children start 180 ms after their container.
+  Everything is staggered from the top left, and children start 180 ms after their container. The whole page's
+  vertical stagger fits the time one screenful takes (`INTRO_PAGE_H`), and anything entirely below the screen at load
+  skips the animation and is simply there (phones held off-screen animations until scrolled to, so those parts
+  "spawned in" late; 2026-11-10).
   Each outline starts at a random point on its edge (rect `pathLength="100"`, a growing dash from a random
   `--off`), about half run counter-clockwise (mirrored rect), and each takes 0.65-0.9 s. A shape fills in when its
   own outline completes (`g.dataset.dur`).
@@ -145,7 +148,12 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   on leaving the row or on a click elsewhere in the list. On phones a long press is the hover: hold a row 0.5 s to
   play it, lift (or scroll) to stop; a press of 500 ms+ doesn't select on release (`AUD.noClick`), a quick tap does. Rows
   suppress the long-press menu. Phones only unlock audio on a tap, so the first tap anywhere wakes the
-  AudioContext; until then a hover or long press stays silent.
+  AudioContext; until then a hover or long press stays silent. iPhones play with the ringer switch off:
+  `navigator.audioSession.type="playback"` (Safari 16.4+), else on the first tap a silent looping `<audio>` element
+  (a generated half-second WAV) moves the page onto the media channel (`mediaUnlock`, `IOS`). Each audition has a token
+  (`AUD.tok`): one still waiting for its audio when it is left (or left and re-entered) never starts, and starting one
+  stops any source already playing. Without it, leaving and coming back during a slow first download started a second
+  copy nothing could stop (Day 'N' Nite, 2026-11-10).
 - Session beat indicator: the current box lights up its outline (border + glow) and is never filled, so a rhyme
   word stays readable (a plain beat in green, a rhyme in its group's color).
 
