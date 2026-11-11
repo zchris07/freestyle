@@ -79,6 +79,9 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   it, or the logo (home); Esc closes into the wtf? button.
 - Session title: the beat name is large (58px, 76px wide, 48px phone; made 50% larger twice on 2026-11-08), with
   line-height 1.3 and .1em bottom padding so descenders (p, g) are never clipped by its overflow:hidden or crowd the boxes.
+  It is shown in full (no "…" truncation) and `fitName` scales it down only when it doesn't fit the room beside
+  PAUSE / STOP, at session start and on every resize. On phones the name gets its own full-width line, the controls
+  the line below, so real names stay at 48px (a 50-character name lands at ~15px).
 - The beat name has its own visualizer (`buildNameViz`/`vizName`): an SVG copy of the word laid exactly over the real
   text (measured like the intro's written words; the real text turns transparent and keeps its layout, so nothing moves
   or changes shape). Clipped to the letters it stays white, with green liquid filling it from below the lowest point of
@@ -95,7 +98,7 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   spring (`NV.jy`/`NV.jv`, ~7 px up at 76px, made ~40% stronger on Chris's ask, settling with a slight bounce). Snares and claps
   give a smaller hop (~60% of a kick's): the "snap" band (~1.3-4.4 kHz) near the top of its recent range, at most one
   per 0.2 s so hi-hats don't trigger it (on Flashing Lights 8 of 10 land on beats 2 and 4).
-  Skipped when the name is cut off with an ellipsis; rebuilt on resize. The session's boxes pop in, staggered like
+  Every name fits, so it always plays (except with prefers-reduced-motion); rebuilt on resize. The session's boxes pop in, staggered like
   the builder grid (`.bars-scroll.pop`).
 - Session visualizer (`#perf-viz`, `vizStart`/`vizFrame`/`vizStop`): a canvas behind everything in the session, driven
   by an AnalyserNode on `playerBus()` (-80..-12 dB so loud masters don't pin it). Mirrored bars rise from the bottom edge,

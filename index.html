@@ -356,6 +356,10 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
   .topbar{padding:0 16px;}
   .brand{font-size:21px;}
   .pname{font-size:48px;}
+  /* phones: the beat name gets the full width on its own line, PAUSE / STOP go on the line below */
+  .perf-hdr{flex-wrap:wrap;row-gap:4px;}
+  .perf-hdr .pname{flex:1 1 100%;}
+  .perf-hdr .perf-actions{margin-left:auto;}
   .col-hint{padding:8px 15px;font-size:12px;gap:9px;}
   .col-hint .ar{font-size:15px;}
 }
@@ -2953,7 +2957,7 @@ function build32Bars(){
 async function startPerf(){
   const it=selItem();if(!it) return;
   if(previewing){previewing=false;stopPlayer();resetDots();}
-  document.getElementById("p-beat-name").textContent=it.name.length>22?it.name.slice(0,21)+"…":it.name;
+  document.getElementById("p-beat-name").textContent=it.name;fitName();   // the whole name, sized to fit
   document.getElementById("stop-btn").innerHTML="&#9632; STOP";
   setPaused(false);document.getElementById("pause-btn").disabled=false;
   rerollWords();
@@ -2972,7 +2976,7 @@ async function startPerf(){
   NV.dropAt=null;NV.rng={};NV.rip=[];NV.lvl=0;NV.jy=NV.jv=NV.jt=0;vizStart();buildNameViz();
   const click=it.builtin||document.getElementById("click-toggle").checked;
   try{await startPlayer(it,{click,onBeat:handleBeat});}
-  catch(e){document.getElementById("p-beat-name").textContent="Could not play this file";}
+  catch(e){document.getElementById("p-beat-name").textContent="Could not play this file";fitName();buildNameViz();}
 }
 // the lit box becomes a played one: indicator off, a hidden rhyme's word hidden again
 function retireBeat(){
@@ -3001,6 +3005,19 @@ function vizStart(){
   }
   VIZ.lv=null;VIZ.bass=0;VIZ.rgb=null;VIZ.last=0;cancelAnimationFrame(VIZ.raf);VIZ.raf=requestAnimationFrame(vizFrame);
 }
+// The beat name is shown in full and sized to the room beside PAUSE / STOP: the CSS size (58/76/48px) when it fits,
+// otherwise scaled down until it does, on any screen and after every resize.
+function fitName(){
+  const el=document.getElementById("p-beat-name");
+  el.querySelector("svg.nviz")?.remove();el.classList.remove("nv");
+  el.style.fontSize="";
+  const max=parseFloat(getComputedStyle(el).fontSize);
+  for(let i=0;i<4&&el.scrollWidth>el.clientWidth+0.5;i++){
+    const cur=parseFloat(getComputedStyle(el).fontSize);
+    el.style.fontSize=Math.max(10,Math.floor(cur*el.clientWidth/el.scrollWidth*0.98*10)/10)+"px";
+  }
+  return max;
+}
 // The beat name's own visualizer: green liquid filling the white letters from the bottom. The word is copied into an SVG
 // laid exactly over it (measured like the intro's written words, so the letters match the page's text to the pixel; the
 // real text turns transparent and keeps the layout). Clipped to the letters, two layers of liquid (a darker one behind)
@@ -3012,7 +3029,7 @@ function buildNameViz(){
   const el=document.getElementById("p-beat-name");
   el.querySelector("svg.nviz")?.remove();el.classList.remove("nv");NV.svg=null;
   if(matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  if(el.scrollWidth>el.clientWidth+1) return;   // cut off with an ellipsis: leave the plain text
+  if(el.scrollWidth>el.clientWidth+1) fitName();   // fitName sizes every name to fit, so the liquid always plays
   const box=el.getBoundingClientRect();if(!box.width) return;
   const probe=document.createElement("span");probe.style.cssText="display:inline-block;width:0;height:0;vertical-align:baseline";
   el.append(probe);const base=probe.getBoundingClientRect().top-box.top;probe.remove();
@@ -3379,7 +3396,7 @@ loadLib().then(runIntro,runIntro);
 let plainT=0;
 window.addEventListener("resize",()=>{clearTimeout(plainT);plainT=setTimeout(()=>{if(!INTRO) plainWords(document);},150);});   // words reflow: real text takes over
 window.addEventListener("resize",()=>{placeHint();const it=selItem();if(it&&!it.builtin&&!document.getElementById("detail").hidden)drawGrid(it);
-  if(document.getElementById("perf-screen").classList.contains("open")&&VIZ.raf) buildNameViz();});   // re-measure the name's copy
+  if(document.getElementById("perf-screen").classList.contains("open")){fitName();if(VIZ.raf) buildNameViz();}});   // refit the name, re-measure its copy
 </script>
 </body>
 </html>
