@@ -22,7 +22,11 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
 - No panel numbering.
 - Layout: the top bar with the "freestyle.wtf" wordmark top-left (".wtf" in green, no caption) has no colour of its
   own: it sits on the page background (`#121212`). At 1000px and wider, setup is two columns (rhyme scheme | beat
-  library + START SESSION, 1.45fr : 1fr, max 1440px, centred) with bigger grids; below that a single 840px column. The session screen (`#perf-screen`, `#191414`) is a full-window overlay
+  library, 1.45fr : 1fr, max 1440px, centred) with bigger grids; below that a single 840px column. START SESSION is a big
+  pill (20px text) fixed at the bottom middle of the screen, apart from the library (2026-11-17); the setup screen keeps
+  116px of bottom padding so it never covers the end of the page (at 1280x850 it sits over the drag hint until scrolled).
+  The Trap / Boom bap tabs are bigger (15px, 10x20 padding), and every load opens on Boom bap (`LIB_TAB`), keeping the
+  remembered beat only if it is a boom bap one, else the first boom bap beat. The session screen (`#perf-screen`, `#191414`) is a full-window overlay
   with its own wordmark row, content centred at about 1040px. Phones (640px and below) get edge-to-edge content and a 50px top bar.
 - Keep it minimal: no caption under the scheme pills, no "Beat timing" label or drag instructions (just "← drag →"
   under the rhyme column), no upload instructions (the button says "+ Upload beat"), no notes under the library.
@@ -40,9 +44,9 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   All text writes itself in with the football explainer's writing animation (`runIntro`, `carveOutline`, `writeWord`:
   an SVG copy of each word, each letter's outline stroked on then inked; words 1/60 s apart, letters 14 ms).
   Everything is staggered from the top left, and children start 180 ms after their container. The whole page's
-  vertical stagger fits the time one screenful takes (`INTRO_PAGE_H`), and anything entirely below the screen at load
-  skips the animation and is simply there (phones held off-screen animations until scrolled to, so those parts
-  "spawned in" late; 2026-11-10).
+  vertical stagger fits the time one screenful takes (`INTRO_PAGE_H`), so everything, the beat library below the fold on
+  phones included, animates in together instead of arriving late when scrolled to (2026-11-10/17; a version that
+  skipped off-screen parts was replaced, Chris wants the library animated on every viewport).
   Each outline starts at a random point on its edge (rect `pathLength="100"`, a growing dash from a random
   `--off`), about half run counter-clockwise (mirrored rect), and each takes 0.65-0.9 s. A shape fills in when its
   own outline completes (`g.dataset.dur`).
@@ -158,7 +162,11 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   stops any source already playing. Without it, leaving and coming back during a slow first download started a second
   copy nothing could stop (Day 'N' Nite, 2026-11-10).
 - Session beat indicator: the current box lights up its outline (border + glow) and is never filled, so a rhyme
-  word stays readable (a plain beat in green, a rhyme in its group's color).
+  word stays readable (a plain beat in green, a rhyme in its group's color). Timing (2026-11-17, Chris felt Ominous and
+  Guitar lag; their grids measured within 2-4 ms of the drum hits, so it was the indicator): `playerTick` also runs every
+  screen refresh, the beat is counted from when it is heard (the clock minus `outputLatency`, capped 150 ms) and switches
+  on the frame nearest it, and a lit box snaps on with no transition (the old 100 ms fade-in read as lag; it still fades
+  off). Measured: a median of 2 ms after the heard beat, against ~40 ms early plus a 100 ms fade before.
 
 ## Architecture (all in `index.html`)
 
@@ -313,7 +321,7 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   From a streaming site, no tags; possibly ATCQ's "Electric Relaxation" (unconfirmed).
   Added 2026-11-08 from Chris's files (commercial instrumentals, all by title; no source tags, 7 are ffmpeg
   conversions of streaming audio, Shabba an FL Studio 9 export tagged 2013 / 120 BPM). Trap: Day 'N' Nite 138.01,
-  first downbeat 0.791 s, drop bar 25 (42.527 s, the bar line nearest Chris's 43 s). Re-timed 2026-11-08 after Chris heard
+  first downbeat 0.775 s (moved 16 ms earlier on 2026-11-17: its drum hits sat 16 ms before the grid), drop bar 25 (42.511 s, the bar line nearest Chris's 43 s). Re-timed 2026-11-08 after Chris heard
   the clicks off: the old built-in grid (138, fd 1.418) had the right tempo but sat ~196 ms late, on the off-beats (its
   onset comb locked onto the 808/hats). Beat This!'s raw beats (half time, ~69) fit 138.008 with R=0.99 and put every
   downbeat on one phase; on that grid the kick is on 1 and a strong snare/clap on 3. No energy step marks the drop. Versace 132.01, drop bar 5 (7.28 s, auto, Chris 7 s); Shabba 120, drop bar 9 (16.03 s,

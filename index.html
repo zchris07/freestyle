@@ -206,8 +206,8 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 .lib::-webkit-scrollbar{width:6px;}
 .lib::-webkit-scrollbar-thumb{background:var(--high-hover);border-radius:3px;}
 .lib>*{flex-shrink:0;}
-.tabs{display:flex;gap:6px;}
-.tab{background:var(--high);border:none;border-radius:500px;padding:6px 14px;font-size:12px;font-weight:700;color:var(--text);cursor:pointer;transition:background .15s;}
+.tabs{display:flex;gap:8px;}
+.tab{background:var(--high);border:none;border-radius:500px;padding:10px 20px;font-size:15px;font-weight:700;color:var(--text);cursor:pointer;transition:background .15s;}
 .tab:hover{background:var(--high-hover);}
 .tab[aria-selected="true"]{background:var(--green);color:var(--on-accent);}
 .lempty{font-size:12px;color:var(--muted);padding:10px 2px;}
@@ -248,7 +248,12 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 .chk{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text);cursor:pointer;}
 .chk input{accent-color:var(--green);width:15px;height:15px;}
 
-.play-btn{width:calc(100% - 28px);margin:4px 14px 14px;background:var(--green);color:var(--on-accent);border:none;border-radius:500px;padding:15px;font-size:15px;font-weight:700;letter-spacing:.1em;cursor:pointer;transition:background .15s,transform .15s;display:flex;align-items:center;justify-content:center;gap:9px;}
+/* START SESSION: a big pill fixed at the bottom middle of the screen, apart from the library */
+.play-btn{position:fixed;left:0;right:0;bottom:calc(18px + env(safe-area-inset-bottom,0px));margin:0 auto;z-index:30;
+  width:min(460px,calc(100% - 32px));background:var(--green);color:var(--on-accent);border:none;border-radius:500px;
+  padding:21px 28px;font-size:20px;font-weight:700;letter-spacing:.1em;cursor:pointer;
+  box-shadow:0 14px 36px rgba(0,0,0,.6);transition:background .15s,transform .15s;display:flex;align-items:center;justify-content:center;gap:11px;}
+#setup-screen{padding-bottom:116px!important;}   /* room so the button never covers the last of the page */
 .play-btn:hover{background:var(--green-hover);transform:scale(1.02);}
 .play-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
 
@@ -288,6 +293,8 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 /* the beat indicator lights the box's outline (border + glow) and never fills it, so a rhyme word stays readable */
 .pcell{transition:background .1s,border-color .1s,box-shadow .12s,transform .18s ease;}
 /* the plain beat's outline takes the effects' colour: the rhyme group coming up next (--beatc, set by the visualizer) */
+/* the indicator snaps on with the beat (a fade-in read as lag); leaving the class keeps the .1s fade-off */
+.pcell.current-beat,.pcell.current-rhyme,.gcell.now{transition:none!important;}
 .pcell.current-beat{--bc:var(--beatc,var(--green));border:2px solid var(--bc);
   box-shadow:0 0 0 3px color-mix(in srgb,var(--bc) 22%,transparent),0 0 18px color-mix(in srgb,var(--bc) 35%,transparent);}
 .pcell.current-rhyme{background:var(--high);border:3px solid var(--gc);
@@ -366,12 +373,11 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 /* full-size windows: two columns on setup, bigger grids, performance centred and filling the height */
 @media (min-width:1000px){
   #setup-screen.active{display:grid;max-width:1440px;padding:20px 24px 24px;gap:16px;align-items:start;
-    grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);grid-template-areas:"scheme lib" "scheme play";grid-template-rows:auto 1fr;}
+    grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);grid-template-areas:"scheme lib";}
   #setup-screen .panel{margin:0;padding:20px 22px;}
   #grid-panel{grid-area:scheme;}
   #grid-panel.has-hint{margin-bottom:70px;}
   #lib-panel{grid-area:lib;}
-  .play-btn{grid-area:play;align-self:start;width:100%;margin:0;padding:18px;font-size:16px;}
   .gcell{height:86px;}
   .word-text{font-size:20px;}
   .word-text.long{font-size:16px;}
@@ -1090,7 +1096,7 @@ const DEFAULTS=[
   {"id":"d-pimp","name":"P.I.M.P.","file":"beats/pimp.mp3","bpm":85.17,"fd":1.9,"dropT":1.9,"feel":"boombap","engine":"beat-this","duration":164.17},
   {"id":"d-cream","name":"C.R.E.A.M.","file":"beats/cream.mp3","bpm":90.09,"fd":0.027,"dropT":21.339,"feel":"boombap","engine":"beat-this","duration":250.01},
   {"id":"d-electric","name":"Electric","file":"beats/electric.mp3","bpm":98.03,"fd":0.717,"dropT":15.406,"feel":"boombap","engine":"beat-this","duration":227.3},
-  {"id":"d-day-n-nite","name":"Day 'N' Nite","file":"beats/day-n-nite.mp3","bpm":138.01,"fd":0.791,"dropT":42.527,"feel":"trap","engine":"beat-this","duration":230.11},
+  {"id":"d-day-n-nite","name":"Day 'N' Nite","file":"beats/day-n-nite.mp3","bpm":138.01,"fd":0.775,"dropT":42.511,"feel":"trap","engine":"beat-this","duration":230.11},
   {"id":"d-versace","name":"Versace","file":"beats/versace.mp3","bpm":132.01,"fd":0.003,"dropT":7.275,"feel":"trap","engine":"beat-this","duration":116.4},
   {"id":"d-shabba","name":"Shabba","file":"beats/shabba.mp3","bpm":120,"fd":0.032,"dropT":16.032,"feel":"trap","engine":"beat-this","duration":281.91},
   {"id":"d-6-7","name":"6 7","file":"beats/6-7.mp3","bpm":168,"fd":0.04,"dropT":5.754,"feel":"trap","engine":"beat-this","duration":249.99},
@@ -1129,8 +1135,9 @@ async function loadLib(){
     LIB=rows.map(r=>({...r,status:"ready"}));
   }catch(e){dbOK=false;LIB=[];}
   try{const s=localStorage.getItem("fs-selected");if(s&&allItems().some(i=>i.id===s))SELECTED=s;}catch(e){}
-  if(!SELECTED){const f=allItems().find(inTab);SELECTED=f?f.id:null;}
-  const cur=selItem();if(cur&&cur.feel) LIB_TAB=cur.feel;   // open the tab the remembered beat lives in
+  // the page opens on Boom bap: keep the remembered beat if it is one (or has no style yet), else the first boom bap beat
+  LIB_TAB="boombap";
+  {const cur=selItem();if(!cur||!inTab(cur)){const f=allItems().find(inTab);if(f) SELECTED=f.id;}}
   renderLib();
   upgradeFeel();
 }
@@ -1223,8 +1230,7 @@ function setSelected(id){
 }
 
 // The library is split into Trap and Boom bap tabs by each beat's feel; uploads whose feel isn't known yet show in both.
-let LIB_TAB="trap";
-try{const t=localStorage.getItem("fs-tab");if(t==="trap"||t==="boombap")LIB_TAB=t;}catch(e){}
+let LIB_TAB="boombap";   // every load opens on Boom bap (Chris, 2026-11-17)
 function inTab(it){return it.feel===LIB_TAB||(!it.isDefault&&!it.feel);}
 function renderLib(){
   if(INTRO){INTRO_PENDING=true;return;}   // re-rendering mid-intro would cut its animations short
@@ -1414,7 +1420,8 @@ async function startPlayer(it,opts){
     if(start>=0) src.start(P.t0,start);
     else{src.start(P.t0-start,0);P.countIn=Math.ceil(-start/P.spb-0.02);}   // drop too early for 8 beats: click count-in
   }
-  P.timer=setInterval(playerTick,20);
+  P.timer=setInterval(playerTick,20);   // schedules the clicks (and keeps the beats going in a background tab)
+  cancelAnimationFrame(P.raf);const frame=()=>{if(!P.timer) return;playerTick();P.raf=requestAnimationFrame(frame);};P.raf=requestAnimationFrame(frame);
 }
 function playerTick(){
   const ac=AC;if(!ac) return;
@@ -1423,7 +1430,10 @@ function playerTick(){
     if(P.click||P.nextIdx<P.countIn) clickAt(P.t0+P.nextIdx*P.spb,P.nextIdx%4===0);
     P.nextIdx++;
   }
-  const idx=Math.floor((now-P.t0)/P.spb);
+  // the lit box switches when the beat is heard, not when it is computed: the audio reaches the speakers outputLatency
+  // after the clock; checked every screen refresh (and the 20 ms timer), it switches on the frame nearest the beat
+  const lat=Math.min(0.15,ac.outputLatency||ac.baseLatency||0);
+  const idx=Math.floor((now-lat-P.t0)/P.spb+0.008/P.spb);
   while(P.last<idx){P.last++;if(P.last>=0&&P.cb)P.cb(P.last);}
 }
 // where in the song the player is right now (seconds), or null before the audio starts / when nothing plays
@@ -1435,7 +1445,7 @@ function songPos(){
   return t;
 }
 function stopPlayer(){
-  P.song=null;
+  P.song=null;cancelAnimationFrame(P.raf);P.raf=0;
   if(P.timer){clearInterval(P.timer);P.timer=null;}
   if(P.src){try{P.src.stop();}catch(e){}try{P.src.disconnect();}catch(e){}P.src=null;}
   P.cb=null;
@@ -3334,10 +3344,9 @@ async function runIntro(){
   INTRO=true;
   const scope=[document.querySelector("#root > .topbar"),document.getElementById("setup-screen")];
   const vis=el=>el.offsetParent!==null||getComputedStyle(el).position==="fixed";
-  // anything entirely below the screen when the page opens is simply there, finished: phones can hold off-screen
-  // animations until they are scrolled to, which made those parts appear late; the screen itself still draws in
-  const onScreen=el=>el.getBoundingClientRect().top<innerHeight;
-  const all=sel=>scope.flatMap(r=>[...r.querySelectorAll(sel)]).filter(el=>vis(el)&&onScreen(el));
+  // everything animates in together, the parts below the screen included: the stagger is squeezed into one
+  // screenful's time (introDelay), so the library is drawn along with the rest, not when it is scrolled to
+  const all=sel=>scope.flatMap(r=>[...r.querySelectorAll(sel)]).filter(vis);
   const carves=all(CARVE_SEL);
   const y0=Math.min(...scope.map(r=>r.getBoundingClientRect().top));
   INTRO_PAGE_H=Math.max(...scope.map(r=>r.getBoundingClientRect().bottom))-y0;
