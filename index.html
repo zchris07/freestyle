@@ -248,12 +248,7 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 .chk{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text);cursor:pointer;}
 .chk input{accent-color:var(--green);width:15px;height:15px;}
 
-/* START SESSION: a big pill fixed at the bottom middle of the screen, apart from the library */
-.play-btn{position:fixed;left:0;right:0;bottom:calc(18px + env(safe-area-inset-bottom,0px));margin:0 auto;z-index:30;
-  width:min(460px,calc(100% - 32px));background:var(--green);color:var(--on-accent);border:none;border-radius:500px;
-  padding:21px 28px;font-size:20px;font-weight:700;letter-spacing:.1em;cursor:pointer;
-  box-shadow:0 14px 36px rgba(0,0,0,.6);transition:background .15s,transform .15s;display:flex;align-items:center;justify-content:center;gap:11px;}
-#setup-screen{padding-bottom:116px!important;}   /* room so the button never covers the last of the page */
+.play-btn{width:calc(100% - 28px);margin:4px 14px 14px;background:var(--green);color:var(--on-accent);border:none;border-radius:500px;padding:15px;font-size:15px;font-weight:700;letter-spacing:.1em;cursor:pointer;transition:background .15s,transform .15s;display:flex;align-items:center;justify-content:center;gap:9px;}
 .play-btn:hover{background:var(--green-hover);transform:scale(1.02);}
 .play-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
 
@@ -373,11 +368,12 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 /* full-size windows: two columns on setup, bigger grids, performance centred and filling the height */
 @media (min-width:1000px){
   #setup-screen.active{display:grid;max-width:1440px;padding:20px 24px 24px;gap:16px;align-items:start;
-    grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);grid-template-areas:"scheme lib";}
+    grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);grid-template-areas:"scheme lib" "scheme play";grid-template-rows:auto 1fr;}
   #setup-screen .panel{margin:0;padding:20px 22px;}
   #grid-panel{grid-area:scheme;}
   #grid-panel.has-hint{margin-bottom:70px;}
   #lib-panel{grid-area:lib;}
+  .play-btn{grid-area:play;align-self:start;width:100%;margin:0;padding:18px;font-size:16px;}
   .gcell{height:86px;}
   .word-text{font-size:20px;}
   .word-text.long{font-size:16px;}
@@ -471,8 +467,8 @@ body.preintro .root{opacity:0;}
   <div class="panel" id="lib-panel">
     <div class="panel-hdr"><div class="panel-title">BEAT LIBRARY</div>
       <div class="tabs" id="lib-tabs" role="tablist" aria-label="Beat style">
-        <button class="tab" role="tab" data-tab="trap" aria-selected="true">Trap</button>
-        <button class="tab" role="tab" data-tab="boombap" aria-selected="false">Boom bap</button>
+        <button class="tab" role="tab" data-tab="boombap" aria-selected="true">Boom bap</button>
+        <button class="tab" role="tab" data-tab="trap" aria-selected="false">Trap</button>
         <button class="tab up" id="upload-chip" title="Upload a beat" aria-label="Upload a beat"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M7 9l5-5 5 5M5 15v4h14v-4"/></svg></button>
       </div>
     </div>
@@ -564,7 +560,7 @@ body.preintro .root{opacity:0;}
     <div class="gsec why rise" style="--d:6"><div class="gnum">?</div><div><h3>Why tf does this exist?</h3>
       <p>Because every other freestyle app out there right now is ass.</p></div></div>
     <div class="gsec who rise" style="--d:7"><div class="gnum">?</div><div><h3>Who tf made ts?</h3>
-      <p><a href="https://github.com/zchris07" target="_blank" rel="noopener">christopher</a></p></div></div>
+      <p><a href="https://www.instagram.com/chriszou.mp4/" target="_blank" rel="noopener">christopher</a></p></div></div>
     <button class="btn go big rise" style="--d:8" id="guide-done">Got it</button>
   </div>
 </div>
@@ -1103,14 +1099,15 @@ const DEFAULTS=[
   {"id":"d-paris","name":"Paris","file":"beats/paris.mp3","bpm":140,"fd":0.085,"dropT":34.371,"feel":"trap","engine":"beat-this","duration":222.52},
   {"id":"d-no-hands","name":"No Hands","file":"beats/no-hands.mp3","bpm":131.5,"fd":0.225,"dropT":16.651,"feel":"trap","engine":"beat-this","duration":267.08},
   {"id":"d-flashing-lights","name":"Flashing Lights","file":"beats/flashing-lights.mp3","bpm":90.49,"fd":0.128,"dropT":21.346,"feel":"boombap","engine":"beat-this","duration":240.05},
-  {"id":"d-stronger","name":"Stronger","file":"beats/stronger.mp3","bpm":104.04,"fd":0.661,"dropT":23.729,"feel":"boombap","engine":"beat-this","duration":310.52},
+  {"id":"d-stronger","name":"Stronger","file":"beats/stronger.mp3","bpm":104.04,"fd":0.644,"dropT":23.712,"feel":"boombap","engine":"beat-this","duration":310.52},
   {"id":"d-swisher","name":"Swisher","file":"beats/swisher.mp3","bpm":156,"fd":0.032,"dropT":3.109,"feel":"trap","engine":"beat-this","duration":185.01},
   {"id":"d-all-of-a-sudden","name":"All of a Sudden","file":"beats/all-of-a-sudden.mp3","bpm":140,"fd":0.128,"dropT":13.843,"feel":"trap","engine":"beat-this","duration":170.02},
   {"id":"d-virtual","name":"Virtual","file":"beats/virtual.mp3","bpm":150,"fd":1.511,"dropT":102.311,"feel":"trap","engine":"builtin","duration":191.6},
-  {"id":"d-money-longer","name":"Money Longer","file":"beats/money-longer.mp3","bpm":136.02,"fd":0.553,"dropT":28.784,"feel":"trap","engine":"builtin","duration":199.84},
-  {"id":"d-big-pimpin","name":"Big Pimpin'","file":"beats/big-pimpin.mp3","bpm":138.16,"fd":0.298,"dropT":0.298,"feel":"trap","engine":"beat-this","duration":298.17},
-  {"id":"d-shook-ones","name":"Shook Ones","file":"beats/shook-ones.mp3","bpm":93.98,"fd":0.416,"dropT":20.846,"feel":"boombap","engine":"beat-this","duration":276.74},
-  {"id":"d-pucci","name":"Pucci","file":"beats/pucci.mp3","bpm":120.99,"fd":0.235,"dropT":0.235,"feel":"trap","engine":"beat-this","duration":142.97}
+  {"id":"d-money-longer","name":"Money Longer","file":"beats/money-longer.mp3","bpm":136.02,"fd":0.558,"dropT":28.789,"feel":"trap","engine":"builtin","duration":199.84},
+  {"id":"d-big-pimpin","name":"Big Pimpin'","file":"beats/big-pimpin.mp3","bpm":138.16,"fd":0.283,"dropT":0.283,"feel":"trap","engine":"beat-this","duration":298.17},
+  {"id":"d-shook-ones","name":"Shook Ones","file":"beats/shook-ones.mp3","bpm":93.98,"fd":0.412,"dropT":20.842,"feel":"boombap","engine":"beat-this","duration":276.74},
+  {"id":"d-pucci","name":"Pucci","file":"beats/pucci.mp3","bpm":120.99,"fd":0.22,"dropT":0.22,"feel":"trap","engine":"beat-this","duration":142.97},
+  {"id":"d-hypnotize","name":"Hypnotize","file":"beats/hypnotize.mp3","bpm":93.865,"fd":0.131,"dropT":5.245,"feel":"boombap","engine":"beat-this","duration":239.35}
 ].map(d=>({...d,isDefault:true,status:"ready"}));
 function openDB(){
   return new Promise((res,rej)=>{

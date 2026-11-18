@@ -22,11 +22,10 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
 - No panel numbering.
 - Layout: the top bar with the "freestyle.wtf" wordmark top-left (".wtf" in green, no caption) has no colour of its
   own: it sits on the page background (`#121212`). At 1000px and wider, setup is two columns (rhyme scheme | beat
-  library, 1.45fr : 1fr, max 1440px, centred) with bigger grids; below that a single 840px column. START SESSION is a big
-  pill (20px text) fixed at the bottom middle of the screen, apart from the library (2026-11-17); the setup screen keeps
-  116px of bottom padding so it never covers the end of the page (at 1280x850 it sits over the drag hint until scrolled).
-  The Trap / Boom bap tabs are bigger (15px, 10x20 padding), and every load opens on Boom bap (`LIB_TAB`), keeping the
-  remembered beat only if it is a boom bap one, else the first boom bap beat. The session screen (`#perf-screen`, `#191414`) is a full-window overlay
+  library + START SESSION under it, 1.45fr : 1fr, max 1440px, centred) with bigger grids; below that a single 840px
+  column. (A fixed bottom-centre START SESSION was tried and reverted on 2026-11-17.) The tabs read Boom bap, then Trap,
+  are bigger (15px, 10x20 padding), and every load opens on Boom bap (`LIB_TAB`), keeping the remembered beat only if
+  it is a boom bap one, else the first boom bap beat. The session screen (`#perf-screen`, `#191414`) is a full-window overlay
   with its own wordmark row, content centred at about 1040px. Phones (640px and below) get edge-to-edge content and a 50px top bar.
 - Keep it minimal: no caption under the scheme pills, no "Beat timing" label or drag instructions (just "← drag →"
   under the rhyme column), no upload instructions (the button says "+ Upload beat"), no notes under the library.
@@ -75,7 +74,7 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
 - wtf? button top right (plain green text, no outline, not even during the intro: it is not in `CARVE_SEL`, only written in; hover only darkens the green) opens `#guide`, a full-page guide that grows as a circle out of the button with its
   sections rising in: how to use every part of the site, plus "every other freestyle app out there right now is ass"
   under "Why tf does this exist?" (plain body text) and "Who tf made ts?" with "christopher" linking to
-  https://github.com/zchris07. The sections are plain text on the background, no boxes. All text (title, lead,
+  https://www.instagram.com/chriszou.mp4/ (was GitHub until 2026-11-17). The sections are plain text on the background, no boxes. All text (title, lead,
   headings, paragraphs, Got it) shares one left edge; the X close button and the section numbers (green 36px
   circles: 1-4, "?" for the why and who sections) sit in a 36px gutter 14px to its left (`--gut`, `--gap`).
   The guide has its own static logo (`#g-home`, a copy of the page logo's inked letters made in `openGuide`, same spot,
@@ -343,6 +342,13 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
   Pucci (added 2026-11-10, no source tags) 120.99 trap: Beat This! (R 0.99) and the built-in agree; first downbeat
   0.235 s (Beat This!'s downbeats; snare-on-3 check 0.228; snare on 3 = 10 vs ~4). No drop given and none detected, so
   it starts from the top with a count-in; it gets louder at bar 17 (31.98 s; bars 1-16 at ~70%).
+  Hypnotize (added 2026-11-17, no source tags) 93.865 boom bap: Beat This! (R 0.996; the built-in said 140.79, a wrong
+  multiple), first downbeat 0.131 s (all 56 of its downbeats on one beat, then 10 ms earlier to sit on the drums), drop
+  bar 3 (5.245 s, nearest Chris's 5 s).
+  Grid precision pass (2026-11-17): every default's grid was checked against its own drum onsets (the onset envelope
+  sampled at grid beats shifted -60..+60 ms, after the drop). 22 sat within 2 ms; Stronger (-17 ms), Big Pimpin' (-15),
+  Pucci (-15), Shook Ones (-4) and Money Longer (+5) were shifted (fd and dropT together) and now measure 0 to -1 ms.
+  Re-run that check when adding a beat.
   When the beat phase is in doubt, check where the snare lands in the bar (on 3 for trap, 2 and 4 for boom bap):
   Day 'N' Nite's built-in grid sat on the off-beats, and Beat This! can be off too when its raw beats wander.
 - Drop detection only sees intros that are clearly quieter than the beat (below 65% of full energy). Drums-in
