@@ -18,7 +18,8 @@ Published as a private Claude artifact: https://claude.ai/artifact/CMVgF6WScPG74
 - Rhyme groups are colored, in order: green `#1ed760`, orange `#ffa42b`, blue `#539df5`, pink `#f3727f`, lavender
   `#b49bc8`, white. A rhyme cell has a 2px outline and word text in its group's color. A hidden ("improvised")
   rhyme box has a fainter, thinner outline in its group's colour (1px at 50%) and shows no word on the setup grid
-  and in sessions (in the builder its word is faded and struck).
+  and in sessions, not even while the beat indicator lights it (fixed 2026-11-17: the lit box used to write the
+  hidden word in for that one beat) (in the builder its word is faded and struck).
 - No panel numbering.
 - Layout: the top bar with the "freestyle.wtf" wordmark top-left (".wtf" in green, no caption) has no colour of its
   own: it sits on the page background (`#121212`). At 1000px and wider, setup is two columns (rhyme scheme | beat

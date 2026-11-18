@@ -3168,7 +3168,8 @@ function handleBeat(globalBeat){
   if(cell){
     cell.classList.remove("upcoming","prep-cell","played");
     cell.classList.add(cell.classList.contains("rhyme-cell")?"current-rhyme":"current-beat");
-    const pw=cell.querySelector(".pword");if(pw&&pw.dataset.word) pw.textContent=pw.dataset.word;
+    // a hidden ("improvised") rhyme stays blank even while lit: only its outline shows it is a rhyme
+    const pw=cell.querySelector(".pword");if(pw&&pw.dataset.word) pw.textContent=pw.dataset.shouldshow==="1"?pw.dataset.word:"";
     const block=document.getElementById("barblock-"+bar),sc=document.getElementById("bars-scroll");
     if(block){const bR=block.getBoundingClientRect(),sR=sc.getBoundingClientRect();
       if(bR.bottom>sR.bottom-40||bR.top<sR.top+10) block.scrollIntoView({behavior:"smooth",block:"nearest"});}
